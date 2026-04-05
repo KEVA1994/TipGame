@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TipGame.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a3ab85df7ccdf03e7272816cde9dba3ca5ab660d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+16f39944dc94d76de8a81fa5de14a86df649c096")]
 [assembly: System.Reflection.AssemblyProductAttribute("TipGame.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TipGame.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
