@@ -15,7 +15,7 @@ namespace TipGame.Infrastructure.Data
 
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
             optionsBuilder.UseNpgsql(
-    "Host=db.ejcuoqbfssefkeinlkly.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=L0hcBYRSVIZEcJm3;SSL Mode=Require;Trust Server Certificate=true");
+    "Host=localhost;Port=5432;Database=tipGame;Username=postgres;Password=Amy66rgp");
             return new AppDbContext(optionsBuilder.Options);
         }
     }

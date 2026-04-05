@@ -3,16 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\KSRP\\source\\repos\\TipGame\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\controllers\\matchescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\controllers\\matchescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\models\\creatematchdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\models\\creatematchdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B5C055B0-47D0-392C-614D-B23C873FCC62}|TipGame.Infrastructure\\TipGame.Infrastructure.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.infrastructure\\migrations\\20260405115334_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B5C055B0-47D0-392C-614D-B23C873FCC62}|TipGame.Infrastructure\\TipGame.Infrastructure.csproj|solutionrelative:tipgame.infrastructure\\migrations\\20260405115334_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\models\\matchdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\models\\matchdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B5C055B0-47D0-392C-614D-B23C873FCC62}|TipGame.Infrastructure\\TipGame.Infrastructure.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.infrastructure\\data\\appdbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -21,6 +25,29 @@
     {
       "AbsoluteMoniker": "D:0:0:{B5C055B0-47D0-392C-614D-B23C873FCC62}|TipGame.Infrastructure\\TipGame.Infrastructure.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.infrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B5C055B0-47D0-392C-614D-B23C873FCC62}|TipGame.Infrastructure\\TipGame.Infrastructure.csproj|solutionrelative:tipgame.infrastructure\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Program Files\\Microsoft Visual Studio\\18\\Professional\\MSBuild\\Current\\Bin\\amd64\\Microsoft.Common.CurrentVersion.targets||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.api\\tipgame.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{7F6A1AD9-A3D4-09AF-D146-C6D91B441F01}|TipGame.Api\\TipGame.Api.csproj|solutionrelative:tipgame.api\\tipgame.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B5C055B0-47D0-392C-614D-B23C873FCC62}|TipGame.Infrastructure\\TipGame.Infrastructure.csproj|c:\\users\\ksrp\\source\\repos\\tipgame\\tipgame.infrastructure\\migrations\\20260405115334_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B5C055B0-47D0-392C-614D-B23C873FCC62}|TipGame.Infrastructure\\TipGame.Infrastructure.csproj|solutionrelative:tipgame.infrastructure\\migrations\\20260405115334_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\KSRP\\source\\repos\\TipGame\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
     }
   ],
   "DocumentGroupContainers": [
@@ -30,8 +57,21 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 7,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "CreateMatchDto.cs",
+              "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\Models\\CreateMatchDto.cs",
+              "RelativeDocumentMoniker": "TipGame.Api\\Models\\CreateMatchDto.cs",
+              "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\Models\\CreateMatchDto.cs*",
+              "RelativeToolTip": "TipGame.Api\\Models\\CreateMatchDto.cs*",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-05T14:22:34.749Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
@@ -46,33 +86,111 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MatchDto.cs",
+              "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\Models\\MatchDto.cs",
+              "RelativeDocumentMoniker": "TipGame.Api\\Models\\MatchDto.cs",
+              "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\Models\\MatchDto.cs*",
+              "RelativeToolTip": "TipGame.Api\\Models\\MatchDto.cs*",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-05T14:21:21.197Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 3,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "TipGame.Api\\appsettings.Development.json",
+              "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\appsettings.Development.json",
+              "RelativeToolTip": "TipGame.Api\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-05T14:02:26.888Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Microsoft.Common.CurrentVersion.targets",
+              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\18\\Professional\\MSBuild\\Current\\Bin\\amd64\\Microsoft.Common.CurrentVersion.targets",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\18\\Professional\\MSBuild\\Current\\Bin\\amd64\\Microsoft.Common.CurrentVersion.targets",
+              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\18\\Professional\\MSBuild\\Current\\Bin\\amd64\\Microsoft.Common.CurrentVersion.targets",
+              "RelativeToolTip": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\18\\Professional\\MSBuild\\Current\\Bin\\amd64\\Microsoft.Common.CurrentVersion.targets",
+              "ViewState": "AgIAAAAVAAAAAAAAAAAnwBIVAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003801|",
+              "WhenOpened": "2026-04-05T13:29:18.898Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MatchesController.cs",
+              "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\Controllers\\MatchesController.cs",
+              "RelativeDocumentMoniker": "TipGame.Api\\Controllers\\MatchesController.cs",
+              "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\Controllers\\MatchesController.cs*",
+              "RelativeToolTip": "TipGame.Api\\Controllers\\MatchesController.cs*",
+              "ViewState": "AgIAAFUAAAAAAAAAAAAkwA4AAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-05T13:23:18.57Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "TipGame.Api",
+              "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\TipGame.Api.csproj",
+              "RelativeDocumentMoniker": "TipGame.Api\\TipGame.Api.csproj",
+              "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\TipGame.Api.csproj*",
+              "RelativeToolTip": "TipGame.Api\\TipGame.Api.csproj*",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-04-05T13:22:56.556Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": ".gitignore",
+              "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\.gitignore",
+              "RelativeDocumentMoniker": ".gitignore",
+              "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\.gitignore",
+              "RelativeToolTip": ".gitignore",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAIYBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-05T12:39:47.657Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "AppDbContextFactory.cs",
               "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Infrastructure\\Data\\AppDbContextFactory.cs",
               "RelativeDocumentMoniker": "TipGame.Infrastructure\\Data\\AppDbContextFactory.cs",
               "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Infrastructure\\Data\\AppDbContextFactory.cs",
               "RelativeToolTip": "TipGame.Infrastructure\\Data\\AppDbContextFactory.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAApAAAAAAAAAA==",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABEAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-05T12:12:10.154Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 8,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\Program.cs",
               "RelativeDocumentMoniker": "TipGame.Api\\Program.cs",
               "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\Program.cs",
               "RelativeToolTip": "TipGame.Api\\Program.cs",
-              "ViewState": "AgIAAA4AAAAAAAAAAAAiwCUAAAAgAAAAAAAAAA==",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-05T11:41:46.839Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 7,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Api\\appsettings.json",
               "RelativeDocumentMoniker": "TipGame.Api\\appsettings.json",
@@ -85,7 +203,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 10,
               "Title": "20260405115334_Init.cs",
               "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Infrastructure\\Migrations\\20260405115334_Init.cs",
               "RelativeDocumentMoniker": "TipGame.Infrastructure\\Migrations\\20260405115334_Init.cs",
@@ -98,13 +216,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "AppDbContext.cs",
               "DocumentMoniker": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Infrastructure\\Data\\AppDbContext.cs",
               "RelativeDocumentMoniker": "TipGame.Infrastructure\\Data\\AppDbContext.cs",
               "ToolTip": "C:\\Users\\KSRP\\source\\repos\\TipGame\\TipGame.Infrastructure\\Data\\AppDbContext.cs",
               "RelativeToolTip": "TipGame.Infrastructure\\Data\\AppDbContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAARAAAAAAAAAA==",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAuwAgAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-05T11:40:51.715Z",
               "EditorCaption": ""
