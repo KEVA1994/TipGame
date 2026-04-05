@@ -1,0 +1,12 @@
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\bin\Debug\net10.0\TipGame.Domain.deps.json
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\bin\Debug\net10.0\TipGame.Domain.dll
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\bin\Debug\net10.0\TipGame.Domain.pdb
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\TipGame.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\TipGame.Domain.AssemblyInfoInputs.cache
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\TipGame.Domain.AssemblyInfo.cs
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\TipGame.Domain.csproj.CoreCompileInputs.cache
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\TipGame.Domain.sourcelink.json
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\TipGame.Domain.dll
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\refint\TipGame.Domain.dll
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\TipGame.Domain.pdb
+C:\Users\KSRP\source\repos\TipGame\TipGame.Domain\obj\Debug\net10.0\ref\TipGame.Domain.dll

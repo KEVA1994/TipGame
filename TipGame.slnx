@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="TipGame.Api/TipGame.Api.csproj" />
+  <Project Path="TipGame.Blazor/TipGame.Blazor.csproj" />
+  <Project Path="TipGame.Domain/TipGame.Domain.csproj" />
+  <Project Path="TipGame.Infrastructure/TipGame.Infrastructure.csproj" />
+</Solution>
