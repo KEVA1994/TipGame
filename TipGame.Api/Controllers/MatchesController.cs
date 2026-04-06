@@ -11,10 +11,12 @@ namespace TipGame.Api.Controllers;
 public class MatchesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly PredictionService _predictionService;
 
-    public MatchesController(AppDbContext context)
+    public MatchesController(AppDbContext context, PredictionService predictionService)
     {
-        _context = context;
+        this._context = context;
+        this._predictionService = predictionService;
     }
 
     // GET: api/matches
@@ -57,6 +59,29 @@ public class MatchesController : ControllerBase
             HomeScore = match.HomeScore,
             AwayScore = match.AwayScore
         });
+    }
+    // POST: api/matches/1/result
+    [HttpPost("{id}/result")]
+    public async Task<IActionResult> SetResult(int id, [FromBody] SetResultDto dto)
+    {
+        var match = await _context.Matches
+            .Include(m => m.Predictions)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (match == null)
+            return NotFound();
+
+        // Sæt resultat
+        match.HomeScore = dto.HomeScore;
+        match.AwayScore = dto.AwayScore;
+        match.Status = "FINISHED";
+
+        // 🔥 Beregn points
+        _predictionService.CalculatePoints(match);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Result updated and points calculated" });
     }
 
     // POST: api/matches
