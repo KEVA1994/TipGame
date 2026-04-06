@@ -11,6 +11,10 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
+//Services
+builder.Services.AddScoped<PredictionService>();
+builder.Services.AddHostedService<MatchSyncService>();
+
 var app = builder.Build();
 app.MapControllers();
 
