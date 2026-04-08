@@ -1,0 +1,32 @@
+﻿@using MudBlazor
+@inject TipService TipService
+
+<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+
+    <MudNumericField @bind-Value="home" Min="0" Max="20" Style="width:60px" Disabled="@isDisabled" />
+
+    <MudNumericField @bind-Value="away" Min="0" Max="20" Style="width:60px" Disabled="@isDisabled" />
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               OnClick="Save"
+               Disabled="@isDisabled">
+        Gem
+    </MudButton>
+
+</MudStack>
+
+@code {
+    [Parameter] public int MatchId { get; set; }
+    [Parameter] public DateTime Kickoff { get; set; }
+
+    private int home;
+    private int away;
+
+    private bool isDisabled => DateTime.Now >= Kickoff;
+
+    private async Task Save()
+    {
+        await TipService.SaveTip(MatchId, home, away);
+    }
+}

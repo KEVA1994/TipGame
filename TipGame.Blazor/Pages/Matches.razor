@@ -1,0 +1,69 @@
+﻿@page "/matches"
+@using MudBlazor
+@using TipGame.Blazor.Components
+@using TipGame.Shared.Models
+
+@inject MatchService matchService
+@inject TipService tipService
+
+<MudText Typo="Typo.h4" GutterBottom="true">Kampe</MudText>
+
+<MudGrid>
+    @foreach (var match in matches)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard>
+                <MudCardContent>
+
+                    <MudText Typo="Typo.h6">
+                        @match.HomeTeam vs @match.AwayTeam
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @match.KickoffTime.ToString("dd/MM HH:mm")
+                    </MudText>
+
+                    <MudChip T="string" Color="Color.Primary" Text="@match.Status" />
+
+                    <MudText Typo="Typo.h5" Class="mt-2">
+                        @(match.HomeScore?.ToString() ?? "-")
+                        -
+                        @(match.AwayScore?.ToString() ?? "-")
+                    </MudText>
+
+                    <TipInput MatchId="@match.Id" Kickoff="@match.KickoffTime" />
+
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">
+                        Tip kamp
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private Dictionary<int, TipDto> tips = new();
+    private List<MatchDto> matches = new()
+    {
+        new() { HomeTeam = "Arsenal", AwayTeam = "Chelsea", HomeScore = 2, AwayScore = 1, Status = "FT" },
+        new() { HomeTeam = "Barcelona", AwayTeam = "Real Madrid", HomeScore = null, AwayScore = null, Status = "NS" },
+        new() { HomeTeam = "FCK", AwayTeam = "Brøndby", HomeScore = null, AwayScore = null, Status = "NS", KickoffTime = new DateTime(2026, 6, 5, 3, 0, 0) }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var matchesTask = matchService.GetMatches();
+        var tipsTask = tipService.GetTips();
+
+        await Task.WhenAll(matchesTask, tipsTask);
+
+        matches = matchesTask.Result;
+
+        var tipList = tipsTask.Result;
+        tips = tipList.ToDictionary(t => t.MatchId);
+    }
+}

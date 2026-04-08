@@ -1,4 +1,4 @@
-﻿namespace TipGame.Api.Models;
+namespace TipGame.Shared.Models;
 
 public class CreatePredictionDto
 {

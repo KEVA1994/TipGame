@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using TipGame.Infrastructure.Data;
 using TipGame.Domain.Entities;
-using TipGame.Api.Models;
+using TipGame.Shared.Models;
 
 namespace TipGame.Api.Controllers;
 

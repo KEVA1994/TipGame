@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TipGame.Infrastructure\TipGame.Infrastructure.csproj" />
+    <ProjectReference Include="..\TipGame.Shared\TipGame.Shared.csproj" />
   </ItemGroup>
 
 </Project>

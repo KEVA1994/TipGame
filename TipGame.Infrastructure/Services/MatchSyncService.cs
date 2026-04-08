@@ -34,7 +34,6 @@ public class MatchSyncService : BackgroundService
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var predictionService = scope.ServiceProvider.GetRequiredService<PredictionService>();
 
-        // 🔥 HER skal du bruge dit API key
         var response = await _httpClient.GetAsync("https://api.football-data.org/v4/matches");
 
         if (!response.IsSuccessStatusCode)
@@ -79,7 +78,6 @@ public class MatchSyncService : BackgroundService
                     match.HomeScore = apiMatch.Score.FullTime.Home;
                     match.AwayScore = apiMatch.Score.FullTime.Away;
 
-                    // 🔥 beregn points
                     predictionService.CalculatePoints(match);
                 }
             }

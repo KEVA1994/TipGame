@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TipGame.Infrastructure.Data;
-using TipGame.Api.Models;
+using TipGame.Shared.Models;
 
 namespace TipGame.Api.Controllers;
 

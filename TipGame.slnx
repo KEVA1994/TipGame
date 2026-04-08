@@ -3,4 +3,5 @@
   <Project Path="TipGame.Blazor/TipGame.Blazor.csproj" />
   <Project Path="TipGame.Domain/TipGame.Domain.csproj" />
   <Project Path="TipGame.Infrastructure/TipGame.Infrastructure.csproj" />
+  <Project Path="TipGame.Shared/TipGame.Shared.csproj" />
 </Solution>

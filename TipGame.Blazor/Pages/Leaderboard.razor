@@ -1,0 +1,32 @@
+﻿@page "/leaderboard"
+@using MudBlazor
+
+<MudText Typo="Typo.h4" GutterBottom="true">Leaderboard</MudText>
+
+<MudTable Items="players">
+    <HeaderContent>
+        <MudTh>Plads</MudTh>
+        <MudTh>Navn</MudTh>
+        <MudTh>Point</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Position</MudTd>
+        <MudTd>@context.Name</MudTd>
+        <MudTd>@context.Points</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<Player> players = new()
+    {
+        new() { Position = 1, Name = "Kasper", Points = 12 },
+        new() { Position = 2, Name = "Mads", Points = 10 }
+    };
+
+    class Player
+    {
+        public int Position { get; set; }
+        public string Name { get; set; } = "";
+        public int Points { get; set; }
+    }
+}
