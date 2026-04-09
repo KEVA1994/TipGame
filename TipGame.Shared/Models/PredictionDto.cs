@@ -2,7 +2,7 @@ namespace TipGame.Shared.Models;
 
 public class PredictionDto
 {
-    public int Id { get; set; }
+    public int MatchId { get; set; }
 
     public string UserName { get; set; }
 

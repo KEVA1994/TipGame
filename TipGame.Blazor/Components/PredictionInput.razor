@@ -1,0 +1,80 @@
+﻿@using MudBlazor
+@using TipGame.Shared.Models
+@inject PredictionService PredictionService
+
+@if (isSaved && !isEditing)
+{
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+        <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.Check"
+                 Text="@($"{home} - {away}")" />
+        @if (!IsLocked)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                           Color="Color.Primary" OnClick="Edit" />
+        }
+    </MudStack>
+}
+else
+{
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+        <MudNumericField @bind-Value="home" Min="0" Max="20"
+                         Style="width: 52px;"
+                         Margin="Margin.Dense"
+                         Variant="Variant.Outlined"
+                         Disabled="@IsLocked" />
+
+        <MudText Typo="Typo.body2" Style="font-weight: 600;">-</MudText>
+
+        <MudNumericField @bind-Value="away" Min="0" Max="20"
+                         Style="width: 52px;"
+                         Margin="Margin.Dense"
+                         Variant="Variant.Outlined"
+                         Disabled="@IsLocked" />
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="Save"
+                   Disabled="@IsLocked">
+            Gem tip
+        </MudButton>
+    </MudStack>
+}
+
+@code {
+    [Parameter] public int MatchId { get; set; }
+    [Parameter] public DateTime Kickoff { get; set; }
+    [Parameter] public string ClientId { get; set; }
+    [Parameter] public string PlayerName { get; set; }
+    [Parameter] public PredictionDto ExistingTip { get; set; }
+
+    private int home;
+    private int away;
+    private bool isSaved;
+    private bool isEditing;
+
+    private bool IsLocked => DateTime.UtcNow >= Kickoff.AddHours(-1) || string.IsNullOrEmpty(PlayerName);
+
+    protected override void OnParametersSet()
+    {
+        if (ExistingTip is not null && !isSaved && !isEditing)
+        {
+            home = ExistingTip.HomeScore;
+            away = ExistingTip.AwayScore;
+            isSaved = true;
+        }
+    }
+
+    private void Edit()
+    {
+        isEditing = true;
+    }
+
+    private async Task Save()
+    {
+        await PredictionService.SaveTip(ClientId, PlayerName, MatchId, home, away);
+        isSaved = true;
+        isEditing = false;
+    }
+}

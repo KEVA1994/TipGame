@@ -13,7 +13,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 //Services
 builder.Services.AddScoped<PredictionService>();
-builder.Services.AddHostedService<MatchSyncService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor",

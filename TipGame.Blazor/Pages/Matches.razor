@@ -4,66 +4,115 @@
 @using TipGame.Shared.Models
 
 @inject MatchService matchService
-@inject TipService tipService
+@inject PredictionService predictionService
+@inject PlayerState PlayerState
 
 <MudText Typo="Typo.h4" GutterBottom="true">Kampe</MudText>
 
-<MudGrid>
+@if (string.IsNullOrEmpty(PlayerState.PlayerName))
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-2">
+        Indtast dit navn øverst til højre for at tippe.
+    </MudAlert>
+}
+
+@if (isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+
+<MudPaper Elevation="0" Class="rounded-lg" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
     @foreach (var match in matches)
     {
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
-                <MudCardContent>
+        <div class="match-row">
+            <div class="match-time">
+                @if (match.Status == "FT")
+                {
+                    <span class="status-finished">FT</span>
+                }
+                else
+                {
+                    <span>@match.KickoffTime.ToString("dd/MM")</span>
+                    <span>@match.KickoffTime.ToString("HH:mm")</span>
+                }
+            </div>
 
-                    <MudText Typo="Typo.h6">
-                        @match.HomeTeam vs @match.AwayTeam
-                    </MudText>
+            <div class="match-teams">
+                <span class="team-name">@match.HomeTeam</span>
+                <span class="team-name">@match.AwayTeam</span>
+            </div>
 
-                    <MudText Typo="Typo.body2">
-                        @match.KickoffTime.ToString("dd/MM HH:mm")
-                    </MudText>
+            <div class="match-score">
+                <span>@(match.HomeScore?.ToString() ?? "-")</span>
+                <span>@(match.AwayScore?.ToString() ?? "-")</span>
+            </div>
 
-                    <MudChip T="string" Color="Color.Primary" Text="@match.Status" />
-
-                    <MudText Typo="Typo.h5" Class="mt-2">
-                        @(match.HomeScore?.ToString() ?? "-")
-                        -
-                        @(match.AwayScore?.ToString() ?? "-")
-                    </MudText>
-
-                    <TipInput MatchId="@match.Id" Kickoff="@match.KickoffTime" />
-
-                </MudCardContent>
-
-                <MudCardActions>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary">
-                        Tip kamp
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
+            <div class="match-tip">
+                <PredictionInput MatchId="@match.Id"
+                                 Kickoff="@match.KickoffTime"
+                                 ClientId="@PlayerState.ClientId"
+                                 PlayerName="@PlayerState.PlayerName"
+                                 ExistingTip="@(tips.GetValueOrDefault(match.Id))" />
+            </div>
+        </div>
     }
-</MudGrid>
+</MudPaper>
 
 @code {
-    private Dictionary<int, TipDto> tips = new();
-    private List<MatchDto> matches = new()
-    {
-        new() { HomeTeam = "Arsenal", AwayTeam = "Chelsea", HomeScore = 2, AwayScore = 1, Status = "FT" },
-        new() { HomeTeam = "Barcelona", AwayTeam = "Real Madrid", HomeScore = null, AwayScore = null, Status = "NS" },
-        new() { HomeTeam = "FCK", AwayTeam = "Brøndby", HomeScore = null, AwayScore = null, Status = "NS", KickoffTime = new DateTime(2026, 6, 5, 3, 0, 0) }
-    };
+    private Dictionary<int, PredictionDto> tips = new();
+    private List<MatchDto> matches = new();
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        await PlayerState.InitializeAsync();
+
         var matchesTask = matchService.GetMatches();
-        var tipsTask = tipService.GetTips();
 
-        await Task.WhenAll(matchesTask, tipsTask);
+        Task<List<PredictionDto>>? tipsTask = null;
+        if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        {
+            tipsTask = predictionService.GetPredictions(PlayerState.ClientId);
+        }
 
-        matches = matchesTask.Result;
+        try
+        {
+            matches = await matchesTask;
+        }
+        catch { }
 
-        var tipList = tipsTask.Result;
-        tips = tipList.ToDictionary(t => t.MatchId);
+        if (tipsTask is not null)
+        {
+            try
+            {
+                var tipList = await tipsTask;
+                tips = tipList.ToDictionary(t => t.MatchId);
+            }
+            catch { }
+        }
+
+        isLoading = false;
+
+        PlayerState.OnChange += OnPlayerChanged;
+    }
+
+    private async void OnPlayerChanged()
+    {
+        if (!string.IsNullOrEmpty(PlayerState.ClientId))
+        {
+            try
+            {
+                var tipList = await predictionService.GetPredictions(PlayerState.ClientId);
+                tips = tipList.ToDictionary(t => t.MatchId);
+            }
+            catch { }
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        PlayerState.OnChange -= OnPlayerChanged;
     }
 }

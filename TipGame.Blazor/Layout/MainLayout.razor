@@ -1,20 +1,59 @@
 ﻿@inherits LayoutComponentBase
 @using MudBlazor
 
+@inject PlayerState PlayerState
+
 <MudThemeProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1">
-        <MudText Typo="Typo.h6">⚽ TipGame</MudText>
+    <MudAppBar Elevation="2" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6" Class="ml-2">⚽ TipGame</MudText>
+        <MudSpacer />
+
+        @if (string.IsNullOrEmpty(PlayerState.PlayerName))
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudTextField @bind-Value="nameInput"
+                              Placeholder="Dit navn..."
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              Style="max-width: 180px; background: rgba(255,255,255,0.15); border-radius: 4px;"
+                              InputType="InputType.Text"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Person"
+                              AdornmentColor="Color.Inherit" />
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Surface"
+                           Size="Size.Small"
+                           OnClick="SaveName"
+                           Disabled="@string.IsNullOrWhiteSpace(nameInput)">
+                    Start
+                </MudButton>
+            </MudStack>
+        }
+        else
+        {
+            <MudChip T="string" Color="Color.Surface" Size="Size.Small"
+                     Icon="@Icons.Material.Filled.Person"
+                     Text="@PlayerState.PlayerName" />
+        }
     </MudAppBar>
 
-    <MudDrawer Open="true" Elevation="1">
+    <MudDrawer @bind-Open="drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Mini" OpenMiniOnHover="true">
         <MudNavMenu>
-            <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-            <MudNavLink Href="/matches">Kampe</MudNavLink>
-            <MudNavLink Href="/leaderboard">Leaderboard</MudNavLink>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+                Dashboard
+            </MudNavLink>
+            <MudNavLink Href="/matches" Icon="@Icons.Material.Filled.SportsSoccer">
+                Kampe
+            </MudNavLink>
+            <MudNavLink Href="/leaderboard" Icon="@Icons.Material.Filled.Leaderboard">
+                Leaderboard
+            </MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
@@ -22,3 +61,26 @@
         @Body
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private bool drawerOpen = true;
+    private string nameInput = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PlayerState.InitializeAsync();
+        PlayerState.OnChange += StateHasChanged;
+    }
+
+    private void ToggleDrawer() => drawerOpen = !drawerOpen;
+
+    private async Task SaveName()
+    {
+        await PlayerState.SetNameAsync(nameInput);
+    }
+
+    public void Dispose()
+    {
+        PlayerState.OnChange -= StateHasChanged;
+    }
+}

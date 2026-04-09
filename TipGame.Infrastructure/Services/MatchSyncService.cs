@@ -1,62 +1,49 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using TipGame.Domain.Entities;
 using TipGame.Infrastructure.Data;
 
-public class MatchSyncService : BackgroundService
+public class MatchSyncService
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly AppDbContext _context;
     private readonly HttpClient _httpClient;
 
-    public MatchSyncService(IServiceProvider serviceProvider)
+    public MatchSyncService(AppDbContext context)
     {
-        _serviceProvider = serviceProvider;
+        _context = context;
         _httpClient = new HttpClient();
+        _httpClient.Timeout = TimeSpan.FromSeconds(15);
         _httpClient.DefaultRequestHeaders.Add("X-Auth-Token", "0d3ba9ce8e38458387268cdf58a0e211");
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public async Task SyncMatches()
     {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            await SyncMatches();
-
-            // kør hver 5 min
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
-        }
-    }
-
-    private async Task SyncMatches()
-    {
-        using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var predictionService = scope.ServiceProvider.GetRequiredService<PredictionService>();
-
-        var response = await _httpClient.GetAsync("https://api.football-data.org/v4/matches");
+        var response = await _httpClient.GetAsync("https://api.football-data.org/v4/competitions/PL/matches?dateFrom=2026-03-30&dateTo=2026-04-27");
 
         if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"API returned {response.StatusCode}");
             return;
+        }
 
         var json = await response.Content.ReadAsStringAsync();
 
         var result = JsonSerializer.Deserialize<FootballApiResponse>(
-            json, 
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true});
+            json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         if (result is null)
             return;
 
+        var count = 0;
+
         foreach (var apiMatch in result.Matches)
         {
-            var match = await context.Matches
-                .Include(m => m.Predictions)
+            var match = await _context.Matches
                 .FirstOrDefaultAsync(m => m.ExternalId == apiMatch.Id);
 
             if (match == null)
             {
-                // opret ny match
                 match = new Match
                 {
                     ExternalId = apiMatch.Id,
@@ -66,23 +53,19 @@ public class MatchSyncService : BackgroundService
                     Status = apiMatch.Status
                 };
 
-                context.Matches.Add(match);
+                _context.Matches.Add(match);
+                count++;
             }
             else
             {
-                // opdater eksisterende
                 match.Status = apiMatch.Status;
-
-                if (apiMatch.Status == "FINISHED")
-                {
-                    match.HomeScore = apiMatch.Score.FullTime.Home;
-                    match.AwayScore = apiMatch.Score.FullTime.Away;
-
-                    predictionService.CalculatePoints(match);
-                }
+                match.HomeScore = apiMatch.Score.FullTime.Home;
+                match.AwayScore = apiMatch.Score.FullTime.Away;
             }
         }
 
-        await context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
+
+        Console.WriteLine($"Sync done — {result.Matches.Count} matches processed, {count} new.");
     }
 }
