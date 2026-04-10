@@ -10,7 +10,7 @@
 <MudLayout>
     <MudAppBar Elevation="2" Color="Color.Primary">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
-        <MudText Typo="Typo.h6" Class="ml-2">⚽ TipGame</MudText>
+        <MudText Typo="Typo.h6" Class="ml-2">⚽ VM Tips Kuponen</MudText>
         <MudSpacer />
 
         @if (string.IsNullOrEmpty(PlayerState.PlayerName))
@@ -37,7 +37,7 @@
         }
         else
         {
-            <MudChip T="string" Color="Color.Surface" Size="Size.Small"
+            <MudChip T="string" Color="Color.Primary" Size="Size.Small"
                      Icon="@Icons.Material.Filled.Person"
                      Text="@PlayerState.PlayerName" />
         }

@@ -9,7 +9,8 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:7048")
+    BaseAddress = new Uri("https://localhost:7048"),
+    Timeout = TimeSpan.FromSeconds(10)
 });
 
 builder.Services.AddMudServices();
