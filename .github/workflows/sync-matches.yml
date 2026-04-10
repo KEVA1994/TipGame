@@ -4,7 +4,12 @@ on:
   schedule:
     # Runs every 15 minutes
     - cron: '*/15 * * * *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      football_api_url:
+        description: 'Football API URL (competition, date filters etc.)'
+        required: false
+        default: 'https://api.football-data.org/v4/competitions/PL/matches?dateFrom=2026-03-30&dateTo=2026-04-27'
 
 jobs:
   sync:
@@ -24,7 +29,8 @@ jobs:
 
       - name: Run DataMiner
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          FOOTBALL_API_TOKEN: ${{ secrets.FOOTBALL_API_TOKEN }}
+          Supabase__Url: ${{ secrets.SUPABASE_URL }}
+          Supabase__Key: ${{ secrets.SUPABASE_KEY }}
+          FootballApi__Token: ${{ secrets.FOOTBALL_API_TOKEN }}
+          FootballApi__Url: ${{ inputs.football_api_url || 'https://api.football-data.org/v4/competitions/PL/matches?dateFrom=2026-03-30&dateTo=2026-04-27' }}
         run: dotnet run --project TipGame.DataMiner/TipGame.DataMiner.csproj

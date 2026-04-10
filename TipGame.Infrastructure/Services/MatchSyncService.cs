@@ -6,18 +6,20 @@ public class MatchSyncService
     private readonly Supabase.Client _supabase;
     private readonly HttpClient _httpClient;
 
-    public MatchSyncService(Supabase.Client supabase, string? footballApiToken = null)
+    private readonly string _apiUrl;
+
+    public MatchSyncService(Supabase.Client supabase, string footballApiToken, string apiUrl)
     {
         _supabase = supabase;
+        _apiUrl = apiUrl;
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(15);
-        _httpClient.DefaultRequestHeaders.Add("X-Auth-Token",
-            footballApiToken ?? "0d3ba9ce8e38458387268cdf58a0e211");
+        _httpClient.DefaultRequestHeaders.Add("X-Auth-Token", footballApiToken);
     }
 
     public async Task SyncMatches()
     {
-        var response = await _httpClient.GetAsync("https://api.football-data.org/v4/competitions/PL/matches?dateFrom=2026-03-30&dateTo=2026-04-27");
+        var response = await _httpClient.GetAsync(_apiUrl);
 
         if (!response.IsSuccessStatusCode)
         {
