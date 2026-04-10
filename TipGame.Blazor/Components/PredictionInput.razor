@@ -10,6 +10,7 @@
                      Margin="Margin.Dense"
                      Variant="Variant.Text"
                      HideSpinButtons="true"
+                     Immediate="true"
                      ReadOnly="@IsReadOnly"
                      Class="@(isSaved && !isEditing ? "tip-field tip-saved" : "tip-field")" />
 
@@ -20,6 +21,7 @@
                      Margin="Margin.Dense"
                      Variant="Variant.Text"
                      HideSpinButtons="true"
+                     Immediate="true"
                      ReadOnly="@IsReadOnly"
                      Class="@(isSaved && !isEditing ? "tip-field tip-saved" : "tip-field")" />
 
@@ -36,19 +38,18 @@
                        Size="Size.Small"
                        Icon="@Icons.Material.Filled.Save"
                        OnClick="Save"
-                       Disabled="@IsReadOnly" />
+                       Disabled="@(IsReadOnly || home is null || away is null)" />
     }
 </MudStack>
 
 @code {
     [Parameter] public int MatchId { get; set; }
     [Parameter] public DateTime Kickoff { get; set; }
-    [Parameter] public string ClientId { get; set; }
     [Parameter] public string PlayerName { get; set; }
     [Parameter] public PredictionDto ExistingTip { get; set; }
 
-    private int home;
-    private int away;
+    private int? home;
+    private int? away;
     private bool isSaved;
     private bool isEditing;
 
@@ -72,7 +73,7 @@
 
     private async Task Save()
     {
-        await PredictionService.SaveTip(ClientId, PlayerName, MatchId, home, away);
+        await PredictionService.SaveTip(PlayerName, MatchId, home!.Value, away!.Value);
         isSaved = true;
         isEditing = false;
     }

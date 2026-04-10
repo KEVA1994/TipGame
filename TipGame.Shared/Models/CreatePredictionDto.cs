@@ -4,8 +4,6 @@ public class CreatePredictionDto
 {
     public int MatchId { get; set; }
 
-    public string ClientId { get; set; }
-
     public string Name { get; set; }
 
     public int HomeScore { get; set; }

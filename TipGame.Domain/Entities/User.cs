@@ -12,9 +12,6 @@ namespace TipGame.Domain.Entities
         [Column("Name")]
         public string Name { get; set; }
 
-        [Column("ClientId")]
-        public string ClientId { get; set; }
-
         // Not mapped — populated manually
         [System.Text.Json.Serialization.JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]

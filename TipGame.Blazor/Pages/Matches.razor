@@ -78,7 +78,6 @@
             <MudTd Style="text-align: right;">
                 <PredictionInput MatchId="@context.Id"
                                  Kickoff="@context.KickoffTime"
-                                 ClientId="@PlayerState.ClientId"
                                  PlayerName="@PlayerState.PlayerName"
                                  ExistingTip="@(tips.GetValueOrDefault(context.Id))" />
             </MudTd>
@@ -108,7 +107,7 @@
         Task<List<PredictionDto>>? tipsTask = null;
         if (!string.IsNullOrEmpty(PlayerState.PlayerName))
         {
-            tipsTask = predictionService.GetPredictions(PlayerState.ClientId);
+            tipsTask = predictionService.GetPredictions(PlayerState.PlayerName);
         }
 
         try
@@ -136,11 +135,11 @@
 
     private async void OnPlayerChanged()
     {
-        if (!string.IsNullOrEmpty(PlayerState.ClientId))
+        if (!string.IsNullOrEmpty(PlayerState.PlayerName))
         {
             try
             {
-                var tipList = await predictionService.GetPredictions(PlayerState.ClientId);
+                var tipList = await predictionService.GetPredictions(PlayerState.PlayerName);
                 tips = tipList.ToDictionary(t => t.MatchId);
             }
             catch { }

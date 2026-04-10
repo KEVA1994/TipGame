@@ -47,9 +47,10 @@
         }
         else
         {
-            <MudChip T="string" Color="Color.Primary" Size="Size.Small"
+            <MudChip T="string" Color="Color.Secondary" Size="Size.Small"
                      Icon="@Icons.Material.Filled.Person"
-                     Text="@PlayerState.PlayerName" />
+                     Text="@PlayerState.PlayerName"
+                     OnClose="SwitchUser" />
         }
     </MudAppBar>
 
@@ -89,6 +90,13 @@
     {
         var fullName = $"{firstNameInput.Trim()} {lastNameInput.Trim()}";
         await PlayerState.SetNameAsync(fullName);
+    }
+
+    private async Task SwitchUser(MudChip<string> chip)
+    {
+        firstNameInput = string.Empty;
+        lastNameInput = string.Empty;
+        await PlayerState.LogoutAsync();
     }
 
     public void Dispose()

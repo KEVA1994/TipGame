@@ -18,30 +18,18 @@ public class PredictionsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CreatePredictionDto dto)
     {
-        // 1. Find or create user
+        // 1. Find or create user by name
         var userResponse = await _supabase.From<User>()
-            .Where(u => u.ClientId == dto.ClientId)
+            .Where(u => u.Name == dto.Name)
             .Get();
 
         var user = userResponse.Models.FirstOrDefault();
 
         if (user == null)
         {
-            user = new User
-            {
-                ClientId = dto.ClientId,
-                Name = dto.Name ?? "Player"
-            };
-
+            user = new User { Name = dto.Name ?? "Player" };
             var insertResponse = await _supabase.From<User>().Insert(user);
             user = insertResponse.Models.First();
-        }
-        else if (!string.IsNullOrEmpty(dto.Name) && user.Name != dto.Name)
-        {
-            await _supabase.From<User>()
-                .Where(u => u.Id == user.Id)
-                .Set(u => u.Name, dto.Name)
-                .Update();
         }
 
         // 2. Check match exists and deadline
@@ -113,12 +101,12 @@ public class PredictionsController : ControllerBase
         return Ok(predictions);
     }
 
-    // GET: api/predictions/user?clientId=xxx
+    // GET: api/predictions/user?name=xxx
     [HttpGet("user")]
-    public async Task<ActionResult<IEnumerable<PredictionDto>>> GetByUser([FromQuery] string clientId)
+    public async Task<ActionResult<IEnumerable<PredictionDto>>> GetByUser([FromQuery] string name)
     {
         var userResponse = await _supabase.From<User>()
-            .Where(u => u.ClientId == clientId)
+            .Where(u => u.Name == name)
             .Get();
 
         var user = userResponse.Models.FirstOrDefault();
