@@ -7,11 +7,14 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient
+var supabaseUrl = builder.Configuration["Supabase:Url"] ?? throw new InvalidOperationException("Supabase:Url not configured");
+var supabaseKey = builder.Configuration["Supabase:Key"] ?? throw new InvalidOperationException("Supabase:Key not configured");
+var supabase = new Supabase.Client(supabaseUrl, supabaseKey, new Supabase.SupabaseOptions
 {
-    BaseAddress = new Uri("https://localhost:7048"),
-    Timeout = TimeSpan.FromSeconds(10)
+    AutoConnectRealtime = false
 });
+await supabase.InitializeAsync();
+builder.Services.AddSingleton(supabase);
 
 builder.Services.AddMudServices();
 builder.Services.AddScoped<MatchService>();
