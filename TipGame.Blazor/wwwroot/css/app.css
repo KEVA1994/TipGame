@@ -115,3 +115,28 @@ code {
 .tip-saved .mud-input-underline::after {
     border-bottom: none !important;
 }
+
+/* AppBar name input — white text/border/icon on primary background */
+.appbar-input .mud-input-slot {
+    color: white !important;
+}
+
+.appbar-input .mud-input-slot::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.appbar-input .mud-input-outlined-border {
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.appbar-input:hover .mud-input-outlined-border {
+    border-color: white !important;
+}
+
+.appbar-input.mud-input-control-focused .mud-input-outlined-border {
+    border-color: white !important;
+}
+
+.appbar-input .mud-input-adornment-start .mud-icon-root {
+    color: white !important;
+}
