@@ -6,12 +6,13 @@ public class MatchSyncService
     private readonly Supabase.Client _supabase;
     private readonly HttpClient _httpClient;
 
-    public MatchSyncService(Supabase.Client supabase)
+    public MatchSyncService(Supabase.Client supabase, string? footballApiToken = null)
     {
         _supabase = supabase;
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(15);
-        _httpClient.DefaultRequestHeaders.Add("X-Auth-Token", "0d3ba9ce8e38458387268cdf58a0e211");
+        _httpClient.DefaultRequestHeaders.Add("X-Auth-Token",
+            footballApiToken ?? "0d3ba9ce8e38458387268cdf58a0e211");
     }
 
     public async Task SyncMatches()
