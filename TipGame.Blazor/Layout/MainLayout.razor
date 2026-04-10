@@ -25,9 +25,9 @@
                               InputType="InputType.Text"
                               Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Person"
-                              AdornmentColor="Color.Inherit" />
+                              AdornmentColor="Color.Primary" />
                 <MudButton Variant="Variant.Filled"
-                           Color="Color.Surface"
+                           Color="Color.Primary"
                            Size="Size.Small"
                            OnClick="SaveName"
                            Disabled="@string.IsNullOrWhiteSpace(nameInput)">
@@ -45,13 +45,13 @@
 
     <MudDrawer @bind-Open="drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Mini" OpenMiniOnHover="true">
         <MudNavMenu>
-            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
                 Dashboard
             </MudNavLink>
-            <MudNavLink Href="/matches" Icon="@Icons.Material.Filled.SportsSoccer">
+            <MudNavLink Href="matches" Icon="@Icons.Material.Filled.SportsSoccer">
                 Kampe
             </MudNavLink>
-            <MudNavLink Href="/leaderboard" Icon="@Icons.Material.Filled.Leaderboard">
+            <MudNavLink Href="leaderboard" Icon="@Icons.Material.Filled.Leaderboard">
                 Leaderboard
             </MudNavLink>
         </MudNavMenu>
