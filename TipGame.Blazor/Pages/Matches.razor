@@ -21,6 +21,13 @@
     <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
 }
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-2">
+        @errorMessage
+    </MudAlert>
+}
+
 <MudPaper Elevation="0" Class="rounded-lg" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
     @foreach (var match in matches)
     {
@@ -62,9 +69,17 @@
     private Dictionary<int, PredictionDto> tips = new();
     private List<MatchDto> matches = new();
     private bool isLoading = true;
+    private string? errorMessage;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
+        PlayerState.OnChange += OnPlayerChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
         await PlayerState.InitializeAsync();
 
         var matchesTask = matchService.GetMatches();
@@ -79,7 +94,10 @@
         {
             matches = await matchesTask;
         }
-        catch { }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            errorMessage = "Kunne ikke hente kampe. Tjek at API'et kører.";
+        }
 
         if (tipsTask is not null)
         {
@@ -92,8 +110,7 @@
         }
 
         isLoading = false;
-
-        PlayerState.OnChange += OnPlayerChanged;
+        StateHasChanged();
     }
 
     private async void OnPlayerChanged()
@@ -109,10 +126,5 @@
         }
 
         await InvokeAsync(StateHasChanged);
-    }
-
-    public void Dispose()
-    {
-        PlayerState.OnChange -= OnPlayerChanged;
     }
 }

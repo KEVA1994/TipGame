@@ -1,32 +1,119 @@
 ﻿@page "/leaderboard"
 @using MudBlazor
+@using TipGame.Shared.Models
 
-<MudText Typo="Typo.h4" GutterBottom="true">Leaderboard</MudText>
+@inject LeaderboardService leaderboardService
 
-<MudTable Items="players">
-    <HeaderContent>
-        <MudTh>Plads</MudTh>
-        <MudTh>Navn</MudTh>
-        <MudTh>Point</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd>@context.Position</MudTd>
-        <MudTd>@context.Name</MudTd>
-        <MudTd>@context.Points</MudTd>
-    </RowTemplate>
-</MudTable>
+<MudText Typo="Typo.h4" GutterBottom="true">🏆 Leaderboard</MudText>
+
+@if (isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (players.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        Ingen point endnu.
+    </MudAlert>
+}
+else
+{
+    <MudPaper Elevation="0" Class="rounded-lg" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
+        <MudTable Items="players" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Dense="true">
+            <HeaderContent>
+                <MudTh Style="width: 48px; text-align: center;">#</MudTh>
+                <MudTh Style="width: 56px;"></MudTh>
+                <MudTh>Navn</MudTh>
+                <MudTh Style="text-align: center; width: 72px;">@latestDay</MudTh>
+                <MudTh Style="text-align: center; width: 80px;">Total</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd Style="text-align: center; font-weight: 700; font-size: 1.1rem;">
+                    @{
+                        var idx = players.IndexOf(context);
+                        var medal = idx switch { 0 => "🥇", 1 => "🥈", 2 => "🥉", _ => $"{idx + 1}" };
+                    }
+                    @medal
+                </MudTd>
+                <MudTd Style="text-align: center;">
+                    @if (context.Change > 0)
+                    {
+                        <MudStack Row="true" Spacing="0" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowUpward" Color="Color.Success" Size="Size.Small" />
+                            <MudText Typo="Typo.caption" Color="Color.Success">@context.Change</MudText>
+                        </MudStack>
+                    }
+                    else if (context.Change < 0)
+                    {
+                        <MudStack Row="true" Spacing="0" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowDownward" Color="Color.Error" Size="Size.Small" />
+                            <MudText Typo="Typo.caption" Color="Color.Error">@Math.Abs(context.Change)</MudText>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Remove" Color="Color.Default" Size="Size.Small" />
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.body2" Style="@(players.IndexOf(context) < 3 ? "font-weight: 700;" : "")">
+                        @context.UserName
+                    </MudText>
+                </MudTd>
+                @{
+                    var latestPts = !string.IsNullOrEmpty(latestDay)
+                        ? context.DailyPoints.GetValueOrDefault(latestDay)
+                        : 0;
+                }
+                <MudTd Style="text-align: center;">
+                    <MudText Typo="Typo.body2" Color="@(latestPts > 0 ? Color.Success : Color.Default)">
+                        @(latestPts > 0 ? $"+{latestPts}" : "–")
+                    </MudText>
+                </MudTd>
+                <MudTd Style="text-align: center;">
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Text="@($"{context.TotalPoints} pts")" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
 
 @code {
-    private List<Player> players = new()
+    private List<LeaderboardDto> players = new();
+    private string latestDay = "";
+    private bool isLoading = true;
+
+    // Mock data – replace with API call when ready
+    private List<LeaderboardDto> MockPlayers() => new()
     {
-        new() { Position = 1, Name = "Kasper", Points = 12 },
-        new() { Position = 2, Name = "Mads", Points = 10 }
+        new() { UserName = "Kasper",   Change =  0, TotalPoints = 21, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 6, ["16/06"] = 3, ["17/06"] = 3, ["18/06"] = 3, ["19/06"] = 3 } },
+        new() { UserName = "Mads",     Change =  1, TotalPoints = 19, DailyPoints = new() { ["14/06"] = 6, ["15/06"] = 3, ["16/06"] = 0, ["17/06"] = 3, ["18/06"] = 4, ["19/06"] = 3 } },
+        new() { UserName = "Peter",    Change = -1, TotalPoints = 17, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 6, ["16/06"] = 3, ["17/06"] = 3, ["18/06"] = 0, ["19/06"] = 2 } },
+        new() { UserName = "Ulrik",    Change =  2, TotalPoints = 16, DailyPoints = new() { ["14/06"] = 0, ["15/06"] = 3, ["16/06"] = 3, ["17/06"] = 4, ["18/06"] = 3, ["19/06"] = 3 } },
+        new() { UserName = "Jens",     Change = -1, TotalPoints = 14, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 3, ["16/06"] = 3, ["17/06"] = 0, ["18/06"] = 3, ["19/06"] = 2 } },
+        new() { UserName = "Emil",     Change =  0, TotalPoints = 13, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 0, ["16/06"] = 3, ["17/06"] = 3, ["18/06"] = 2, ["19/06"] = 2 } },
+        new() { UserName = "Frederik", Change =  1, TotalPoints = 12, DailyPoints = new() { ["14/06"] = 0, ["15/06"] = 3, ["16/06"] = 0, ["17/06"] = 4, ["18/06"] = 3, ["19/06"] = 2 } },
+        new() { UserName = "Anders",   Change = -2, TotalPoints = 10, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 3, ["16/06"] = 3, ["17/06"] = 0, ["18/06"] = 0, ["19/06"] = 1 } },
+        new() { UserName = "Thomas",   Change =  1, TotalPoints =  9, DailyPoints = new() { ["14/06"] = 0, ["15/06"] = 0, ["16/06"] = 3, ["17/06"] = 1, ["18/06"] = 3, ["19/06"] = 2 } },
+        new() { UserName = "Lars",     Change = -1, TotalPoints =  6, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 2, ["16/06"] = 0, ["17/06"] = 0, ["18/06"] = 0, ["19/06"] = 1 } },
     };
 
-    class Player
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        public int Position { get; set; }
-        public string Name { get; set; } = "";
-        public int Points { get; set; }
+        if (!firstRender) return;
+
+        players = MockPlayers();
+        // players = await leaderboardService.GetLeaderboard();
+
+        var matchDays = players
+            .SelectMany(p => p.DailyPoints.Keys)
+            .Distinct()
+            .OrderBy(d => DateTime.ParseExact(d, "dd/MM", null))
+            .ToList();
+
+        latestDay = matchDays.LastOrDefault() ?? "";
+
+        isLoading = false;
+        StateHasChanged();
     }
 }

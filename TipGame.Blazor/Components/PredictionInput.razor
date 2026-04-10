@@ -2,45 +2,47 @@
 @using TipGame.Shared.Models
 @inject PredictionService PredictionService
 
-@if (isSaved && !isEditing)
-{
-    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-        <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.Check"
-                 Text="@($"{home} - {away}")" />
-        @if (!IsLocked)
-        {
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                           Color="Color.Primary" OnClick="Edit" />
-        }
-    </MudStack>
-}
-else
-{
-    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-        <MudNumericField @bind-Value="home" Min="0" Max="20"
-                         Style="width: 52px;"
-                         Margin="Margin.Dense"
-                         Variant="Variant.Outlined"
-                         Disabled="@IsLocked" />
+<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center"
+          Style="@(IsReadOnly ? "background-color: rgba(76, 175, 80, 0.12); border-radius: 4px; padding: 4px 0px 4px 8px;" : "")">
+    
+    <MudText Typo="Typo.body2" 
+             Style="font-weight: 600;"> @(IsReadOnly ? "TIP" : "")
+    </MudText>
 
-        <MudText Typo="Typo.body2" Style="font-weight: 600;">-</MudText>
+    <MudNumericField @bind-Value="home" Min="0" Max="20"
+                     Style="width: 52px;"
+                     Margin="Margin.Dense"
+                     Variant="Variant.Text"
+                     HideSpinButtons="true"
+                     ReadOnly="@IsReadOnly"
+                     Class="@(isSaved && !isEditing ? "tip-field tip-saved" : "tip-field")" />
 
-        <MudNumericField @bind-Value="away" Min="0" Max="20"
-                         Style="width: 52px;"
-                         Margin="Margin.Dense"
-                         Variant="Variant.Outlined"
-                         Disabled="@IsLocked" />
+    <MudText Typo="Typo.body2" Style="font-weight: 600; margin: 0 16px;"> - </MudText>
 
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Size="Size.Small"
-                   StartIcon="@Icons.Material.Filled.Save"
-                   OnClick="Save"
-                   Disabled="@IsLocked">
-            Gem tip
-        </MudButton>
-    </MudStack>
-}
+    <MudNumericField @bind-Value="away" Min="0" Max="20"
+                     Style="width: 52px;"
+                     Margin="Margin.Dense"
+                     Variant="Variant.Text"
+                     HideSpinButtons="true"
+                     ReadOnly="@IsReadOnly"
+                     Class="@(isSaved && !isEditing ? "tip-field tip-saved" : "tip-field")" />
+
+    @if (isSaved && !isEditing && CanEdit)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                       Size="Size.Small"
+                       Color="Color.Primary" 
+                       OnClick="Edit" />
+    }
+    else
+    {
+        <MudIconButton Color="Color.Primary"
+                       Size="Size.Small"
+                       Icon="@Icons.Material.Filled.Save"
+                       OnClick="Save"
+                       Disabled="@IsReadOnly" />
+    }
+</MudStack>
 
 @code {
     [Parameter] public int MatchId { get; set; }
@@ -54,7 +56,8 @@ else
     private bool isSaved;
     private bool isEditing;
 
-    private bool IsLocked => DateTime.UtcNow >= Kickoff.AddHours(-1) || string.IsNullOrEmpty(PlayerName);
+    private bool CanEdit => !string.IsNullOrEmpty(PlayerName) && DateTime.UtcNow < Kickoff.AddHours(-1);
+    private bool IsReadOnly => !CanEdit || (isSaved && !isEditing);
 
     protected override void OnParametersSet()
     {
