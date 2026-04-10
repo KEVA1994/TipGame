@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TipGame.Infrastructure.Data;
 using TipGame.Domain.Entities;
 using TipGame.Shared.Models;
 
@@ -10,19 +8,22 @@ namespace TipGame.Api.Controllers;
 [Route("api/[controller]")]
 public class PredictionsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly Supabase.Client _supabase;
 
-    public PredictionsController(AppDbContext context)
+    public PredictionsController(Supabase.Client supabase)
     {
-        _context = context;
+        _supabase = supabase;
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(CreatePredictionDto dto)
     {
-        // 1. Find eller opret user
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.ClientId == dto.ClientId);
+        // 1. Find or create user
+        var userResponse = await _supabase.From<User>()
+            .Where(u => u.ClientId == dto.ClientId)
+            .Get();
+
+        var user = userResponse.Models.FirstOrDefault();
 
         if (user == null)
         {
@@ -32,31 +33,44 @@ public class PredictionsController : ControllerBase
                 Name = dto.Name ?? "Player"
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var insertResponse = await _supabase.From<User>().Insert(user);
+            user = insertResponse.Models.First();
         }
         else if (!string.IsNullOrEmpty(dto.Name) && user.Name != dto.Name)
         {
-            user.Name = dto.Name;
+            await _supabase.From<User>()
+                .Where(u => u.Id == user.Id)
+                .Set(u => u.Name, dto.Name)
+                .Update();
         }
 
-        // 2. Check match findes og deadline
-        var match = await _context.Matches.FindAsync(dto.MatchId);
+        // 2. Check match exists and deadline
+        var matchResponse = await _supabase.From<Match>()
+            .Where(m => m.Id == dto.MatchId)
+            .Get();
 
+        var match = matchResponse.Models.FirstOrDefault();
         if (match == null)
             return BadRequest("Match not found");
 
         if (DateTime.UtcNow >= match.KickoffTime.AddHours(-1))
             return BadRequest("Deadline passed — tips lock 1 hour before kickoff");
 
-        // 3. Opret eller opdater prediction
-        var prediction = await _context.Predictions
-            .FirstOrDefaultAsync(p => p.UserId == user.Id && p.MatchId == dto.MatchId);
+        // 3. Upsert prediction
+        var predResponse = await _supabase.From<Prediction>()
+            .Where(p => p.UserId == user.Id)
+            .Where(p => p.MatchId == dto.MatchId)
+            .Get();
+
+        var prediction = predResponse.Models.FirstOrDefault();
 
         if (prediction != null)
         {
-            prediction.PredictedHome = dto.HomeScore;
-            prediction.PredictedAway = dto.AwayScore;
+            await _supabase.From<Prediction>()
+                .Where(p => p.Id == prediction.Id)
+                .Set(p => p.PredictedHome, dto.HomeScore)
+                .Set(p => p.PredictedAway, dto.AwayScore)
+                .Update();
         }
         else
         {
@@ -69,29 +83,32 @@ public class PredictionsController : ControllerBase
                 Points = 0
             };
 
-            _context.Predictions.Add(prediction);
+            var insertResponse = await _supabase.From<Prediction>().Insert(prediction);
+            prediction = insertResponse.Models.First();
         }
-
-        await _context.SaveChangesAsync();
 
         return Ok(prediction.Id);
     }
 
     [HttpGet("match/{matchId}")]
-    public async Task<ActionResult<IEnumerable<Shared.Models.PredictionDto>>> GetByMatch(int matchId)
+    public async Task<ActionResult<IEnumerable<PredictionDto>>> GetByMatch(int matchId)
     {
-        var predictions = await _context.Predictions
+        var predResponse = await _supabase.From<Prediction>()
             .Where(p => p.MatchId == matchId)
-            .Include(p => p.User)
-            .Select(p => new PredictionDto
-            {
-                MatchId = p.Id,
-                UserName = p.User.Name,
-                HomeScore = p.PredictedHome,
-                AwayScore = p.PredictedAway,
-                Points = p.Points
-            })
-            .ToListAsync();
+            .Get();
+
+        var userIds = predResponse.Models.Select(p => p.UserId).Distinct().ToList();
+        var usersResponse = await _supabase.From<User>().Get();
+        var usersLookup = usersResponse.Models.ToDictionary(u => u.Id);
+
+        var predictions = predResponse.Models.Select(p => new PredictionDto
+        {
+            MatchId = p.MatchId,
+            UserName = usersLookup.GetValueOrDefault(p.UserId)?.Name ?? "Unknown",
+            HomeScore = p.PredictedHome,
+            AwayScore = p.PredictedAway,
+            Points = p.Points
+        });
 
         return Ok(predictions);
     }
@@ -100,21 +117,24 @@ public class PredictionsController : ControllerBase
     [HttpGet("user")]
     public async Task<ActionResult<IEnumerable<PredictionDto>>> GetByUser([FromQuery] string clientId)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.ClientId == clientId);
+        var userResponse = await _supabase.From<User>()
+            .Where(u => u.ClientId == clientId)
+            .Get();
 
+        var user = userResponse.Models.FirstOrDefault();
         if (user == null)
             return Ok(new List<PredictionDto>());
 
-        var tips = await _context.Predictions
+        var predResponse = await _supabase.From<Prediction>()
             .Where(p => p.UserId == user.Id)
-            .Select(p => new PredictionDto
-            {
-                MatchId = p.MatchId,
-                HomeScore = p.PredictedHome,
-                AwayScore = p.PredictedAway
-            })
-            .ToListAsync();
+            .Get();
+
+        var tips = predResponse.Models.Select(p => new PredictionDto
+        {
+            MatchId = p.MatchId,
+            HomeScore = p.PredictedHome,
+            AwayScore = p.PredictedAway
+        });
 
         return Ok(tips);
     }

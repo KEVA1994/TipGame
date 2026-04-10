@@ -1,16 +1,14 @@
 ﻿using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using TipGame.Domain.Entities;
-using TipGame.Infrastructure.Data;
 
 public class MatchSyncService
 {
-    private readonly AppDbContext _context;
+    private readonly Supabase.Client _supabase;
     private readonly HttpClient _httpClient;
 
-    public MatchSyncService(AppDbContext context)
+    public MatchSyncService(Supabase.Client supabase)
     {
-        _context = context;
+        _supabase = supabase;
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(15);
         _httpClient.DefaultRequestHeaders.Add("X-Auth-Token", "0d3ba9ce8e38458387268cdf58a0e211");
@@ -35,12 +33,12 @@ public class MatchSyncService
         if (result is null)
             return;
 
+        var existingMatches = (await _supabase.From<Match>().Get()).Models;
         var count = 0;
 
         foreach (var apiMatch in result.Matches)
         {
-            var match = await _context.Matches
-                .FirstOrDefaultAsync(m => m.ExternalId == apiMatch.Id);
+            var match = existingMatches.FirstOrDefault(m => m.ExternalId == apiMatch.Id);
 
             if (match == null)
             {
@@ -53,18 +51,19 @@ public class MatchSyncService
                     Status = apiMatch.Status
                 };
 
-                _context.Matches.Add(match);
+                await _supabase.From<Match>().Insert(match);
                 count++;
             }
             else
             {
-                match.Status = apiMatch.Status;
-                match.HomeScore = apiMatch.Score.FullTime.Home;
-                match.AwayScore = apiMatch.Score.FullTime.Away;
+                await _supabase.From<Match>()
+                    .Where(m => m.Id == match.Id)
+                    .Set(m => m.Status, apiMatch.Status)
+                    .Set(m => m.HomeScore, apiMatch.Score.FullTime.Home)
+                    .Set(m => m.AwayScore, apiMatch.Score.FullTime.Away)
+                    .Update();
             }
         }
-
-        await _context.SaveChangesAsync();
 
         Console.WriteLine($"Sync done — {result.Matches.Count} matches processed, {count} new.");
     }

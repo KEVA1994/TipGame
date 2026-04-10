@@ -1,23 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using TipGame.Infrastructure.Data;
+﻿using Microsoft.Extensions.Configuration;
 
 var config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
 
-var services = new ServiceCollection();
+var supabaseUrl = config["Supabase:Url"]!;
+var supabaseKey = config["Supabase:Key"]!;
+var supabase = new Supabase.Client(supabaseUrl, supabaseKey, new Supabase.SupabaseOptions
+{
+    AutoConnectRealtime = false
+});
+await supabase.InitializeAsync();
 
-services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(config.GetConnectionString("Default")));
-
-services.AddScoped<MatchSyncService>();
-
-var provider = services.BuildServiceProvider();
-
-using var scope = provider.CreateScope();
-var syncService = scope.ServiceProvider.GetRequiredService<MatchSyncService>();
+var syncService = new MatchSyncService(supabase);
 
 Console.WriteLine("Starting match sync...");
 await syncService.SyncMatches();

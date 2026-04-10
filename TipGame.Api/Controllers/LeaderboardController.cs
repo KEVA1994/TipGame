@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TipGame.Infrastructure.Data;
+using TipGame.Domain.Entities;
 using TipGame.Shared.Models;
 
 namespace TipGame.Api.Controllers;
@@ -9,38 +8,43 @@ namespace TipGame.Api.Controllers;
 [Route("api/[controller]")]
 public class LeaderboardController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly Supabase.Client _supabase;
 
-    public LeaderboardController(AppDbContext context)
+    public LeaderboardController(Supabase.Client supabase)
     {
-        _context = context;
+        _supabase = supabase;
     }
 
     // GET: api/leaderboard
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LeaderboardDto>>> Get()
     {
-        var users = await _context.Users
-            .Include(u => u.Predictions)
-                .ThenInclude(p => p.Match)
-            .ToListAsync();
+        var users = (await _supabase.From<User>().Get()).Models;
+        var predictions = (await _supabase.From<Prediction>().Get()).Models;
+        var matches = (await _supabase.From<Match>()
+            .Where(m => m.Status == "FINISHED")
+            .Get()).Models;
 
-        // Build current leaderboard with daily breakdown
+        var matchLookup = matches.ToDictionary(m => m.Id);
+
         var leaderboard = users
-            .Select(u => new LeaderboardDto
+            .Select(u =>
             {
-                UserName = u.Name,
-                TotalPoints = u.Predictions.Sum(p => p.Points),
-                DailyPoints = u.Predictions
-                    .Where(p => p.Match.Status == "FINISHED")
-                    .GroupBy(p => p.Match.KickoffTime.ToString("dd/MM"))
-                    .ToDictionary(g => g.Key, g => g.Sum(p => p.Points))
+                var userPreds = predictions.Where(p => p.UserId == u.Id).ToList();
+                return new LeaderboardDto
+                {
+                    UserName = u.Name,
+                    TotalPoints = userPreds.Sum(p => p.Points),
+                    DailyPoints = userPreds
+                        .Where(p => matchLookup.ContainsKey(p.MatchId))
+                        .GroupBy(p => matchLookup[p.MatchId].KickoffTime.ToString("dd/MM"))
+                        .ToDictionary(g => g.Key, g => g.Sum(p => p.Points))
+                };
             })
             .OrderByDescending(x => x.TotalPoints)
             .ToList();
 
-        // Calculate position change by comparing with "yesterday's" ranking
-        // (ranking without today's points)
+        // Calculate position change
         var today = DateTime.UtcNow.ToString("dd/MM");
         var previousRanking = leaderboard
             .Select(x => new
@@ -57,7 +61,7 @@ public class LeaderboardController : ControllerBase
             var player = leaderboard[i];
             if (previousRanking.TryGetValue(player.UserName, out var prevPos))
             {
-                player.Change = prevPos - i; // positive = moved up
+                player.Change = prevPos - i;
             }
         }
 
