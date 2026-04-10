@@ -5,9 +5,56 @@
 @inject MatchService matchService
 @inject LeaderboardService leaderboardService
 
-<MudText Typo="Typo.h4" GutterBottom="true">⚽ Dashboard</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">⚽ VM Tips Kuponen</MudText>
 
-<MudText Typo="Typo.h6" Class="mb-2">Dagens kampe</MudText>
+<MudPaper Elevation="1" Class="pa-5 rounded-lg mb-6">
+    <MudText Typo="Typo.h5" GutterBottom="true">Velkommen til VM Tips! 🎉</MudText>
+    <MudText Typo="Typo.body1" Class="mb-3">
+        Gør VM mere spændende — tip på alle kampe og kæmp om æren (og pengene)!
+    </MudText>
+
+    <MudDivider Class="my-3" />
+
+    <MudText Typo="Typo.h6" GutterBottom="true">💰 Sådan deltager du</MudText>
+    <MudStack Spacing="2" Class="mb-3 pl-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2">📱 Overfør <strong>50 kr</strong> til MobilePay-boksen (link kommer snart).</MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2">👤 Indtast dit <strong>fornavn</strong> og <strong>efternavn</strong> i toppen af siden, og tryk <strong>Start</strong>.</MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2">⚽ Gå til <strong>Kampe</strong>-siden og indtast dit tip (hjemme - ude) for hver kamp.</MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2">💾 Tryk <strong>gem</strong>-ikonet for at gemme dit tip. Du kan redigere det indtil <strong>1 time før kampstart</strong>.</MudText>
+        </MudStack>
+    </MudStack>
+
+    <MudDivider Class="my-3" />
+
+    <MudText Typo="Typo.h6" GutterBottom="true">📋 Pointregler</MudText>
+    <MudStack Spacing="2" Class="mb-3 pl-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2">🎯 Helt korrekt resultat (f.eks. 2-1 = 2-1) — <strong>3 point</strong></MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2">🤝 Korrekt uafgjort, men forkert resultat (f.eks. 1-1 når kampen ender 0-0) — <strong>2 point</strong></MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2">✅ Korrekt vinder, men forkert resultat (f.eks. 2-0 når kampen ender 3-1) — <strong>1 point</strong></MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2">❌ Forkert udfald — <strong>0 point</strong></MudText>
+        </MudStack>
+    </MudStack>
+
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+        Tips låses <strong>1 time</strong> før kampstart — sørg for at tippe i god tid!
+    </MudAlert>
+</MudPaper>
+
+<MudText Typo="Typo.h6" Class="mb-2">📅 Dagens kampe</MudText>
 
 @if (isLoading)
 {

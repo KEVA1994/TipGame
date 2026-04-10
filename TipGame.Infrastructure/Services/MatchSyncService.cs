@@ -5,6 +5,7 @@ public class MatchSyncService
 {
     private readonly Supabase.Client _supabase;
     private readonly HttpClient _httpClient;
+    private readonly PredictionService _predictionService;
 
     private readonly string _apiUrl;
 
@@ -12,6 +13,7 @@ public class MatchSyncService
     {
         _supabase = supabase;
         _apiUrl = apiUrl;
+        _predictionService = new PredictionService();
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(15);
         _httpClient.DefaultRequestHeaders.Add("X-Auth-Token", footballApiToken);
@@ -59,12 +61,39 @@ public class MatchSyncService
             }
             else
             {
+                var wasFinished = match.Status == "FINISHED";
+
                 await _supabase.From<Match>()
                     .Where(m => m.Id == match.Id)
                     .Set(m => m.Status, apiMatch.Status)
                     .Set(m => m.HomeScore, apiMatch.Score.FullTime.Home)
                     .Set(m => m.AwayScore, apiMatch.Score.FullTime.Away)
                     .Update();
+
+                // Calculate points when a match finishes
+                if (apiMatch.Status == "FINISHED" && !wasFinished)
+                {
+                    match.HomeScore = apiMatch.Score.FullTime.Home;
+                    match.AwayScore = apiMatch.Score.FullTime.Away;
+                    match.Status = "FINISHED";
+
+                    var predResponse = await _supabase.From<Prediction>()
+                        .Where(p => p.MatchId == match.Id)
+                        .Get();
+
+                    match.Predictions = predResponse.Models.ToList<Prediction>();
+                    _predictionService.CalculatePoints(match);
+
+                    foreach (var pred in match.Predictions)
+                    {
+                        await _supabase.From<Prediction>()
+                            .Where(p => p.Id == pred.Id)
+                            .Set(p => p.Points, pred.Points)
+                            .Update();
+                    }
+
+                    Console.WriteLine($"Points calculated for {match.HomeTeam} vs {match.AwayTeam}");
+                }
             }
         }
 
