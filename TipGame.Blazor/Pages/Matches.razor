@@ -29,40 +29,61 @@
 }
 
 <MudPaper Elevation="0" Class="rounded-lg" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
-    @foreach (var match in matches)
-    {
-        <div class="match-row">
-            <div class="match-time">
-                @if (match.Status == "FT")
+    <MudTable Items="matches" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Dense="true">
+        <HeaderContent>
+            <MudTh Style="width: 56px; text-align: center; font-weight: 700;">Tid</MudTh>
+            <MudTh Style="width: 150px; font-weight: 700;">Hjemme</MudTh>
+            <MudTh Style="width: 150px; font-weight: 700;">Ude</MudTh>
+            <MudTh Style="width: 56px; text-align: center; white-space: nowrap; font-weight: 700;">Score</MudTh>
+            <MudTh Style="width: 1%; white-space: nowrap; text-align: center; font-weight: 700;">Status</MudTh>
+            <MudTh Style="font-weight: 700; white-space: nowrap; text-align: right; padding-right: 110px;">Tip</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd Style="text-align: center;">
+                <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.caption">@context.KickoffTime.ToString("dd/MM")</MudText>
+                    <MudText Typo="Typo.caption">@context.KickoffTime.ToString("HH:mm")</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd>
+                <MudText Typo="Typo.body2">@context.HomeTeam</MudText>
+            </MudTd>
+            <MudTd>
+                <MudText Typo="Typo.body2">@context.AwayTeam</MudText>
+            </MudTd>
+            <MudTd Style="text-align: center;">
+                <MudText Typo="Typo.body2" Style="font-weight: 700;">
+                    @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
+                </MudText>
+            </MudTd>
+            <MudTd Style="text-align: center; white-space: nowrap;">
+                @{
+                    var now = DateTime.UtcNow;
+                    var isFinished = context.Status == "FINISHED";
+                    var isLive = !isFinished && now >= context.KickoffTime && now < context.KickoffTime.AddHours(2);
+                }
+                @if (isFinished)
                 {
-                    <span class="status-finished">FT</span>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Text="FT" />
+                }
+                else if (isLive)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Text="LIVE" />
                 }
                 else
                 {
-                    <span>@match.KickoffTime.ToString("dd/MM")</span>
-                    <span>@match.KickoffTime.ToString("HH:mm")</span>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Text="Planlagt" />
                 }
-            </div>
-
-            <div class="match-teams">
-                <span class="team-name">@match.HomeTeam</span>
-                <span class="team-name">@match.AwayTeam</span>
-            </div>
-
-            <div class="match-score">
-                <span>@(match.HomeScore?.ToString() ?? "-")</span>
-                <span>@(match.AwayScore?.ToString() ?? "-")</span>
-            </div>
-
-            <div class="match-tip">
-                <PredictionInput MatchId="@match.Id"
-                                 Kickoff="@match.KickoffTime"
+            </MudTd>
+            <MudTd Style="text-align: right;">
+                <PredictionInput MatchId="@context.Id"
+                                 Kickoff="@context.KickoffTime"
                                  ClientId="@PlayerState.ClientId"
                                  PlayerName="@PlayerState.PlayerName"
-                                 ExistingTip="@(tips.GetValueOrDefault(match.Id))" />
-            </div>
-        </div>
-    }
+                                 ExistingTip="@(tips.GetValueOrDefault(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
 </MudPaper>
 
 @code {

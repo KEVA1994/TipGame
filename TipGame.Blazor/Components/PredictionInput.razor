@@ -3,11 +3,7 @@
 @inject PredictionService PredictionService
 
 <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center"
-          Style="@(IsReadOnly ? "background-color: rgba(76, 175, 80, 0.12); border-radius: 4px; padding: 4px 0px 4px 8px;" : "")">
-    
-    <MudText Typo="Typo.body2" 
-             Style="font-weight: 600;"> @(IsReadOnly ? "TIP" : "")
-    </MudText>
+          Style="@($"width: 180px; justify-content: flex-end; margin-left: auto;{(IsReadOnly ? " background-color: rgba(76, 175, 80, 0.12); border-radius: 4px; padding: 4px 0px 4px 8px;" : "")}")">
 
     <MudNumericField @bind-Value="home" Min="0" Max="20"
                      Style="width: 52px;"
