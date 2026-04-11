@@ -52,6 +52,8 @@ public class MatchSyncService
                     ExternalId = apiMatch.Id,
                     HomeTeam = apiMatch.HomeTeam.Name,
                     AwayTeam = apiMatch.AwayTeam.Name,
+                    HomeCrest = apiMatch.HomeTeam.Crest,
+                    AwayCrest = apiMatch.AwayTeam.Crest,
                     KickoffTime = apiMatch.UtcDate,
                     Status = apiMatch.Status
                 };
@@ -77,6 +79,8 @@ public class MatchSyncService
                     .Set(m => m.AwayScore, awayScore)
                     .Set(m => m.KickoffTime, apiMatch.UtcDate)
                     .Set(m => m.Minute, minute)
+                    .Set(m => m.HomeCrest, apiMatch.HomeTeam.Crest)
+                    .Set(m => m.AwayCrest, apiMatch.AwayTeam.Crest)
                     .Update();
 
                 Console.WriteLine($"Updated {match.HomeTeam} vs {match.AwayTeam}: status={apiMatch.Status}, score={homeScore}-{awayScore}, minute={minute}, rows={updateResponse.Models.Count}");

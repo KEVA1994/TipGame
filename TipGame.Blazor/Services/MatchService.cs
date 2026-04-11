@@ -22,6 +22,8 @@ public class MatchService
             Id = m.Id,
             HomeTeam = m.HomeTeam,
             AwayTeam = m.AwayTeam,
+            HomeCrest = m.HomeCrest,
+            AwayCrest = m.AwayCrest,
             KickoffTime = DateTime.SpecifyKind(m.KickoffTime, DateTimeKind.Utc),
             Status = m.Status,
             HomeScore = m.HomeScore,

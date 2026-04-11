@@ -49,10 +49,22 @@
                 </MudStack>
             </MudTd>
             <MudTd>
-                <MudText Typo="Typo.body2">@context.HomeTeam</MudText>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    @if (!string.IsNullOrEmpty(context.HomeCrest))
+                    {
+                        <MudImage Src="@context.HomeCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
+                    }
+                    <MudText Typo="Typo.body2">@context.HomeTeam</MudText>
+                </MudStack>
             </MudTd>
             <MudTd>
-                <MudText Typo="Typo.body2">@context.AwayTeam</MudText>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    @if (!string.IsNullOrEmpty(context.AwayCrest))
+                    {
+                        <MudImage Src="@context.AwayCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
+                    }
+                    <MudText Typo="Typo.body2">@context.AwayTeam</MudText>
+                </MudStack>
             </MudTd>
             <MudTd Style="text-align: center;">
                 @if (context.Status == "IN_PLAY")
@@ -91,7 +103,8 @@
                     <PredictionInput MatchId="@context.Id"
                                  Kickoff="@context.KickoffTime"
                                  PlayerName="@PlayerState.PlayerName"
-                                 ExistingTip="@(tips.GetValueOrDefault(context.Id))" />
+                                 ExistingTip="@(tips.GetValueOrDefault(context.Id))"
+                                 OnTipSaved="OnTipSaved" />
                 </MudTd>
             }
         </RowTemplate>
@@ -157,10 +170,26 @@
 
         try
         {
-            matches = await matchService.GetMatches();
+            var updated = await matchService.GetMatches();
+            foreach (var u in updated)
+            {
+                var existing = matches.FirstOrDefault(m => m.Id == u.Id);
+                if (existing != null)
+                {
+                    existing.Status = u.Status;
+                    existing.HomeScore = u.HomeScore;
+                    existing.AwayScore = u.AwayScore;
+                    existing.Minute = u.Minute;
+                }
+            }
             await InvokeAsync(StateHasChanged);
         }
         catch { }
+    }
+
+    private void OnTipSaved(PredictionDto tip)
+    {
+        tips[tip.MatchId] = tip;
     }
 
     private async void OnPlayerChanged()

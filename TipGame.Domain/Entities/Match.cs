@@ -18,6 +18,12 @@ namespace TipGame.Domain.Entities
         [Column("AwayTeam")]
         public string AwayTeam { get; set; }
 
+        [Column("HomeCrest")]
+        public string? HomeCrest { get; set; }
+
+        [Column("AwayCrest")]
+        public string? AwayCrest { get; set; }
+
         [Column("HomeScore")]
         public int? HomeScore { get; set; }
 
