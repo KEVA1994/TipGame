@@ -3,27 +3,27 @@
 @inject PredictionService PredictionService
 
 <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center"
-          Style="@($"width: 180px; justify-content: flex-end; margin-left: auto;{(isSaved && CanEdit ? " background-color: rgba(76, 175, 80, 0.12); border-radius: 4px; padding: 4px 0px 4px 8px;" : "")}")">
+          Style="width: 180px; justify-content: flex-end; margin-left: auto;">
 
     <MudNumericField @bind-Value="home" Min="0" Max="20"
                      Style="width: 52px;"
                      Margin="Margin.Dense"
-                     Variant="Variant.Text"
+                     Variant="@(IsReadOnly ? Variant.Text : Variant.Outlined)"
                      HideSpinButtons="true"
                      Immediate="true"
                      ReadOnly="@IsReadOnly"
-                     Class="@(isSaved && !isEditing ? "tip-field tip-saved" : "tip-field")" />
+                     Class="@(IsReadOnly ? "tip-readonly tip-field" : "tip-field")" />
 
     <MudText Typo="Typo.body2" Style="font-weight: 600; margin: 0 16px;"> - </MudText>
 
     <MudNumericField @bind-Value="away" Min="0" Max="20"
                      Style="width: 52px;"
                      Margin="Margin.Dense"
-                     Variant="Variant.Text"
+                     Variant="@(IsReadOnly ? Variant.Text : Variant.Outlined)"
                      HideSpinButtons="true"
                      Immediate="true"
                      ReadOnly="@IsReadOnly"
-                     Class="@(isSaved && !isEditing ? "tip-field tip-saved" : "tip-field")" />
+                     Class="@(IsReadOnly ? "tip-readonly tip-field" : "tip-field")" />
 
     @if (isSaved && !isEditing && CanEdit)
     {

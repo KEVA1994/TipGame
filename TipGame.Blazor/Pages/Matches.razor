@@ -67,7 +67,7 @@
                 </MudStack>
             </MudTd>
             <MudTd Style="text-align: center;">
-                @if (context.Status == "IN_PLAY")
+                @if (context.Status is "IN_PLAY" or "PAUSED")
                 {
                     <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">
                         @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
@@ -84,6 +84,13 @@
                 @if (context.Status == "FINISHED")
                 {
                     <MudChip T="string" Size="Size.Small" Color="Color.Default" Text="FT" />
+                }
+                else if (context.Status == "PAUSED")
+                {
+                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                        <span class="live-dot"></span>
+                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700; line-height: 1;">HT</MudText>
+                    </div>
                 }
                 else if (context.Status == "IN_PLAY")
                 {
@@ -166,7 +173,7 @@
 
     private async Task RefreshLiveMatches()
     {
-        if (!matches.Any(m => m.Status == "IN_PLAY")) return;
+        if (!matches.Any(m => m.Status is "IN_PLAY" or "PAUSED")) return;
 
         try
         {
