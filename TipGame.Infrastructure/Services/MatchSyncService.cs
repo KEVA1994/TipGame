@@ -62,19 +62,24 @@ public class MatchSyncService
             else
             {
                 var wasFinished = match.Status == "FINISHED";
+                var homeScore = apiMatch.Score?.FullTime?.Home;
+                var awayScore = apiMatch.Score?.FullTime?.Away;
 
-                await _supabase.From<Match>()
+                var updateResponse = await _supabase.From<Match>()
                     .Where(m => m.Id == match.Id)
                     .Set(m => m.Status, apiMatch.Status)
-                    .Set(m => m.HomeScore, apiMatch.Score.FullTime.Home)
-                    .Set(m => m.AwayScore, apiMatch.Score.FullTime.Away)
+                    .Set(m => m.HomeScore, homeScore)
+                    .Set(m => m.AwayScore, awayScore)
+                    .Set(m => m.KickoffTime, apiMatch.UtcDate)
                     .Update();
 
+                Console.WriteLine($"Updated {match.HomeTeam} vs {match.AwayTeam}: status={apiMatch.Status}, score={homeScore}-{awayScore}, rows={updateResponse.Models.Count}");
+
                 // Calculate points when a match finishes
-                if (apiMatch.Status == "FINISHED" && !wasFinished)
+                if (apiMatch.Status == "FINISHED" && !wasFinished && homeScore is not null && awayScore is not null)
                 {
-                    match.HomeScore = apiMatch.Score.FullTime.Home;
-                    match.AwayScore = apiMatch.Score.FullTime.Away;
+                    match.HomeScore = homeScore;
+                    match.AwayScore = awayScore;
                     match.Status = "FINISHED";
 
                     var predResponse = await _supabase.From<Prediction>()

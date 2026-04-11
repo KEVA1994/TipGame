@@ -144,6 +144,10 @@
             }
             catch { }
         }
+        else
+        {
+            tips = new();
+        }
 
         await InvokeAsync(StateHasChanged);
     }
