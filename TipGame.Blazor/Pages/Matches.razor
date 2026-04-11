@@ -32,11 +32,14 @@
     <MudTable Items="matches" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Dense="true">
         <HeaderContent>
             <MudTh Style="width: 56px; text-align: center; font-weight: 700;">Tid</MudTh>
-            <MudTh Style="width: 150px; font-weight: 700;">Hjemme</MudTh>
-            <MudTh Style="width: 150px; font-weight: 700;">Ude</MudTh>
+            <MudTh Style="width: 250px; font-weight: 700;">Hjemme</MudTh>
+            <MudTh Style="width: 250px; font-weight: 700;">Ude</MudTh>
             <MudTh Style="width: 56px; text-align: center; white-space: nowrap; font-weight: 700;">Score</MudTh>
             <MudTh Style="width: 1%; white-space: nowrap; text-align: center; font-weight: 700;">Status</MudTh>
-            <MudTh Style="font-weight: 700; white-space: nowrap; text-align: right; padding-right: 110px;">Tip</MudTh>
+            @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+            {
+                <MudTh Style="font-weight: 700; white-space: nowrap; text-align: right; padding-right: 110px;">Tip</MudTh>
+            }
         </HeaderContent>
         <RowTemplate>
             <MudTd Style="text-align: center;">
@@ -52,44 +55,57 @@
                 <MudText Typo="Typo.body2">@context.AwayTeam</MudText>
             </MudTd>
             <MudTd Style="text-align: center;">
-                <MudText Typo="Typo.body2" Style="font-weight: 700;">
-                    @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
-                </MudText>
+                @if (context.Status == "IN_PLAY")
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">
+                        @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
+                    </MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Style="font-weight: 700;">
+                        @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
+                    </MudText>
+                }
             </MudTd>
             <MudTd Style="text-align: center; white-space: nowrap;">
-                @{
-                    var now = DateTime.UtcNow;
-                    var isFinished = context.Status == "FINISHED";
-                    var isLive = !isFinished && now >= context.KickoffTime && now < context.KickoffTime.AddHours(2);
-                }
-                @if (isFinished)
+                @if (context.Status == "FINISHED")
                 {
                     <MudChip T="string" Size="Size.Small" Color="Color.Default" Text="FT" />
                 }
-                else if (isLive)
+                else if (context.Status == "IN_PLAY")
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Text="LIVE" />
+                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                        <span class="live-dot"></span>
+                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700; line-height: 1;">@(context.Minute != null ? $"{context.Minute}'" : "LIVE")</MudText>
+                    </div>
                 }
                 else
                 {
                     <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Text="Planlagt" />
                 }
             </MudTd>
-            <MudTd Style="text-align: right;">
-                <PredictionInput MatchId="@context.Id"
+            @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+            {
+                <MudTd Style="text-align: right;">
+                    <PredictionInput MatchId="@context.Id"
                                  Kickoff="@context.KickoffTime"
                                  PlayerName="@PlayerState.PlayerName"
                                  ExistingTip="@(tips.GetValueOrDefault(context.Id))" />
-            </MudTd>
+                </MudTd>
+            }
         </RowTemplate>
     </MudTable>
 </MudPaper>
+
+@implements IDisposable
 
 @code {
     private Dictionary<int, PredictionDto> tips = new();
     private List<MatchDto> matches = new();
     private bool isLoading = true;
     private string? errorMessage;
+    private Timer? _refreshTimer;
 
     protected override void OnInitialized()
     {
@@ -131,6 +147,20 @@
 
         isLoading = false;
         StateHasChanged();
+
+        _refreshTimer = new Timer(async _ => await RefreshLiveMatches(), null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2));
+    }
+
+    private async Task RefreshLiveMatches()
+    {
+        if (!matches.Any(m => m.Status == "IN_PLAY")) return;
+
+        try
+        {
+            matches = await matchService.GetMatches();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch { }
     }
 
     private async void OnPlayerChanged()
@@ -150,5 +180,11 @@
         }
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _refreshTimer?.Dispose();
+        PlayerState.OnChange -= OnPlayerChanged;
     }
 }

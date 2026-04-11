@@ -65,15 +65,21 @@ public class MatchSyncService
                 var homeScore = apiMatch.Score?.FullTime?.Home;
                 var awayScore = apiMatch.Score?.FullTime?.Away;
 
+                // Calculate minute from kickoff time for live matches
+                int? minute = apiMatch.Status == "IN_PLAY"
+                    ? (int)Math.Min((DateTime.UtcNow - apiMatch.UtcDate).TotalMinutes, 120)
+                    : null;
+
                 var updateResponse = await _supabase.From<Match>()
                     .Where(m => m.Id == match.Id)
                     .Set(m => m.Status, apiMatch.Status)
                     .Set(m => m.HomeScore, homeScore)
                     .Set(m => m.AwayScore, awayScore)
                     .Set(m => m.KickoffTime, apiMatch.UtcDate)
+                    .Set(m => m.Minute, minute)
                     .Update();
 
-                Console.WriteLine($"Updated {match.HomeTeam} vs {match.AwayTeam}: status={apiMatch.Status}, score={homeScore}-{awayScore}, rows={updateResponse.Models.Count}");
+                Console.WriteLine($"Updated {match.HomeTeam} vs {match.AwayTeam}: status={apiMatch.Status}, score={homeScore}-{awayScore}, minute={minute}, rows={updateResponse.Models.Count}");
 
                 // Calculate points when a match finishes
                 if (apiMatch.Status == "FINISHED" && !wasFinished && homeScore is not null && awayScore is not null)

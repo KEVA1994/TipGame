@@ -30,6 +30,9 @@ namespace TipGame.Domain.Entities
         [Column("Status")]
         public string Status { get; set; }
 
+        [Column("Minute")]
+        public int? Minute { get; set; }
+
         // Not mapped — populated manually for point calculation
         [System.Text.Json.Serialization.JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]

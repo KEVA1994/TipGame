@@ -10,4 +10,5 @@ public class MatchDto
 
     public int? HomeScore { get; set; }
     public int? AwayScore { get; set; }
+    public int? Minute { get; set; }
 }

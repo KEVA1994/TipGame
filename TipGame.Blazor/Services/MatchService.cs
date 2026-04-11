@@ -22,10 +22,11 @@ public class MatchService
             Id = m.Id,
             HomeTeam = m.HomeTeam,
             AwayTeam = m.AwayTeam,
-            KickoffTime = m.KickoffTime,
+            KickoffTime = DateTime.SpecifyKind(m.KickoffTime, DateTimeKind.Utc),
             Status = m.Status,
             HomeScore = m.HomeScore,
-            AwayScore = m.AwayScore
+            AwayScore = m.AwayScore,
+            Minute = m.Minute
         }).ToList();
     }
 }
