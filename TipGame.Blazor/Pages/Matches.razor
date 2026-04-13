@@ -152,7 +152,7 @@
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            errorMessage = "Kunne ikke hente kampe. Tjek at API'et kører.";
+            errorMessage = "Kunne ikke hente kampe.";
         }
 
         if (tipsTask is not null)
@@ -168,7 +168,7 @@
         isLoading = false;
         StateHasChanged();
 
-        _refreshTimer = new Timer(async _ => await RefreshLiveMatches(), null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2));
+        _refreshTimer = new Timer(async _ => await RefreshLiveMatches(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
 
     private async Task RefreshLiveMatches()

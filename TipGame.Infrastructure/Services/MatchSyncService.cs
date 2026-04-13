@@ -6,8 +6,9 @@ public class MatchSyncService
     private readonly Supabase.Client _supabase;
     private readonly HttpClient _httpClient;
     private readonly PredictionService _predictionService;
-
     private readonly string _apiUrl;
+
+    private List<ApiMatch> _lastApiMatches = [];
 
     public MatchSyncService(Supabase.Client supabase, string footballApiToken, string apiUrl)
     {
@@ -17,6 +18,14 @@ public class MatchSyncService
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(15);
         _httpClient.DefaultRequestHeaders.Add("X-Auth-Token", footballApiToken);
+    }
+
+    public bool HasLiveOrUpcomingMatches()
+    {
+        var now = DateTime.UtcNow;
+        return _lastApiMatches.Any(m =>
+            m.Status is "IN_PLAY" or "PAUSED" ||
+            (m.Status == "TIMED" && m.UtcDate <= now.AddMinutes(15)));
     }
 
     public async Task SyncMatches()
@@ -37,6 +46,8 @@ public class MatchSyncService
 
         if (result is null)
             return;
+
+        _lastApiMatches = result.Matches;
 
         var existingMatches = (await _supabase.From<Match>().Get()).Models;
         var count = 0;
