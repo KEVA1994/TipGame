@@ -45,6 +45,9 @@ namespace TipGame.Domain.Entities
         [Column("Stage")]
         public string? Stage { get; set; }
 
+        [Column("Matchday")]
+        public int? Matchday { get; set; }
+
         // Not mapped
         [System.Text.Json.Serialization.JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]

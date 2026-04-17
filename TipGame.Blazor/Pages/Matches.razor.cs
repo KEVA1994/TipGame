@@ -15,7 +15,7 @@ public partial class Matches : IAsyncDisposable
 
     private Dictionary<int, PredictionDto> tips = new();
     private List<MatchDto> matches = new();
-    private List<IGrouping<string, MatchDto>> groupedMatches = new();
+    private List<MatchGroup> matchGroups = new();
     private bool isLoading = true;
     private string? errorMessage;
     private DotNetObjectReference<Matches>? _dotNetRef;
@@ -119,9 +119,22 @@ public partial class Matches : IAsyncDisposable
 
     private void BuildGroupedMatches()
     {
-        groupedMatches = matches
+        matchGroups = matches
             .GroupBy(m => m.Group ?? m.Stage ?? "Øvrige")
             .OrderBy(g => g.Key)
+            .Select(g => new MatchGroup
+            {
+                GroupKey = g.Key,
+                Rounds = g
+                    .GroupBy(m => m.Matchday ?? 0)
+                    .OrderBy(r => r.Key)
+                    .Select(r => new MatchRound
+                    {
+                        Matchday = r.Key,
+                        Matches = r.OrderBy(m => m.KickoffTime).ToList()
+                    })
+                    .ToList()
+            })
             .ToList();
     }
 
@@ -139,6 +152,7 @@ public partial class Matches : IAsyncDisposable
         "GROUP_J" => "Gruppe J",
         "GROUP_K" => "Gruppe K",
         "GROUP_L" => "Gruppe L",
+        "GROUP_TEST" => "🧪 Test Gruppe",
         "LAST_32" => "1/16-finale",
         "LAST_16" => "1/8-finale",
         "QUARTER_FINALS" => "Kvartfinale",
@@ -147,6 +161,18 @@ public partial class Matches : IAsyncDisposable
         "FINAL" => "Finale",
         _ => key
     };
+
+    private record MatchGroup
+    {
+        public string GroupKey { get; init; } = "";
+        public List<MatchRound> Rounds { get; init; } = [];
+    }
+
+    private record MatchRound
+    {
+        public int Matchday { get; init; }
+        public List<MatchDto> Matches { get; init; } = [];
+    }
 
     public async ValueTask DisposeAsync()
     {

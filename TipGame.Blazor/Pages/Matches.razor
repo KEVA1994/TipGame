@@ -24,11 +24,17 @@
     </MudAlert>
 }
 
-@foreach (var group in groupedMatches)
+@foreach (var group in matchGroups)
 {
-    <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2" Style="font-weight: 700;">@FormatGroupName(group.Key)</MudText>
+    <MudText Typo="Typo.h6" Class="mt-5 mb-1" Style="font-weight: 800;">@FormatGroupName(group.GroupKey)</MudText>
+    @foreach (var round in group.Rounds)
+    {
+        @if (round.Matchday > 0)
+        {
+            <MudText Typo="Typo.subtitle2" Class="mt-3 mb-1 ml-1" Style="font-weight: 600; color: var(--mud-palette-text-secondary);">Runde @round.Matchday</MudText>
+        }
     <MudPaper Elevation="0" Class="rounded-lg mb-3" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
-        <MudTable Items="group.ToList()" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Dense="true">
+        <MudTable Items="round.Matches" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Dense="true">
             <HeaderContent>
                 <MudTh Style="width: 56px; text-align: center; font-weight: 700;">Tid</MudTh>
                 <MudTh Style="width: 250px; font-weight: 700;">Hjemme</MudTh>
@@ -116,4 +122,5 @@
             </RowTemplate>
         </MudTable>
     </MudPaper>
+    }
 }

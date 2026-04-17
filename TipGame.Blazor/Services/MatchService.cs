@@ -30,7 +30,8 @@ public class MatchService
             AwayScore = m.AwayScore,
             Minute = m.Minute,
             Group = m.Group,
-            Stage = m.Stage
+            Stage = m.Stage,
+            Matchday = m.Matchday
         }).ToList();
     }
 }

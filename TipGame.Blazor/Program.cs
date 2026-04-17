@@ -20,6 +20,7 @@ builder.Services.AddMudServices();
 builder.Services.AddScoped<MatchService>();
 builder.Services.AddScoped<PredictionService>();
 builder.Services.AddScoped<LeaderboardService>();
+builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<PlayerState>();
 
 await builder.Build().RunAsync();

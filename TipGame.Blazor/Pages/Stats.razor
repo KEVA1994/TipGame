@@ -1,0 +1,194 @@
+@page "/stats"
+@using MudBlazor
+
+<MudText Typo="Typo.h4" GutterBottom="true">📊 Statistik</MudText>
+
+@if (isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-2">@errorMessage</MudAlert>
+}
+else if (data is not null)
+{
+    <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" Class="mt-4" PanelClass="pa-6" Color="Color.Primary" SliderColor="Color.Primary">
+
+        @* ── Tab 1: Point-udvikling ── *@
+        <MudTabPanel Text="Point-udvikling" Icon="@Icons.Material.Filled.TrendingUp">
+            <MudPaper Class="pa-6" Elevation="0">
+                <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">📈 Point-udvikling over tid</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
+                    Viser akkumulerede point per spiller for hver runde. Krydsende linjer = overhalinger på leaderboardet.
+                </MudText>
+
+                <MudChart T="double" ChartType="ChartType.Line"
+                          ChartSeries="@pointSeries"
+                          ChartLabels="@pointLabels"
+                          Width="100%" Height="400px"
+                          ChartOptions="@lineOptions"
+                          Class="mt-4" />
+            </MudPaper>
+        </MudTabPanel>
+
+        @* ── Tab 2: Træfsikkerhed ── *@
+        <MudTabPanel Text="Træfsikkerhed" Icon="@Icons.Material.Filled.PieChart">
+            <MudPaper Class="pa-6" Elevation="0">
+                <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">🎯 Træfsikkerhed per spiller</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-4">
+                    Fordeling af tip-resultater for færdigspillede kampe.
+                </MudText>
+
+                <MudStack Row="true" Spacing="3" Class="mb-4">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Success" Size="Size.Small" />
+                        <MudText Typo="Typo.caption"><b>Exakt</b> — Præcis score (3 point)</MudText>
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Warning" Size="Size.Small" />
+                        <MudText Typo="Typo.caption"><b>Udfald</b> — Rigtigt udfald (1 point)</MudText>
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Error" Size="Size.Small" />
+                        <MudText Typo="Typo.caption"><b>Forkert</b> — Forkert tip (0 point)</MudText>
+                    </MudStack>
+                </MudStack>
+
+                <MudGrid Spacing="4" Class="mt-2">
+                    @foreach (var player in data.Accuracy)
+                    {
+                        var total = player.Exact + player.CorrectOutcome + player.Wrong;
+                        if (total > 0)
+                        {
+                            var pct = (int)Math.Round(100.0 * player.Exact / total);
+                            <MudItem xs="12" sm="6" md="4" lg="3">
+                                <MudPaper Class="pa-4 d-flex flex-column align-center" Elevation="2" Style="border-radius: 12px;">
+                                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">@player.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Default" Class="mb-2">@total kampe tippet</MudText>
+                                    <MudChart T="double" ChartType="ChartType.Donut"
+                                              InputData="@GetAccuracyData(player)"
+                                              InputLabels="@accuracyLabels"
+                                              Width="160px" Height="160px" />
+                                    <MudText Typo="Typo.h6" Color="Color.Success" Class="mt-2" Style="font-weight: 800;">@pct% exakt</MudText>
+                                    <MudStack Row="true" Justify="Justify.Center" Spacing="1" Class="mt-1">
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">@player.Exact</MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">@player.CorrectOutcome</MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">@player.Wrong</MudChip>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                        }
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudTabPanel>
+
+        @* ── Tab 3: Populære tips ── *@
+        <MudTabPanel Text="Populære tips" Icon="@Icons.Material.Filled.BarChart">
+            <MudPaper Class="pa-6" Elevation="0">
+                <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">🔥 Top 10 mest tippede resultater</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
+                    Hvilke scoringer tipper flest spillere? Viser flokmentalitet — er alle enige, eller spreder det sig?
+                </MudText>
+
+                <MudChart T="double" ChartType="ChartType.Bar"
+                          ChartSeries="@popularSeries"
+                          ChartLabels="@popularLabels"
+                          Width="100%" Height="400px"
+                          ChartOptions="@popularBarOptions"
+                          Class="mt-4" />
+
+                @if (data.PopularTips.Count > 0)
+                {
+                    <MudDivider Class="my-3" />
+                    <MudStack Row="true" Spacing="3">
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            🥇 Mest populære: <b>@data.PopularTips[0].Score</b> (@data.PopularTips[0].Count tips)
+                        </MudText>
+                        @if (data.PopularTips.Count > 1)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Default">
+                                🥈 Næstmest: <b>@data.PopularTips[1].Score</b> (@data.PopularTips[1].Count tips)
+                            </MudText>
+                        }
+                    </MudStack>
+                }
+            </MudPaper>
+        </MudTabPanel>
+
+        @* ── Tab 4: Head-to-head ── *@
+        <MudTabPanel Text="Head-to-head" Icon="@Icons.Material.Filled.CompareArrows">
+            <MudPaper Class="pa-6" Elevation="0">
+                <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">⚔️ Head-to-head</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
+                    Sammenlign to spillere kamp for kamp. Søjlerne viser point scoret per kamp for hver spiller.
+                </MudText>
+
+                <MudGrid Spacing="3" Class="mb-4">
+                    <MudItem xs="12" sm="5">
+                        <MudSelect T="string" Label="Spiller 1" @bind-Value="h2hPlayer1" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person">
+                            @foreach (var name in data.PlayerNames)
+                            {
+                                <MudSelectItem Value="@name">@name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="2" Class="d-flex align-center justify-center">
+                        <MudText Typo="Typo.h6" Color="Color.Default">vs</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="5">
+                        <MudSelect T="string" Label="Spiller 2" @bind-Value="h2hPlayer2" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person">
+                            @foreach (var name in data.PlayerNames)
+                            {
+                                <MudSelectItem Value="@name">@name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+                @if (!string.IsNullOrEmpty(h2hPlayer1) && !string.IsNullOrEmpty(h2hPlayer2) && h2hPlayer1 != h2hPlayer2)
+                {
+                    <MudChart T="double" ChartType="ChartType.Bar"
+                              ChartSeries="@GetH2HSeries()"
+                              ChartLabels="@data.MatchLabels.ToArray()"
+                              Width="100%" Height="400px"
+                              ChartOptions="@h2hBarOptions"
+                              Class="mt-2" />
+
+                    <MudDivider Class="my-4" />
+                    <MudPaper Class="pa-4 d-flex justify-center" Elevation="1" Style="border-radius: 12px; background: var(--mud-palette-background-gray);">
+                        <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                                <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 800;">@GetH2HTotal(h2hPlayer1)</MudText>
+                                <MudText Typo="Typo.caption" Style="font-weight: 600;">@h2hPlayer1</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Default">@GetH2HWins(h2hPlayer1, h2hPlayer2) sejre</MudText>
+                            </MudStack>
+
+                            <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                                <MudText Typo="Typo.h6" Color="Color.Default">—</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Default">@GetH2HDraws() uafgjort</MudText>
+                            </MudStack>
+
+                            <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                                <MudText Typo="Typo.h5" Color="Color.Secondary" Style="font-weight: 800;">@GetH2HTotal(h2hPlayer2)</MudText>
+                                <MudText Typo="Typo.caption" Style="font-weight: 600;">@h2hPlayer2</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Default">@GetH2HWins(h2hPlayer2, h2hPlayer1) sejre</MudText>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+                else if (h2hPlayer1 == h2hPlayer2 && !string.IsNullOrEmpty(h2hPlayer1))
+                {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Vælg to forskellige spillere.</MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Normal" Variant="Variant.Text" Icon="@Icons.Material.Filled.Info">
+                        Vælg to spillere ovenfor for at sammenligne deres præstationer.
+                    </MudAlert>
+                }
+            </MudPaper>
+        </MudTabPanel>
+    </MudTabs>
+}

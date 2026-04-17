@@ -15,4 +15,5 @@ public class MatchDto
     public int? Minute { get; set; }
     public string? Group { get; set; }
     public string? Stage { get; set; }
+    public int? Matchday { get; set; }
 }

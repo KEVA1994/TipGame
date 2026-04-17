@@ -1,7 +1,8 @@
 ﻿@inherits LayoutComponentBase
 @using MudBlazor
 
-<MudThemeProvider />
+<MudThemeProvider @bind-IsDarkMode="isDarkMode" Theme="appTheme" />
+<MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
@@ -50,6 +51,11 @@
                      Text="@PlayerState.PlayerName"
                      OnClose="SwitchUser" />
         }
+
+        <MudIconButton Icon="@(isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       Color="Color.Inherit"
+                       OnClick="@(() => isDarkMode = !isDarkMode)"
+                       Title="@(isDarkMode ? "Lyst tema" : "Mørkt tema")" />
     </MudAppBar>
 
     <MudDrawer @bind-Open="drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Mini" OpenMiniOnHover="true">
@@ -62,6 +68,9 @@
             </MudNavLink>
             <MudNavLink Href="leaderboard" Icon="@Icons.Material.Filled.Leaderboard">
                 Leaderboard
+            </MudNavLink>
+            <MudNavLink Href="stats" Icon="@Icons.Material.Filled.BarChart">
+                Statistik
             </MudNavLink>
         </MudNavMenu>
     </MudDrawer>
