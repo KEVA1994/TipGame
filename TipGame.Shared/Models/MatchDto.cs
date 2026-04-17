@@ -13,4 +13,6 @@ public class MatchDto
     public int? HomeScore { get; set; }
     public int? AwayScore { get; set; }
     public int? Minute { get; set; }
+    public string? Group { get; set; }
+    public string? Stage { get; set; }
 }

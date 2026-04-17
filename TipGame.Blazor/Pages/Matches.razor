@@ -24,92 +24,96 @@
     </MudAlert>
 }
 
-<MudPaper Elevation="0" Class="rounded-lg" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
-    <MudTable Items="matches" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Dense="true">
-        <HeaderContent>
-            <MudTh Style="width: 56px; text-align: center; font-weight: 700;">Tid</MudTh>
-            <MudTh Style="width: 250px; font-weight: 700;">Hjemme</MudTh>
-            <MudTh Style="width: 250px; font-weight: 700;">Ude</MudTh>
-            <MudTh Style="width: 56px; text-align: center; white-space: nowrap; font-weight: 700;">Score</MudTh>
-            <MudTh Style="width: 1%; white-space: nowrap; text-align: center; font-weight: 700;">Status</MudTh>
-            @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
-            {
-                <MudTh Style="font-weight: 700; white-space: nowrap; text-align: right; padding-right: 110px;">Tip</MudTh>
-            }
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd Style="text-align: center;">
-                <MudStack Spacing="0" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.caption">@context.KickoffTime.ToString("dd/MM")</MudText>
-                    <MudText Typo="Typo.caption">@context.KickoffTime.ToString("HH:mm")</MudText>
-                </MudStack>
-            </MudTd>
-            <MudTd>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                    @if (!string.IsNullOrEmpty(context.HomeCrest))
-                    {
-                        <MudImage Src="@context.HomeCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
-                    }
-                    <MudText Typo="Typo.body2">@context.HomeTeam</MudText>
-                </MudStack>
-            </MudTd>
-            <MudTd>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                    @if (!string.IsNullOrEmpty(context.AwayCrest))
-                    {
-                        <MudImage Src="@context.AwayCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
-                    }
-                    <MudText Typo="Typo.body2">@context.AwayTeam</MudText>
-                </MudStack>
-            </MudTd>
-            <MudTd Style="text-align: center;">
-                @if (context.Status is "IN_PLAY" or "PAUSED")
+@foreach (var group in groupedMatches)
+{
+    <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2" Style="font-weight: 700;">@FormatGroupName(group.Key)</MudText>
+    <MudPaper Elevation="0" Class="rounded-lg mb-3" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
+        <MudTable Items="group.ToList()" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Dense="true">
+            <HeaderContent>
+                <MudTh Style="width: 56px; text-align: center; font-weight: 700;">Tid</MudTh>
+                <MudTh Style="width: 250px; font-weight: 700;">Hjemme</MudTh>
+                <MudTh Style="width: 250px; font-weight: 700;">Ude</MudTh>
+                <MudTh Style="width: 56px; text-align: center; white-space: nowrap; font-weight: 700;">Score</MudTh>
+                <MudTh Style="width: 1%; white-space: nowrap; text-align: center; font-weight: 700;">Status</MudTh>
+                @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
                 {
-                    <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">
-                        @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
-                    </MudText>
+                    <MudTh Style="font-weight: 700; white-space: nowrap; text-align: right; padding-right: 110px;">Tip</MudTh>
                 }
-                else
-                {
-                    <MudText Typo="Typo.body2" Style="font-weight: 700;">
-                        @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
-                    </MudText>
-                }
-            </MudTd>
-            <MudTd Style="text-align: center; white-space: nowrap;">
-                @if (context.Status == "FINISHED")
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Text="FT" />
-                }
-                else if (context.Status == "PAUSED")
-                {
-                    <div style="display: inline-flex; align-items: center; gap: 6px;">
-                        <span class="live-dot"></span>
-                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700; line-height: 1;">HT</MudText>
-                    </div>
-                }
-                else if (context.Status == "IN_PLAY")
-                {
-                    <div style="display: inline-flex; align-items: center; gap: 6px;">
-                        <span class="live-dot"></span>
-                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700; line-height: 1;">@(context.Minute != null ? $"{context.Minute}'" : "LIVE")</MudText>
-                    </div>
-                }
-                else
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Text="Planlagt" />
-                }
-            </MudTd>
-            @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
-            {
-                <MudTd Style="text-align: right;">
-                    <PredictionInput MatchId="@context.Id"
-                                 Kickoff="@context.KickoffTime"
-                                 PlayerName="@PlayerState.PlayerName"
-                                 ExistingTip="@(tips.GetValueOrDefault(context.Id))"
-                                 OnTipSaved="OnTipSaved" />
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd Style="text-align: center;">
+                    <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.caption">@context.KickoffTime.ToString("dd/MM")</MudText>
+                        <MudText Typo="Typo.caption">@context.KickoffTime.ToString("HH:mm")</MudText>
+                    </MudStack>
                 </MudTd>
-            }
-        </RowTemplate>
-    </MudTable>
-</MudPaper>
+                <MudTd>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        @if (!string.IsNullOrEmpty(context.HomeCrest))
+                        {
+                            <MudImage Src="@context.HomeCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
+                        }
+                        <MudText Typo="Typo.body2">@context.HomeTeam</MudText>
+                    </MudStack>
+                </MudTd>
+                <MudTd>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        @if (!string.IsNullOrEmpty(context.AwayCrest))
+                        {
+                            <MudImage Src="@context.AwayCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
+                        }
+                        <MudText Typo="Typo.body2">@context.AwayTeam</MudText>
+                    </MudStack>
+                </MudTd>
+                <MudTd Style="text-align: center;">
+                    @if (context.Status is "IN_PLAY" or "PAUSED")
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">
+                            @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Style="font-weight: 700;">
+                            @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
+                        </MudText>
+                    }
+                </MudTd>
+                <MudTd Style="text-align: center; white-space: nowrap;">
+                    @if (context.Status == "FINISHED")
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Text="FT" />
+                    }
+                    else if (context.Status == "PAUSED")
+                    {
+                        <div style="display: inline-flex; align-items: center; gap: 6px;">
+                            <span class="live-dot"></span>
+                            <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700; line-height: 1;">HT</MudText>
+                        </div>
+                    }
+                    else if (context.Status == "IN_PLAY")
+                    {
+                        <div style="display: inline-flex; align-items: center; gap: 6px;">
+                            <span class="live-dot"></span>
+                            <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700; line-height: 1;">@(context.Minute != null ? $"{context.Minute}'" : "LIVE")</MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Text="Planlagt" />
+                    }
+                </MudTd>
+                @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+                {
+                    <MudTd Style="text-align: right;">
+                        <PredictionInput MatchId="@context.Id"
+                                     Kickoff="@context.KickoffTime"
+                                     PlayerName="@PlayerState.PlayerName"
+                                     ExistingTip="@(tips.GetValueOrDefault(context.Id))"
+                                     OnTipSaved="OnTipSaved" />
+                    </MudTd>
+                }
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}

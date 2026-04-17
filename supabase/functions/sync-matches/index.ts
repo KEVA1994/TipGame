@@ -62,6 +62,8 @@ Deno.serve(async () => {
         AwayCrest: apiMatch.awayTeam.crest,
         KickoffTime: apiMatch.utcDate,
         Status: apiMatch.status,
+        Group: apiMatch.group ?? null,
+        Stage: apiMatch.stage ?? null,
       });
       newCount++;
     } else {
@@ -87,6 +89,8 @@ Deno.serve(async () => {
           Minute: minute,
           HomeCrest: apiMatch.homeTeam.crest,
           AwayCrest: apiMatch.awayTeam.crest,
+          Group: apiMatch.group ?? null,
+          Stage: apiMatch.stage ?? null,
         })
         .eq("Id", existing.Id);
 
@@ -155,6 +159,8 @@ interface ApiMatch {
   homeTeam: { name: string; crest: string };
   awayTeam: { name: string; crest: string };
   score: { fullTime: { home: number | null; away: number | null } } | null;
+  group: string | null;
+  stage: string | null;
 }
 
 // Type definition for Supabase Matches row
@@ -164,4 +170,6 @@ interface DbMatch {
   Status: string;
   HomeScore: number | null;
   AwayScore: number | null;
+  Group: string | null;
+  Stage: string | null;
 }

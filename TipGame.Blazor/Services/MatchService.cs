@@ -28,7 +28,9 @@ public class MatchService
             Status = m.Status,
             HomeScore = m.HomeScore,
             AwayScore = m.AwayScore,
-            Minute = m.Minute
+            Minute = m.Minute,
+            Group = m.Group,
+            Stage = m.Stage
         }).ToList();
     }
 }

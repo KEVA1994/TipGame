@@ -15,6 +15,7 @@ public partial class Matches : IAsyncDisposable
 
     private Dictionary<int, PredictionDto> tips = new();
     private List<MatchDto> matches = new();
+    private List<IGrouping<string, MatchDto>> groupedMatches = new();
     private bool isLoading = true;
     private string? errorMessage;
     private DotNetObjectReference<Matches>? _dotNetRef;
@@ -46,6 +47,8 @@ public partial class Matches : IAsyncDisposable
         {
             errorMessage = "Kunne ikke hente kampe.";
         }
+
+        BuildGroupedMatches();
 
         if (tipsTask is not null)
         {
@@ -113,6 +116,39 @@ public partial class Matches : IAsyncDisposable
 
         await InvokeAsync(StateHasChanged);
     }
+
+    private void BuildGroupedMatches()
+    {
+        groupedMatches = matches
+            .GroupBy(m => m.Group ?? m.Stage ?? "Øvrige")
+            .OrderBy(g => g.Key == "GROUP_TEST" ? 0 : 1)
+            .ThenBy(g => g.Key)
+            .ToList();
+    }
+
+    private static string FormatGroupName(string key) => key switch
+    {
+        "GROUP_A" => "Gruppe A",
+        "GROUP_B" => "Gruppe B",
+        "GROUP_C" => "Gruppe C",
+        "GROUP_D" => "Gruppe D",
+        "GROUP_E" => "Gruppe E",
+        "GROUP_F" => "Gruppe F",
+        "GROUP_G" => "Gruppe G",
+        "GROUP_H" => "Gruppe H",
+        "GROUP_I" => "Gruppe I",
+        "GROUP_J" => "Gruppe J",
+        "GROUP_K" => "Gruppe K",
+        "GROUP_L" => "Gruppe L",
+        "GROUP_TEST" => "🧪 Test",
+        "LAST_32" => "1/16-finale",
+        "LAST_16" => "1/8-finale",
+        "QUARTER_FINALS" => "Kvartfinale",
+        "SEMI_FINALS" => "Semifinale",
+        "THIRD_PLACE" => "Bronzekamp",
+        "FINAL" => "Finale",
+        _ => key
+    };
 
     public async ValueTask DisposeAsync()
     {

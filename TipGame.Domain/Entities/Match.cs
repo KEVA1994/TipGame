@@ -39,7 +39,13 @@ namespace TipGame.Domain.Entities
         [Column("Minute")]
         public int? Minute { get; set; }
 
-        // Not mapped — populated manually for point calculation
+        [Column("Group")]
+        public string? Group { get; set; }
+
+        [Column("Stage")]
+        public string? Stage { get; set; }
+
+        // Not mapped
         [System.Text.Json.Serialization.JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]
         public ICollection<Prediction> Predictions { get; set; } = new List<Prediction>();
