@@ -37,13 +37,20 @@ public class LeaderboardService
             .OrderByDescending(x => x.TotalPoints)
             .ToList();
 
-        // Calculate position change
-        var today = DateTime.UtcNow.ToString("dd/MM");
+        // Calculate position change based on latest day with data
+        var latestDay = leaderboard
+            .SelectMany(x => x.DailyPoints.Keys)
+            .Distinct()
+            .OrderDescending()
+            .FirstOrDefault();
+
         var previousRanking = leaderboard
             .Select(x => new
             {
                 x.UserName,
-                PreviousPoints = x.TotalPoints - x.DailyPoints.GetValueOrDefault(today)
+                PreviousPoints = latestDay is not null
+                    ? x.TotalPoints - x.DailyPoints.GetValueOrDefault(latestDay)
+                    : x.TotalPoints
             })
             .OrderByDescending(x => x.PreviousPoints)
             .Select((x, i) => new { x.UserName, Position = i })

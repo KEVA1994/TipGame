@@ -121,8 +121,7 @@ public partial class Matches : IAsyncDisposable
     {
         groupedMatches = matches
             .GroupBy(m => m.Group ?? m.Stage ?? "Øvrige")
-            .OrderBy(g => g.Key == "GROUP_TEST" ? 0 : 1)
-            .ThenBy(g => g.Key)
+            .OrderBy(g => g.Key)
             .ToList();
     }
 
@@ -140,7 +139,6 @@ public partial class Matches : IAsyncDisposable
         "GROUP_J" => "Gruppe J",
         "GROUP_K" => "Gruppe K",
         "GROUP_L" => "Gruppe L",
-        "GROUP_TEST" => "🧪 Test",
         "LAST_32" => "1/16-finale",
         "LAST_16" => "1/8-finale",
         "QUARTER_FINALS" => "Kvartfinale",
