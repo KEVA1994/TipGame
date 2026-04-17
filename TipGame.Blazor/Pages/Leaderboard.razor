@@ -2,8 +2,6 @@
 @using MudBlazor
 @using TipGame.Shared.Models
 
-@inject LeaderboardService leaderboardService
-
 <MudText Typo="Typo.h4" GutterBottom="true">🏆 Leaderboard</MudText>
 
 @if (isLoading)
@@ -76,44 +74,4 @@ else
             </RowTemplate>
         </MudTable>
     </MudPaper>
-}
-
-@code {
-    private List<LeaderboardDto> players = new();
-    private string latestDay = "";
-    private bool isLoading = true;
-
-    // Mock data – replace with API call when ready
-    private List<LeaderboardDto> MockPlayers() => new()
-    {
-        new() { UserName = "Kasper",   Change =  0, TotalPoints = 21, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 6, ["16/06"] = 3, ["17/06"] = 3, ["18/06"] = 3, ["19/06"] = 3 } },
-        new() { UserName = "Mads",     Change =  1, TotalPoints = 19, DailyPoints = new() { ["14/06"] = 6, ["15/06"] = 3, ["16/06"] = 0, ["17/06"] = 3, ["18/06"] = 4, ["19/06"] = 3 } },
-        new() { UserName = "Peter",    Change = -1, TotalPoints = 17, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 6, ["16/06"] = 3, ["17/06"] = 3, ["18/06"] = 0, ["19/06"] = 2 } },
-        new() { UserName = "Ulrik",    Change =  2, TotalPoints = 16, DailyPoints = new() { ["14/06"] = 0, ["15/06"] = 3, ["16/06"] = 3, ["17/06"] = 4, ["18/06"] = 3, ["19/06"] = 3 } },
-        new() { UserName = "Jens",     Change = -1, TotalPoints = 14, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 3, ["16/06"] = 3, ["17/06"] = 0, ["18/06"] = 3, ["19/06"] = 2 } },
-        new() { UserName = "Emil",     Change =  0, TotalPoints = 13, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 0, ["16/06"] = 3, ["17/06"] = 3, ["18/06"] = 2, ["19/06"] = 2 } },
-        new() { UserName = "Frederik", Change =  1, TotalPoints = 12, DailyPoints = new() { ["14/06"] = 0, ["15/06"] = 3, ["16/06"] = 0, ["17/06"] = 4, ["18/06"] = 3, ["19/06"] = 2 } },
-        new() { UserName = "Anders",   Change = -2, TotalPoints = 10, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 3, ["16/06"] = 3, ["17/06"] = 0, ["18/06"] = 0, ["19/06"] = 1 } },
-        new() { UserName = "Thomas",   Change =  1, TotalPoints =  9, DailyPoints = new() { ["14/06"] = 0, ["15/06"] = 0, ["16/06"] = 3, ["17/06"] = 1, ["18/06"] = 3, ["19/06"] = 2 } },
-        new() { UserName = "Lars",     Change = -1, TotalPoints =  6, DailyPoints = new() { ["14/06"] = 3, ["15/06"] = 2, ["16/06"] = 0, ["17/06"] = 0, ["18/06"] = 0, ["19/06"] = 1 } },
-    };
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender) return;
-
-        players = MockPlayers();
-        // players = await leaderboardService.GetLeaderboard();
-
-        var matchDays = players
-            .SelectMany(p => p.DailyPoints.Keys)
-            .Distinct()
-            .OrderBy(d => DateTime.ParseExact(d, "dd/MM", null))
-            .ToList();
-
-        latestDay = matchDays.LastOrDefault() ?? "";
-
-        isLoading = false;
-        StateHasChanged();
-    }
 }

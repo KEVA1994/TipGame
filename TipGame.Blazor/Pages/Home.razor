@@ -2,9 +2,6 @@
 @using MudBlazor
 @using TipGame.Shared.Models
 
-@inject MatchService matchService
-@inject LeaderboardService leaderboardService
-
 <MudText Typo="Typo.h4" GutterBottom="true">⚽ VM Tips Kuponen</MudText>
 
 <MudPaper Elevation="1" Class="pa-5 rounded-lg mb-6">
@@ -107,34 +104,4 @@ else
             </div>
         }
     </MudPaper>
-}
-
-@code {
-    private List<MatchDto> todayMatches = new();
-    private List<LeaderboardDto> topPlayers = new();
-    private bool isLoading = true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var matchesTask = matchService.GetMatches();
-        var leaderboardTask = leaderboardService.GetLeaderboard();
-
-        try
-        {
-            var allMatches = await matchesTask;
-            todayMatches = allMatches
-                .Where(m => m.KickoffTime.Date == DateTime.Today)
-                .ToList();
-        }
-        catch { }
-
-        try
-        {
-            var leaderboard = await leaderboardTask;
-            topPlayers = leaderboard.Take(3).ToList();
-        }
-        catch { }
-
-        isLoading = false;
-    }
 }
