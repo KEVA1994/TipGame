@@ -1,0 +1,74 @@
+@using MudBlazor
+
+<MudPaper Class="pa-6" Elevation="0">
+    <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">🎯 Træfsikkerhed per spiller</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-4">
+        Fordeling af tips resultater for færdigspillede kampe. Sorteret efter flest kampe ramt "Lige på".
+    </MudText>
+
+    <MudStack Row="true" Spacing="4" Wrap="Wrap.Wrap" Class="mb-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <div style="width:12px; height:12px; border-radius:50%; background:#2E7D32;"></div>
+            <MudText Typo="Typo.caption"><b>Lige på</b> — 3p</MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <div style="width:12px; height:12px; border-radius:50%; background:#66BB6A;"></div>
+            <MudText Typo="Typo.caption"><b>Uafgjort</b> — 2p</MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <div style="width:12px; height:12px; border-radius:50%; background:#FFA726;"></div>
+            <MudText Typo="Typo.caption"><b>Vinder</b> — 1p</MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <div style="width:12px; height:12px; border-radius:50%; background:#E53935;"></div>
+            <MudText Typo="Typo.caption"><b>Forkert</b> — 0p</MudText>
+        </MudStack>
+    </MudStack>
+
+    <MudGrid Spacing="4" Class="mt-2">
+        @foreach (var player in sortedPlayers)
+        {
+            var total = player.Exact + player.CorrectDraw + player.CorrectOutcome + player.Wrong;
+            var pct = (int)Math.Round(100.0 * player.Exact / total);
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudPaper Class="pa-4 d-flex flex-column align-center" Elevation="2" Style="border-radius: 12px;">
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">@player.Name</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Default" Class="mb-2">@total kampe tippet</MudText>
+                    <MudChart ChartType="ChartType.Donut"
+                              ChartSeries="@GetData(player).AsChartDataSet()"
+                              ChartOptions="@pieOptions"
+                              MatchBoundsToSize="true"
+                              >
+                        <CustomGraphics>
+                            <text class="mud-donut-text mud-typography-h3" x="50%" y="50%" style="fill: #2E7D32;">@pct%</text>
+                        </CustomGraphics>
+                    </MudChart>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public List<AccuracyData> Players { get; set; } = [];
+
+    private List<AccuracyData> sortedPlayers = [];
+    private readonly string[] pieLabels = ["Lige på (3p)", "Uafgjort (2p)", "Vinder (1p)", "Forkert (0p)"];
+
+    private readonly DonutChartOptions pieOptions = new()
+    {
+        ChartPalette = ["#2E7D32", "#66BB6A", "#FFA726", "#E53935"],
+        FillOpacity = 0.8,
+        ShowToolTips = true,
+    };
+
+    protected override void OnParametersSet()
+    {
+        sortedPlayers = Players
+            .Where(p => p.Exact + p.CorrectDraw + p.CorrectOutcome + p.Wrong > 0)
+            .ToList();
+    }
+
+    private static double[] GetData(AccuracyData p) =>
+        [p.Exact, p.CorrectDraw, p.CorrectOutcome, p.Wrong];
+}

@@ -1,0 +1,114 @@
+@using MudBlazor
+
+<MudPaper Class="pa-6" Elevation="0">
+    <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">⚔️ Head-to-head</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
+        Sammenlign to spillere kamp for kamp. Søjlerne viser point scoret per kamp for hver spiller.
+    </MudText>
+
+    <MudGrid Spacing="3" Class="mb-4">
+        <MudItem xs="12" sm="5">
+            <MudSelect T="string" Label="Spiller 1" @bind-Value="Player1" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person">
+                @foreach (var name in PlayerNames)
+                {
+                    <MudSelectItem Value="@name">@name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="2" Class="d-flex align-center justify-center">
+            <MudText Typo="Typo.h6" Color="Color.Default">vs</MudText>
+        </MudItem>
+        <MudItem xs="12" sm="5">
+            <MudSelect T="string" Label="Spiller 2" @bind-Value="Player2" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person">
+                @foreach (var name in PlayerNames)
+                {
+                    <MudSelectItem Value="@name">@name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+
+    @if (!string.IsNullOrEmpty(Player1) && !string.IsNullOrEmpty(Player2) && Player1 != Player2)
+    {
+        <MudChart ChartType="ChartType.Bar"
+                  ChartSeries="@GetH2HSeries()"
+                  ChartLabels="@MatchLabels.ToArray()"
+                  Width="100%" Height="300px"
+                  ChartOptions="@barOptions"
+                  Class="mt-2" />
+
+        <MudDivider Class="my-4" />
+        <MudPaper Class="pa-4 d-flex justify-center" Elevation="1" Style="border-radius: 12px; background: var(--mud-palette-background-gray);">
+            <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
+                <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                    <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 800;">@GetTotal(Player1)</MudText>
+                    <MudText Typo="Typo.caption" Style="font-weight: 600;">@Player1</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Default">@GetWins(Player1, Player2) sejre</MudText>
+                </MudStack>
+
+                <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                    <MudText Typo="Typo.h6" Color="Color.Default">—</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Default">@GetDraws() uafgjort</MudText>
+                </MudStack>
+
+                <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                    <MudText Typo="Typo.h5" Color="Color.Secondary" Style="font-weight: 800;">@GetTotal(Player2)</MudText>
+                    <MudText Typo="Typo.caption" Style="font-weight: 600;">@Player2</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Default">@GetWins(Player2, Player1) sejre</MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    }
+    else if (Player1 == Player2 && !string.IsNullOrEmpty(Player1))
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Vælg to forskellige spillere.</MudAlert>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Text" Icon="@Icons.Material.Filled.Info">
+            Vælg to spillere ovenfor for at sammenligne deres præstationer.
+        </MudAlert>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public List<HeadToHeadPlayer> HeadToHead { get; set; } = [];
+    [Parameter, EditorRequired] public List<int> MatchIds { get; set; } = [];
+    [Parameter, EditorRequired] public List<string> MatchLabels { get; set; } = [];
+    [Parameter, EditorRequired] public List<string> PlayerNames { get; set; } = [];
+    [Parameter] public string? Player1 { get; set; }
+    [Parameter] public string? Player2 { get; set; }
+
+    private readonly BarChartOptions barOptions = new()
+    {
+        XAxisTitle = "Kamp",
+        YAxisTitle = "Point",
+        XAxisLabelRotation = 90
+    };
+
+    private List<ChartSeries<double>> GetH2HSeries()
+    {
+        var p1 = HeadToHead.FirstOrDefault(h => h.Name == Player1);
+        var p2 = HeadToHead.FirstOrDefault(h => h.Name == Player2);
+        if (p1 is null || p2 is null) return [];
+
+        return
+        [
+            new() { Name = Player1!, Data = MatchIds.Select(id => (double)p1.PointsByMatch.GetValueOrDefault(id)).ToArray() },
+            new() { Name = Player2!, Data = MatchIds.Select(id => (double)p2.PointsByMatch.GetValueOrDefault(id)).ToArray() }
+        ];
+    }
+
+    private int GetTotal(string name) =>
+        MatchIds.Sum(id => HeadToHead.First(h => h.Name == name).PointsByMatch.GetValueOrDefault(id));
+
+    private int GetWins(string name, string opponent) =>
+        MatchIds.Count(id =>
+            HeadToHead.First(h => h.Name == name).PointsByMatch.GetValueOrDefault(id) >
+            HeadToHead.First(h => h.Name == opponent).PointsByMatch.GetValueOrDefault(id));
+
+    private int GetDraws() =>
+        MatchIds.Count(id =>
+            HeadToHead.First(h => h.Name == Player1!).PointsByMatch.GetValueOrDefault(id) ==
+            HeadToHead.First(h => h.Name == Player2!).PointsByMatch.GetValueOrDefault(id));
+}

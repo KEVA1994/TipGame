@@ -1,0 +1,44 @@
+@using MudBlazor
+
+<MudPaper Class="pa-6" Elevation="0">
+    <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">🔥 Top 10 mest tippede resultater</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
+        Hvilke scoringer tipper flest spillere? Viser flokmentalitet — er alle enige, eller spreder det sig?
+    </MudText>
+
+    <MudChart ChartType="ChartType.Bar"
+              ChartSeries="@Series"
+              ChartLabels="@Labels"
+              Width="100%" Height="300px"
+              ChartOptions="@barOptions"
+              Class="mt-4" />
+
+    @if (Tips.Count > 0)
+    {
+        <MudDivider Class="my-3" />
+        <MudStack Row="true" Spacing="3">
+            <MudText Typo="Typo.caption" Color="Color.Default">
+                🥇 Mest populære: <b>@Tips[0].Score</b> (@Tips[0].Count tips)
+            </MudText>
+            @if (Tips.Count > 1)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Default">
+                    🥈 Næstmest: <b>@Tips[1].Score</b> (@Tips[1].Count tips)
+                </MudText>
+            }
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public List<PopularTip> Tips { get; set; } = [];
+    [Parameter, EditorRequired] public List<ChartSeries<double>> Series { get; set; } = [];
+    [Parameter, EditorRequired] public string[] Labels { get; set; } = [];
+
+    private readonly BarChartOptions barOptions = new()
+    {
+        XAxisTitle = "Tippet resultat",
+        YAxisTitle = "Antal tips",
+        XAxisLabelRotation = 90
+    };
+}

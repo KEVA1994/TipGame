@@ -18,32 +18,34 @@ public class StatsService
             .Where(m => m.Status == "FINISHED")
             .Get()).Models;
 
+        Console.WriteLine($"[Stats] Users={users.Count}, Predictions={predictions.Count}, FinishedMatches={matches.Count}");
+
         var matchLookup = matches.ToDictionary(m => m.Id);
         var userLookup = users.ToDictionary(u => u.Id, u => u.Name);
 
-        // 1. Point-udvikling over tid (kumulative point per matchday per spiller)
-        var allMatchdays = matches
-            .Where(m => m.Matchday.HasValue)
-            .Select(m => m.Matchday!.Value)
-            .Distinct()
-            .OrderBy(d => d)
+        // Ordered matches for progression chart (group by match date)
+        var orderedMatches = matches.OrderBy(m => m.KickoffTime).ToList();
+        var matchDays = orderedMatches
+            .GroupBy(m => m.KickoffTime.Date)
+            .OrderBy(g => g.Key)
             .ToList();
 
-        var matchdayLabels = allMatchdays.Select(d => $"Runde {d}").ToList();
+        // 1. Point-udvikling over tid (kumulative point per kampdag per spiller)
+        var matchdayLabels = matchDays
+            .Select(g => g.Key.ToString("dd/MM"))
+            .ToList();
 
         var cumulativeData = users.Select(u =>
         {
-            var userPreds = predictions.Where(p => p.UserId == u.Id && matchLookup.ContainsKey(p.MatchId));
-            var pointsByMatchday = userPreds
-                .Where(p => matchLookup[p.MatchId].Matchday.HasValue)
-                .GroupBy(p => matchLookup[p.MatchId].Matchday!.Value)
-                .ToDictionary(g => g.Key, g => g.Sum(p => p.Points));
+            var userPreds = predictions
+                .Where(p => p.UserId == u.Id && matchLookup.ContainsKey(p.MatchId))
+                .ToDictionary(p => p.MatchId, p => p.Points);
 
             var cumulative = new List<double>();
             var running = 0.0;
-            foreach (var md in allMatchdays)
+            foreach (var day in matchDays)
             {
-                running += pointsByMatchday.GetValueOrDefault(md);
+                running += day.Sum(m => userPreds.GetValueOrDefault(m.Id));
                 cumulative.Add(running);
             }
 
@@ -58,10 +60,11 @@ public class StatsService
             {
                 Name = u.Name,
                 Exact = userPreds.Count(p => p.Points == 3),
+                CorrectDraw = userPreds.Count(p => p.Points == 2),
                 CorrectOutcome = userPreds.Count(p => p.Points == 1),
                 Wrong = userPreds.Count(p => p.Points == 0)
             };
-        }).ToList();
+        }).OrderByDescending(a => a.Exact).ThenByDescending(a => a.CorrectDraw).ToList();
 
         // 3. Mest tippede resultater
         var popularTips = predictions
@@ -122,6 +125,7 @@ public class AccuracyData
 {
     public string Name { get; set; } = "";
     public int Exact { get; set; }
+    public int CorrectDraw { get; set; }
     public int CorrectOutcome { get; set; }
     public int Wrong { get; set; }
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace TipGame.Blazor.Layout;
@@ -6,6 +7,7 @@ namespace TipGame.Blazor.Layout;
 public partial class MainLayout : IDisposable
 {
     [Inject] private PlayerState PlayerState { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private bool drawerOpen = true;
     private bool isDarkMode = true;
@@ -73,13 +75,29 @@ public partial class MainLayout : IDisposable
         }
     };
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender) return;
+
         await PlayerState.InitializeAsync();
         PlayerState.OnChange += StateHasChanged;
+
+        var stored = await JS.InvokeAsync<string?>("localStorage.getItem", "darkMode");
+        if (stored is not null)
+        {
+            isDarkMode = stored == "true";
+        }
+
+        StateHasChanged();
     }
 
     private void ToggleDrawer() => drawerOpen = !drawerOpen;
+
+    private async Task ToggleDarkMode()
+    {
+        isDarkMode = !isDarkMode;
+        await JS.InvokeVoidAsync("localStorage.setItem", "darkMode", isDarkMode ? "true" : "false");
+    }
 
     private async Task SaveName()
     {

@@ -1,0 +1,68 @@
+@using MudBlazor
+
+<MudPaper Class="pa-6" Elevation="0">
+    <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">📈 Point-udvikling over tid</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
+        Viser akkumulerede point per spiller for hver kampdag. Klik på navnene for at vise/skjule spillere.
+    </MudText>
+
+    <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-4">
+        @foreach (var name in allNames)
+        {
+            var n = name;
+            var active = visibleNames.Contains(n);
+            <MudChip T="string"
+                     Text="@n"
+                     Size="Size.Small"
+                     Variant="@(active ? Variant.Filled : Variant.Outlined)"
+                     Color="Color.Primary"
+                     OnClick="@(() => TogglePlayer(n))" />
+        }
+    </MudStack>
+
+    <MudChart ChartType="ChartType.Line"
+              ChartSeries="@filteredSeries"
+              ChartLabels="@Labels"
+              ChartOptions="@lineOptions"
+              MatchBoundsToSize="true"
+              Height="350px"
+              @bind-SelectedIndex="selectedIndex"
+              Class="mt-4" />
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public List<ChartSeries<double>> Series { get; set; } = [];
+    [Parameter, EditorRequired] public string[] Labels { get; set; } = [];
+
+    private int selectedIndex = -1;
+    private HashSet<string> visibleNames = [];
+    private List<string> allNames = [];
+    private List<ChartSeries<double>> filteredSeries = [];
+
+    private readonly LineChartOptions lineOptions = new()
+    {
+        ShowDataMarkers = true,
+        YAxisTicks = 0,
+        ShowToolTips = true,
+    };
+
+    protected override void OnParametersSet()
+    {
+        if (allNames.Count == 0 && Series.Count > 0)
+        {
+            allNames = Series.Select(s => s.Name).ToList();
+            visibleNames = [.. allNames];
+        }
+        UpdateFilteredSeries();
+    }
+
+    private void TogglePlayer(string name)
+    {
+        if (!visibleNames.Remove(name))
+            visibleNames.Add(name);
+        UpdateFilteredSeries();
+    }
+
+    private void UpdateFilteredSeries() =>
+        filteredSeries = Series.Where(s => visibleNames.Contains(s.Name)).ToList();
+}
