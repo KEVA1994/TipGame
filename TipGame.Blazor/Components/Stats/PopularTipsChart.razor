@@ -1,44 +1,155 @@
 @using MudBlazor
 
 <MudPaper Class="pa-6" Elevation="0">
-    <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">🔥 Top 10 mest tippede resultater</MudText>
+    <MudText Typo="Typo.h6" Class="mb-2">🔥 Mest tippede resultater</MudText>
     <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
-        Hvilke scoringer tipper flest spillere? Viser flokmentalitet — er alle enige, eller spreder det sig?
+        Hvilke scoringer tipper flest spillere? Se om flokmentaliteten hersker.
     </MudText>
-
-    <MudChart ChartType="ChartType.Bar"
-              ChartSeries="@Series"
-              ChartLabels="@Labels"
-              Width="100%" Height="300px"
-              ChartOptions="@barOptions"
-              Class="mt-4" />
 
     @if (Tips.Count > 0)
     {
-        <MudDivider Class="my-3" />
-        <MudStack Row="true" Spacing="3">
-            <MudText Typo="Typo.caption" Color="Color.Default">
-                🥇 Mest populære: <b>@Tips[0].Score</b> (@Tips[0].Count tips)
-            </MudText>
-            @if (Tips.Count > 1)
+        @* --- Podium top 3 --- *@
+        <MudPaper Class="pa-4 rounded-xl mb-5" Elevation="1">
+            <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.End" Spacing="4">
+                @if (Tips.Count > 1)
+                {
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText Typo="Typo.h4">🥈</MudText>
+                        <MudChip T="string" Color="Color.Default" Variant="Variant.Filled" Size="Size.Medium">@Tips[1].Score</MudChip>
+                        <MudText Typo="Typo.caption" Color="Color.Default">@Tips[1].Count tips</MudText>
+                    </MudStack>
+                }
+
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.h3">🥇</MudText>
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large">@Tips[0].Score</MudChip>
+                    <MudText Typo="Typo.body2"><b>@Tips[0].Count tips</b></MudText>
+                    @if (Tips[0].ExactHits > 0)
+                    {
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.Filled.Check">
+                            🎯 @Tips[0].TotalPlayerHits hits
+                        </MudChip>
+                    }
+                </MudStack>
+
+                @if (Tips.Count > 2)
+                {
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText Typo="Typo.h4">🥉</MudText>
+                        <MudChip T="string" Color="Color.Default" Variant="Variant.Filled" Size="Size.Medium">@Tips[2].Score</MudChip>
+                        <MudText Typo="Typo.caption" Color="Color.Default">@Tips[2].Count tips</MudText>
+                    </MudStack>
+                }
+            </MudStack>
+        </MudPaper>
+
+        @* --- Rangliste --- *@
+        <MudStack Spacing="2">
+            @for (var i = 0; i < Tips.Count; i++)
             {
-                <MudText Typo="Typo.caption" Color="Color.Default">
-                    🥈 Næstmest: <b>@Tips[1].Score</b> (@Tips[1].Count tips)
-                </MudText>
+                var tip = Tips[i];
+                var rank = i + 1;
+                var pct = MaxCount > 0 ? (double)tip.Count / MaxCount * 100 : 0;
+                var isTop3 = rank <= 3;
+
+                <MudPaper Class="pa-3 rounded-lg" Elevation="0" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                        <MudText Typo="Typo.subtitle2" Style="min-width: 28px; text-align: center;"
+                                 Color="@(isTop3 ? Color.Primary : Color.Default)">
+                            @(rank).
+                        </MudText>
+
+                        <MudChip T="string"
+                                 Color="@(isTop3 ? Color.Primary : Color.Default)"
+                                 Variant="@(isTop3 ? Variant.Filled : Variant.Outlined)"
+                                 Size="Size.Small">
+                            @tip.Score
+                        </MudChip>
+
+                        <div style="flex: 1;">
+                            <MudProgressLinear Value="@pct"
+                                               Color="@(isTop3 ? Color.Primary : Color.Default)"
+                                               Rounded="true" Size="Size.Medium" />
+                        </div>
+
+                        <MudText Typo="Typo.body2" Style="min-width: 55px; text-align: right;">
+                            <b>@tip.Count</b> tips
+                        </MudText>
+
+                        <MudBadge Content="@tip.TotalPlayerHits" Color="Color.Success" Overlap="true" Visible="@(tip.TotalPlayerHits > 0)">
+                            <MudMenu Icon="@Icons.Material.Filled.MyLocation" Size="Size.Small"
+                                     Color="@(tip.ExactHits > 0 ? Color.Success : Color.Default)"
+                                     AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                @if (tip.ExactHits > 0)
+                                {
+                                    <div class="pa-3" style="min-width: 250px;">
+                                        <MudText Typo="Typo.subtitle2" Class="mb-3">
+                                            🎯 @tip.Score ramte @tip.ExactHits @(tip.ExactHits == 1 ? "gang" : "gange")
+                                        </MudText>
+                                        @foreach (var m in tip.HitMatches)
+                                        {
+                                            <MudStack Spacing="0" Class="mb-3">
+                                                <MudText Typo="Typo.body2"><b>@m.MatchLabel</b></MudText>
+                                                @if (m.Players.Count > 0)
+                                                {
+                                                    <MudStack Row="true" Spacing="1" Class="mt-1" Style="flex-wrap: wrap;">
+                                                        @foreach (var player in m.Players)
+                                                        {
+                                                            <MudChip T="string" Color="Color.Success" Variant="Variant.Text" Size="Size.Small">@player</MudChip>
+                                                        }
+                                                    </MudStack>
+                                                }
+                                            </MudStack>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="pa-3">
+                                        <MudText Typo="Typo.body2" Color="Color.Default">Ingen kampe endte @tip.Score</MudText>
+                                    </div>
+                                }
+                            </MudMenu>
+                        </MudBadge>
+
+                        <MudMenu Icon="@Icons.Material.Filled.FormatListBulleted" Size="Size.Small"
+                                 Color="Color.Default"
+                                 AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                            <div class="pa-3" style="min-width: 280px; max-height: 400px; overflow-y: auto;">
+                                <MudText Typo="Typo.subtitle2" Class="mb-3">
+                                    📋 Hvem tippede @tip.Score?
+                                </MudText>
+                                @foreach (var m in tip.TippedMatches)
+                                {
+                                    <MudStack Spacing="0" Class="mb-3">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                            @if (m.WasCorrect)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" />
+                                            }
+                                            <MudText Typo="Typo.body2"><b>@m.MatchLabel</b></MudText>
+                                        </MudStack>
+                                        <MudStack Row="true" Spacing="1" Class="mt-1" Style="flex-wrap: wrap;">
+                                            @foreach (var player in m.Players)
+                                            {
+                                                <MudChip T="string"
+                                                         Color="@(m.WasCorrect ? Color.Success : Color.Default)"
+                                                         Variant="Variant.Text" Size="Size.Small">@player</MudChip>
+                                            }
+                                        </MudStack>
+                                    </MudStack>
+                                }
+                            </div>
+                        </MudMenu>
+                    </MudStack>
+                </MudPaper>
             }
         </MudStack>
     }
-</MudPaper>
-
-@code {
-    [Parameter, EditorRequired] public List<PopularTip> Tips { get; set; } = [];
-    [Parameter, EditorRequired] public List<ChartSeries<double>> Series { get; set; } = [];
-    [Parameter, EditorRequired] public string[] Labels { get; set; } = [];
-
-    private readonly BarChartOptions barOptions = new()
+    else
     {
-        XAxisTitle = "Tippet resultat",
-        YAxisTitle = "Antal tips",
-        XAxisLabelRotation = 90
-    };
-}
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Text" Icon="@Icons.Material.Filled.Info">
+            Ingen tips endnu.
+        </MudAlert>
+    }
+</MudPaper>

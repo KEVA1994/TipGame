@@ -11,8 +11,7 @@ public partial class MainLayout : IDisposable
 
     private bool drawerOpen = true;
     private bool isDarkMode = true;
-    private string firstNameInput = string.Empty;
-    private string lastNameInput = string.Empty;
+    private bool accountPopoverOpen;
 
     private readonly MudTheme appTheme = new()
     {
@@ -71,7 +70,7 @@ public partial class MainLayout : IDisposable
         },
         LayoutProperties = new LayoutProperties
         {
-            DefaultBorderRadius = "8px"
+            DefaultBorderRadius = "6px"
         }
     };
 
@@ -97,19 +96,6 @@ public partial class MainLayout : IDisposable
     {
         isDarkMode = !isDarkMode;
         await JS.InvokeVoidAsync("localStorage.setItem", "darkMode", isDarkMode ? "true" : "false");
-    }
-
-    private async Task SaveName()
-    {
-        var fullName = $"{firstNameInput.Trim()} {lastNameInput.Trim()}";
-        await PlayerState.SetNameAsync(fullName);
-    }
-
-    private async Task SwitchUser(MudChip<string> chip)
-    {
-        firstNameInput = string.Empty;
-        lastNameInput = string.Empty;
-        await PlayerState.LogoutAsync();
     }
 
     public void Dispose()

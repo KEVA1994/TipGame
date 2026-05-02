@@ -1,74 +1,128 @@
 @using MudBlazor
 
 <MudPaper Class="pa-6" Elevation="0">
-    <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">🎯 Træfsikkerhed per spiller</MudText>
-    <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-4">
-        Fordeling af tips resultater for færdigspillede kampe. Sorteret efter flest kampe ramt "Lige på".
+    <MudText Typo="Typo.h6" Class="mb-2">🎯 Træfsikkerhed</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
+        Fordeling af tips for færdigspillede kampe. Sorteret efter flest ramt "Lige på".
     </MudText>
 
-    <MudStack Row="true" Spacing="4" Wrap="Wrap.Wrap" Class="mb-4">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-            <div style="width:12px; height:12px; border-radius:50%; background:#2E7D32;"></div>
-            <MudText Typo="Typo.caption"><b>Lige på</b> — 3p</MudText>
-        </MudStack>
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-            <div style="width:12px; height:12px; border-radius:50%; background:#66BB6A;"></div>
-            <MudText Typo="Typo.caption"><b>Uafgjort</b> — 2p</MudText>
-        </MudStack>
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-            <div style="width:12px; height:12px; border-radius:50%; background:#FFA726;"></div>
-            <MudText Typo="Typo.caption"><b>Vinder</b> — 1p</MudText>
-        </MudStack>
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-            <div style="width:12px; height:12px; border-radius:50%; background:#E53935;"></div>
-            <MudText Typo="Typo.caption"><b>Forkert</b> — 0p</MudText>
-        </MudStack>
-    </MudStack>
+    @if (Players.Count > 0)
+    {
+        @* --- Topscorer highlight --- *@
+        <MudPaper Class="pa-4 rounded-xl mb-5" Elevation="1">
+            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                <MudText Typo="Typo.h4">🏆</MudText>
+                <MudAvatar Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled">
+                    @Players[0].Name[..1].ToUpper()
+                </MudAvatar>
+                <MudText Typo="Typo.subtitle1">@Players[0].Name</MudText>
+                <MudStack Row="true" Spacing="3" Justify="Justify.Center">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                        <MudText Typo="Typo.h5" Color="Color.Success">@Players[0].Exact</MudText>
+                        <MudText Typo="Typo.caption">Lige på</MudText>
+                    </MudStack>
+                    <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                        <MudText Typo="Typo.h5" Color="Color.Info">@Players[0].CorrectDraw</MudText>
+                        <MudText Typo="Typo.caption">Uafgjort</MudText>
+                    </MudStack>
+                    <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                        <MudText Typo="Typo.h5" Color="Color.Warning">@Players[0].CorrectOutcome</MudText>
+                        <MudText Typo="Typo.caption">Vinder</MudText>
+                    </MudStack>
+                    <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                        <MudText Typo="Typo.h5" Color="Color.Error">@Players[0].Wrong</MudText>
+                        <MudText Typo="Typo.caption">Forkert</MudText>
+                    </MudStack>
+                </MudStack>
+                @{
+                    var bestTotal = Players[0].Exact + Players[0].CorrectDraw + Players[0].CorrectOutcome + Players[0].Wrong;
+                }
+                @if (bestTotal > 0)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Default">
+                        @((Players[0].Exact * 100.0 / bestTotal).ToString("0"))% ramt lige på
+                    </MudText>
+                }
+            </MudStack>
+        </MudPaper>
 
-    <MudGrid Spacing="4" Class="mt-2">
-        @foreach (var player in sortedPlayers)
-        {
-            var total = player.Exact + player.CorrectDraw + player.CorrectOutcome + player.Wrong;
-            var pct = (int)Math.Round(100.0 * player.Exact / total);
-            <MudItem xs="12" sm="6" md="4" lg="3">
-                <MudPaper Class="pa-4 d-flex flex-column align-center" Elevation="2" Style="border-radius: 12px;">
-                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">@player.Name</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Default" Class="mb-2">@total kampe tippet</MudText>
-                    <MudChart ChartType="ChartType.Donut"
-                              ChartSeries="@GetData(player).AsChartDataSet()"
-                              ChartOptions="@pieOptions"
-                              MatchBoundsToSize="true"
-                              >
-                        <CustomGraphics>
-                            <text class="mud-donut-text mud-typography-h3" x="50%" y="50%" style="fill: #2E7D32;">@pct%</text>
-                        </CustomGraphics>
-                    </MudChart>
+        @* --- Spillerliste --- *@
+        <MudStack Spacing="2">
+            @for (var i = 0; i < Players.Count; i++)
+            {
+                var player = Players[i];
+                var total = player.Exact + player.CorrectDraw + player.CorrectOutcome + player.Wrong;
+                var rank = i + 1;
+                var isTop3 = rank <= 3;
+                var exactPct = total > 0 ? (double)player.Exact / total * 100 : 0;
+                var drawPct = total > 0 ? (double)player.CorrectDraw / total * 100 : 0;
+                var outcomePct = total > 0 ? (double)player.CorrectOutcome / total * 100 : 0;
+                var wrongPct = total > 0 ? (double)player.Wrong / total * 100 : 0;
+
+                <MudPaper Class="pa-3 rounded-lg" Elevation="0" Outlined="true">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                            <MudText Typo="Typo.subtitle2" Style="min-width: 28px; text-align: center;"
+                                     Color="@(isTop3 ? Color.Primary : Color.Default)">
+                                @(rank).
+                            </MudText>
+
+                            <MudAvatar Color="@(isTop3? Color.Primary: Color.Default)" Size="Size.Small"
+                                       Variant="@(isTop3 ? Variant.Filled : Variant.Outlined)">
+                                @player.Name[..1].ToUpper()
+                            </MudAvatar>
+
+                            <MudText Typo="Typo.body1" Style="flex: 1;">@player.Name</MudText>
+                        </MudStack>
+
+                        @* Stacked progress bar *@
+                        <MudStack Row="true" Spacing="1" Style="width: 100%;">
+                            @if (player.Exact > 0)
+                            {
+                                <MudChip T="string" Style="@($"width: {(player.Exact * 100 / total)}%; min-width: 32px;")" Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">@player.Exact</MudChip>
+                            }
+                            @if (player.CorrectDraw > 0)
+                            {
+                                <MudChip T="string" Style="@($"width: {(player.CorrectDraw * 100 / total)}%; min-width: 32px;")" Color="Color.Info" Variant="Variant.Filled" Size="Size.Small">@player.CorrectDraw</MudChip>
+                            }
+                            @if (player.CorrectOutcome > 0)
+                            {
+                                <MudChip T="string" Style="@($"width: {(player.CorrectOutcome * 100 / total)}%; min-width: 32px;")" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small">@player.CorrectOutcome</MudChip>
+                            }
+                            @if (player.Wrong > 0)
+                            {
+                                <MudChip T="string" Style="@($"width: {(player.Wrong * 100 / total)}%; min-width: 32px;")" Color="Color.Error" Variant="Variant.Filled" Size="Size.Small">@player.Wrong</MudChip>
+                            }
+                        </MudStack>
+                    </MudStack>
                 </MudPaper>
-            </MudItem>
-        }
-    </MudGrid>
-</MudPaper>
+            }
+        </MudStack>
 
-@code {
-    [Parameter, EditorRequired] public List<AccuracyData> Players { get; set; } = [];
-
-    private List<AccuracyData> sortedPlayers = [];
-    private readonly string[] pieLabels = ["Lige på (3p)", "Uafgjort (2p)", "Vinder (1p)", "Forkert (0p)"];
-
-    private readonly DonutChartOptions pieOptions = new()
-    {
-        ChartPalette = ["#2E7D32", "#66BB6A", "#FFA726", "#E53935"],
-        FillOpacity = 0.8,
-        ShowToolTips = true,
-    };
-
-    protected override void OnParametersSet()
-    {
-        sortedPlayers = Players
-            .Where(p => p.Exact + p.CorrectDraw + p.CorrectOutcome + p.Wrong > 0)
-            .ToList();
+        @* --- Forklaring --- *@
+        <MudStack Row="true" Spacing="3" Justify="Justify.Center" Class="mt-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--mud-palette-success);"></div>
+                <MudText Typo="Typo.caption">Lige på (3p)</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--mud-palette-info);"></div>
+                <MudText Typo="Typo.caption">Uafgjort (2p)</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--mud-palette-warning);"></div>
+                <MudText Typo="Typo.caption">Vinder (1p)</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--mud-palette-error);"></div>
+                <MudText Typo="Typo.caption">Forkert (0p)</MudText>
+            </MudStack>
+        </MudStack>
     }
-
-    private static double[] GetData(AccuracyData p) =>
-        [p.Exact, p.CorrectDraw, p.CorrectOutcome, p.Wrong];
-}
+    else
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Text" Icon="@Icons.Material.Filled.Info">
+            Ingen data endnu.
+        </MudAlert>
+    }
+</MudPaper>

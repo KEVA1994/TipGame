@@ -1,0 +1,109 @@
+@using MudBlazor
+
+<MudDialog @bind-Visible="IsOpen" Options="dialogOptions">
+    <TitleContent>
+        @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        {
+            <MudText Typo="Typo.h6">Min konto</MudText>
+        }
+        else if (isSignUpMode)
+        {
+            <MudText Typo="Typo.h6">Opret konto</MudText>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6">Log ind</MudText>
+        }
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudAvatar Color="Color.Primary" Size="Size.Large">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" />
+                </MudAvatar>
+                <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                    <MudText Typo="Typo.h6">@PlayerState.PlayerName</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Default">@PlayerState.Email</MudText>
+                </MudStack>
+            </MudStack>
+        }
+        else if (isSignUpMode)
+        {
+            <MudStack Spacing="2">
+                <MudTextField @bind-Value="signUpName"
+                              Label="Visningsnavn"
+                              Variant="Variant.Text"
+                              Immediate="true" />
+                <MudTextField @bind-Value="signUpEmail"
+                              Label="Email"
+                              InputType="InputType.Email"
+                              Variant="Variant.Text"
+                              Immediate="true" />
+                <MudTextField @bind-Value="signUpPassword"
+                              Label="Kodeord"
+                              InputType="InputType.Password"
+                              Variant="Variant.Text"
+                              Immediate="true" />
+            </MudStack>
+
+            <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Class="mt-4">
+                <MudText Typo="Typo.body2">Har du allerede en konto?</MudText>
+                <MudLink Typo="Typo.body2" Color="Color.Primary" OnClick="@(() => isSignUpMode = false)">
+                    Log ind
+                </MudLink>
+            </MudStack>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                <MudTextField @bind-Value="emailInput"
+                              Label="Email"
+                              InputType="InputType.Email"
+                              Variant="Variant.Text"
+                              Immediate="true" />
+                <MudTextField @bind-Value="passwordInput"
+                              Label="Kodeord"
+                              InputType="InputType.Password"
+                              Variant="Variant.Text"
+                              Immediate="true" />
+            </MudStack>
+
+            <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Class="mt-4">
+                <MudText Typo="Typo.body2">Har du ikke en konto?</MudText>
+                <MudLink Typo="Typo.body2" Color="Color.Primary" OnClick="@(() => isSignUpMode = true)">
+                    Opret nu
+                </MudLink>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        {
+            <MudButton OnClick="Close">Luk</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error"
+                       StartIcon="@Icons.Material.Filled.Logout"
+                       OnClick="HandleLogout">
+                Log ud
+            </MudButton>
+        }
+        else if (isSignUpMode)
+        {
+            <MudButton OnClick="Close">Annuller</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="HandleSignUp"
+                       Disabled="@(string.IsNullOrWhiteSpace(signUpName) || string.IsNullOrWhiteSpace(signUpEmail) || string.IsNullOrWhiteSpace(signUpPassword))">
+                Opret konto
+            </MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="Close">Annuller</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="HandleLogin"
+                       Disabled="@(string.IsNullOrWhiteSpace(emailInput) || string.IsNullOrWhiteSpace(passwordInput))">
+                Log ind
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>

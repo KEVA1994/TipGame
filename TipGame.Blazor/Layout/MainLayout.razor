@@ -14,60 +14,35 @@
 
         @if (string.IsNullOrEmpty(PlayerState.PlayerName))
         {
-            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                <MudTextField @bind-Value="firstNameInput"
-                              Placeholder="Fornavn..."
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense"
-                              Immediate="true"
-                              Style="max-width: 140px; background: rgba(255,255,255,0.15); border-radius: 4px;"
-                              InputType="InputType.Text"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Person"
-                              AdornmentColor="Color.Inherit"
-                              Class="appbar-input" />
-                <MudTextField @bind-Value="lastNameInput"
-                              Placeholder="Efternavn..."
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense"
-                              Immediate="true"
-                              Style="max-width: 140px; background: rgba(255,255,255,0.15); border-radius: 4px;"
-                              InputType="InputType.Text"
-                              Class="appbar-input" />
-                <MudButton Variant="Variant.Filled"
-                           Style="height: 40px;"
-                           Color="Color.Secondary"
-                           Size="Size.Small"
-                           OnClick="SaveName"
-                           Disabled="@(string.IsNullOrWhiteSpace(firstNameInput) || string.IsNullOrWhiteSpace(lastNameInput))">
-                    Start
-                </MudButton>
-            </MudStack>
+            <MudIconButton Icon="@Icons.Material.Filled.Person"
+                           Color="Color.Inherit"
+                           OnClick="@(() => accountPopoverOpen = !accountPopoverOpen)" />
         }
         else
         {
             <MudChip T="string" Color="Color.Secondary" Size="Size.Small"
                      Icon="@Icons.Material.Filled.Person"
                      Text="@PlayerState.PlayerName"
-                     OnClose="SwitchUser" />
+                     OnClick="@(() => accountPopoverOpen = !accountPopoverOpen)" />
         }
+
+        <TipGame.Blazor.Components.Account.AccountPopover @bind-IsOpen="accountPopoverOpen" />
 
         <MudIconButton Icon="@(isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                        Color="Color.Inherit"
-                       OnClick="ToggleDarkMode"
-                       Title="@(isDarkMode ? "Lyst tema" : "Mørkt tema")" />
+                       OnClick="ToggleDarkMode"/>
     </MudAppBar>
 
-    <MudDrawer @bind-Open="drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Mini" OpenMiniOnHover="true">
+    <MudDrawer @bind-Open="drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Responsive" Breakpoint="Breakpoint.Md" OpenMiniOnHover="true">
         <MudNavMenu>
             <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
-                Dashboard
+                Hjem
             </MudNavLink>
             <MudNavLink Href="matches" Icon="@Icons.Material.Filled.SportsSoccer">
                 Kampe
             </MudNavLink>
-            <MudNavLink Href="leaderboard" Icon="@Icons.Material.Filled.Leaderboard">
-                Leaderboard
+            <MudNavLink Href="leaderboard" Icon="@Icons.Material.Filled.EmojiEvents">
+                Stilling
             </MudNavLink>
             <MudNavLink Href="stats" Icon="@Icons.Material.Filled.BarChart">
                 Statistik

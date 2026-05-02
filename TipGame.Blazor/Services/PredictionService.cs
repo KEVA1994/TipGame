@@ -10,21 +10,15 @@ public class PredictionService
         _supabase = supabase;
     }
 
-    public async Task SaveTip(string playerName, int matchId, int home, int away)
+    public async Task SaveTip(string authId, int matchId, int home, int away)
     {
-        // Find or create user by name
+        // Find user by AuthId (created automatically by database trigger on signup)
         var userResponse = await _supabase.From<User>()
-            .Where(u => u.Name == playerName)
+            .Where(u => u.AuthId == authId)
             .Get();
 
         var user = userResponse.Models.FirstOrDefault();
-
-        if (user == null)
-        {
-            user = new User { Name = playerName };
-            var insertResponse = await _supabase.From<User>().Insert(user);
-            user = insertResponse.Models.First();
-        }
+        if (user == null) return;
 
         // Check deadline
         var matchResponse = await _supabase.From<Match>()
@@ -64,15 +58,15 @@ public class PredictionService
         }
     }
 
-    public async Task<List<PredictionDto>> GetPredictions(string playerName)
+    public async Task<List<PredictionDto>> GetPredictions(string authId)
     {
         var userResponse = await _supabase.From<User>()
-            .Where(u => u.Name == playerName)
+            .Where(u => u.AuthId == authId)
             .Get();
 
         var user = userResponse.Models.FirstOrDefault();
         if (user == null)
-            return new List<PredictionDto>();
+            return [];
 
         var predResponse = await _supabase.From<Prediction>()
             .Where(p => p.UserId == user.Id)

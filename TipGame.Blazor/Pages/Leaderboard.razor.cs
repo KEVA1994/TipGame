@@ -7,9 +7,11 @@ public partial class Leaderboard
 {
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
 
-    private List<LeaderboardDto> players = new();
+    private List<LeaderboardDto> players = [];
+    private List<string> matchDays = [];
     private string latestDay = "";
     private bool isLoading = true;
+    private Dictionary<string, int> maxPointsByDay = [];
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -21,16 +23,20 @@ public partial class Leaderboard
         }
         catch
         {
-            players = new();
+            players = [];
         }
 
-        var matchDays = players
+        matchDays = players
             .SelectMany(p => p.DailyPoints.Keys)
             .Distinct()
             .OrderBy(d => DateTime.ParseExact(d, "dd/MM", null))
             .ToList();
 
         latestDay = matchDays.LastOrDefault() ?? "";
+
+        maxPointsByDay = matchDays.ToDictionary(
+            day => day,
+            day => players.Max(p => p.DailyPoints.GetValueOrDefault(day)));
 
         isLoading = false;
         StateHasChanged();

@@ -60,25 +60,25 @@
 else if (todayMatches.Count == 0)
 {
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-        No matches today. Better luck tomorrow.
+        Ingen kampe i dag. Bedre held i morgen!
     </MudAlert>
 }
 else
 {
-    <MudPaper Elevation="0" Class="rounded-lg mb-4" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
+    <MudPaper Elevation="0" Class="rounded-lg mb-4" Outlined="true">
         @foreach (var match in todayMatches)
         {
-            <div style="display: flex; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--mud-palette-lines-default);">
-                <MudText Typo="Typo.caption" Style="width: 48px; text-align: center;" Color="@(match.Status == "FINISHED" ? Color.Error : Color.Default)">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="px-4 py-2 border-b">
+                <MudText Typo="Typo.caption" Color="@(match.Status == "FINISHED" ? Color.Error : Color.Default)">
                     @(match.Status == "FINISHED" ? "FT" : match.KickoffTime.ToString("HH:mm"))
                 </MudText>
-                <MudText Typo="Typo.body2" Style="flex: 1; padding: 0 12px;">
+                <MudText Typo="Typo.body2" Class="flex-grow-1 px-3">
                     @match.HomeTeam vs @match.AwayTeam
                 </MudText>
-                <MudText Typo="Typo.body2" Style="font-weight: 700; width: 60px; text-align: center;">
+                <MudText Typo="Typo.body2">
                     @(match.HomeScore?.ToString() ?? "-") - @(match.AwayScore?.ToString() ?? "-")
                 </MudText>
-            </div>
+            </MudStack>
         }
     </MudPaper>
 }
@@ -91,17 +91,17 @@ else
 }
 else
 {
-    <MudPaper Elevation="0" Class="rounded-lg" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
+    <MudPaper Elevation="0" Class="rounded-lg" Outlined="true">
         @for (var i = 0; i < topPlayers.Count; i++)
         {
             var player = topPlayers[i];
             var medal = i switch { 0 => "🥇", 1 => "🥈", 2 => "🥉", _ => "" };
 
-            <div style="display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--mud-palette-lines-default);">
-                <MudText Typo="Typo.h6" Style="width: 40px;">@medal</MudText>
-                <MudText Typo="Typo.body1" Style="flex: 1;">@player.UserName</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="px-4 py-2 border-b">
+                <MudText Typo="Typo.h6">@medal</MudText>
+                <MudText Typo="Typo.body1" Class="flex-grow-1">@player.UserName</MudText>
                 <MudChip T="string" Color="Color.Primary" Size="Size.Small" Text="@($"{player.TotalPoints} pts")" />
-            </div>
+            </MudStack>
         }
     </MudPaper>
 }

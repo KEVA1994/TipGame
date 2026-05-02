@@ -1,29 +1,27 @@
 ﻿@using MudBlazor
 @using TipGame.Shared.Models
-@inject PredictionService PredictionService
 
-<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center"
-          Style="width: 180px; justify-content: flex-end; margin-left: auto;">
+<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd">
 
-    <MudNumericField @bind-Value="home" Min="0" Max="20"
-                     Style="width: 52px;"
-                     Margin="Margin.Dense"
-                     Variant="@(IsReadOnly ? Variant.Text : Variant.Outlined)"
-                     HideSpinButtons="true"
-                     Immediate="true"
-                     ReadOnly="@IsReadOnly"
-                     Class="@(IsReadOnly ? "tip-readonly tip-field" : "tip-field")" />
+    <MudStack Spacing="0" AlignItems="AlignItems.Center">
+        <MudNumericField @bind-Value="home" Min="0" Max="20"
+                         Margin="Margin.Dense"
+                         Variant="@(IsReadOnly ? Variant.Text : Variant.Outlined)"
+                         HideSpinButtons="true"
+                         Immediate="true"
+                         ReadOnly="@IsReadOnly"
+                         Style="width: 36px;"
+                         Class="@(IsReadOnly ? "tip-readonly tip-field tip-bold" : "tip-field tip-bold")" />
 
-    <MudText Typo="Typo.body2" Style="font-weight: 600; margin: 0 16px;"> - </MudText>
-
-    <MudNumericField @bind-Value="away" Min="0" Max="20"
-                     Style="width: 52px;"
-                     Margin="Margin.Dense"
-                     Variant="@(IsReadOnly ? Variant.Text : Variant.Outlined)"
-                     HideSpinButtons="true"
-                     Immediate="true"
-                     ReadOnly="@IsReadOnly"
-                     Class="@(IsReadOnly ? "tip-readonly tip-field" : "tip-field")" />
+        <MudNumericField @bind-Value="away" Min="0" Max="20"
+                         Margin="Margin.Dense"
+                         Variant="@(IsReadOnly ? Variant.Text : Variant.Outlined)"
+                         HideSpinButtons="true"
+                         Immediate="true"
+                         ReadOnly="@IsReadOnly"
+                         Style="width: 36px;"
+                         Class="@(IsReadOnly ? "tip-readonly tip-field tip-bold" : "tip-field tip-bold")" />
+    </MudStack>
 
     @if (isSaved && !isEditing && CanEdit)
     {
@@ -32,63 +30,12 @@
                        Color="Color.Primary" 
                        OnClick="Edit" />
     }
-    else
+    else if (CanEdit)
     {
         <MudIconButton Color="Color.Primary"
                        Size="Size.Small"
                        Icon="@Icons.Material.Filled.Save"
                        OnClick="Save"
-                       Disabled="@(IsReadOnly || home is null || away is null)" />
+                       Disabled="@(home is null || away is null)" />
     }
 </MudStack>
-
-@code {
-    [Parameter] public int MatchId { get; set; }
-    [Parameter] public DateTime Kickoff { get; set; }
-    [Parameter] public string PlayerName { get; set; }
-    [Parameter] public PredictionDto ExistingTip { get; set; }
-    [Parameter] public EventCallback<PredictionDto> OnTipSaved { get; set; }
-
-    private int? home;
-    private int? away;
-    private bool isSaved;
-    private bool isEditing;
-    private string? _previousPlayer;
-
-    private bool CanEdit => !string.IsNullOrEmpty(PlayerName) && DateTime.UtcNow < Kickoff.AddHours(-1);
-    private bool IsReadOnly => !CanEdit || (isSaved && !isEditing);
-
-    protected override void OnParametersSet()
-    {
-        var playerChanged = _previousPlayer != PlayerName;
-        _previousPlayer = PlayerName;
-
-        if (playerChanged)
-        {
-            isSaved = false;
-            isEditing = false;
-            home = null;
-            away = null;
-        }
-
-        if (ExistingTip is not null && !isSaved && !isEditing)
-        {
-            home = ExistingTip.HomeScore;
-            away = ExistingTip.AwayScore;
-            isSaved = true;
-        }
-    }
-
-    private void Edit()
-    {
-        isEditing = true;
-    }
-
-    private async Task Save()
-    {
-        await PredictionService.SaveTip(PlayerName, MatchId, home!.Value, away!.Value);
-        isSaved = true;
-        isEditing = false;
-        await OnTipSaved.InvokeAsync(new PredictionDto { MatchId = MatchId, HomeScore = home!.Value, AwayScore = away!.Value });
-    }
-}

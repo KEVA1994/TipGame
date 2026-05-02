@@ -70,7 +70,53 @@ public class StatsService
         var popularTips = predictions
             .Where(p => matchLookup.ContainsKey(p.MatchId))
             .GroupBy(p => $"{p.PredictedHome}-{p.PredictedAway}")
-            .Select(g => new PopularTip { Score = g.Key, Count = g.Count() })
+            .Select(g =>
+            {
+                var score = g.Key;
+                var parts = score.Split('-');
+                var home = int.Parse(parts[0]);
+                var away = int.Parse(parts[1]);
+                var hitMatchList = matches
+                    .Where(m => m.HomeScore == home && m.AwayScore == away)
+                    .Select(m =>
+                    {
+                        var players = predictions
+                            .Where(p => p.MatchId == m.Id && p.PredictedHome == home && p.PredictedAway == away)
+                            .Select(p => userLookup.GetValueOrDefault(p.UserId, "?"))
+                            .ToList();
+                        return new HitMatchInfo
+                        {
+                            MatchLabel = $"{m.HomeTeam} {m.HomeScore}-{m.AwayScore} {m.AwayTeam}",
+                            Players = players
+                        };
+                    })
+                    .ToList();
+                var tippedMatches = g
+                    .GroupBy(p => p.MatchId)
+                    .Where(mg => matchLookup.ContainsKey(mg.Key))
+                    .Select(mg =>
+                    {
+                        var match = matchLookup[mg.Key];
+                        return new TipMatchInfo
+                        {
+                            MatchLabel = $"{match.HomeTeam} {match.HomeScore}-{match.AwayScore} {match.AwayTeam}",
+                            Players = mg.Select(p => userLookup.GetValueOrDefault(p.UserId, "?")).ToList(),
+                            WasCorrect = match.HomeScore == home && match.AwayScore == away
+                        };
+                    })
+                    .OrderByDescending(t => t.WasCorrect)
+                    .ThenByDescending(t => t.Players.Count)
+                    .ToList();
+
+                return new PopularTip
+                {
+                    Score = score,
+                    Count = g.Count(),
+                    ExactHits = hitMatchList.Count,
+                    HitMatches = hitMatchList,
+                    TippedMatches = tippedMatches
+                };
+            })
             .OrderByDescending(x => x.Count)
             .Take(10)
             .ToList();
@@ -134,6 +180,23 @@ public class PopularTip
 {
     public string Score { get; set; } = "";
     public int Count { get; set; }
+    public int ExactHits { get; set; }
+    public int TotalPlayerHits => HitMatches.Sum(m => m.Players.Count);
+    public List<HitMatchInfo> HitMatches { get; set; } = [];
+    public List<TipMatchInfo> TippedMatches { get; set; } = [];
+}
+
+public class HitMatchInfo
+{
+    public string MatchLabel { get; set; } = "";
+    public List<string> Players { get; set; } = [];
+}
+
+public class TipMatchInfo
+{
+    public string MatchLabel { get; set; } = "";
+    public List<string> Players { get; set; } = [];
+    public bool WasCorrect { get; set; }
 }
 
 public class HeadToHeadPlayer

@@ -12,6 +12,9 @@ namespace TipGame.Domain.Entities
         [Column("Name")]
         public string Name { get; set; }
 
+        [Column("AuthId")]
+        public string? AuthId { get; set; }
+
         // Not mapped — populated manually
         [System.Text.Json.Serialization.JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]

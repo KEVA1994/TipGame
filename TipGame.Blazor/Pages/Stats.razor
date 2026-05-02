@@ -17,7 +17,7 @@ else if (data is not null)
     <MudTabs Elevation="1" Rounded="false" Ripple="true" Color="Color.Primary" SliderColor="Color.Inherit" TabPanelsClass="pt-6">
 
         <MudTabPanel Text="Point-udvikling" Icon="@Icons.Material.Filled.TrendingUp">
-            <PointProgressionChart Series="@pointSeries" Labels="@pointLabels" />
+            <PointProgressionChart Series="@pointSeries" Labels="@pointLabels" CumulativePoints="@data.CumulativePoints" />
         </MudTabPanel>
 
         <MudTabPanel Text="Træfsikkerhed" Icon="@Icons.Material.Filled.PieChart">
@@ -25,7 +25,7 @@ else if (data is not null)
         </MudTabPanel>
 
         <MudTabPanel Text="Populære tips" Icon="@Icons.Material.Filled.BarChart">
-            <PopularTipsChart Tips="@data.PopularTips" Series="@popularSeries" Labels="@popularLabels" />
+            <PopularTipsChart Tips="@data.PopularTips" />
         </MudTabPanel>
 
         <MudTabPanel Text="Head-to-head" Icon="@Icons.Material.Filled.CompareArrows">

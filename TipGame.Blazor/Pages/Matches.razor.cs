@@ -14,11 +14,15 @@ public partial class Matches : IAsyncDisposable
     [Inject] private IConfiguration Configuration { get; set; } = default!;
 
     private Dictionary<int, PredictionDto> tips = new();
+    private Dictionary<int, TipState> tipStates = new();
     private List<MatchDto> matches = new();
     private List<MatchGroup> matchGroups = new();
+    private Dictionary<string, bool> expandedStates = new();
     private bool isLoading = true;
     private string? errorMessage;
     private DotNetObjectReference<Matches>? _dotNetRef;
+    private int activeTab;
+    private int liveCount;
 
     protected override void OnInitialized()
     {
@@ -34,9 +38,9 @@ public partial class Matches : IAsyncDisposable
         var matchesTask = MatchService.GetMatches();
 
         Task<List<PredictionDto>>? tipsTask = null;
-        if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        if (!string.IsNullOrEmpty(PlayerState.AuthId))
         {
-            tipsTask = PredictionService.GetPredictions(PlayerState.PlayerName);
+            tipsTask = PredictionService.GetPredictions(PlayerState.AuthId);
         }
 
         try
@@ -49,6 +53,7 @@ public partial class Matches : IAsyncDisposable
         }
 
         BuildGroupedMatches();
+        liveCount = matches.Count(m => m.Status is "IN_PLAY" or "PAUSED");
 
         if (tipsTask is not null)
         {
@@ -90,6 +95,7 @@ public partial class Matches : IAsyncDisposable
         if (payload.TryGetProperty("Minute", out var min))
             existing.Minute = min.ValueKind == JsonValueKind.Null ? null : min.GetInt32();
 
+        liveCount = matches.Count(m => m.Status is "IN_PLAY" or "PAUSED");
         await InvokeAsync(StateHasChanged);
     }
 
@@ -98,13 +104,42 @@ public partial class Matches : IAsyncDisposable
         tips[tip.MatchId] = tip;
     }
 
+    private bool CanEdit(MatchDto match) =>
+        !string.IsNullOrEmpty(PlayerState.AuthId) && DateTime.UtcNow < match.KickoffTime.AddHours(-1);
+
+    private TipState GetTipState(int matchId)
+    {
+        if (!tipStates.TryGetValue(matchId, out var state))
+        {
+            var existing = tips.GetValueOrDefault(matchId);
+            state = new TipState
+            {
+                Home = existing?.HomeScore,
+                Away = existing?.AwayScore,
+                IsSaved = existing is not null
+            };
+            tipStates[matchId] = state;
+        }
+        return state;
+    }
+
+    private async Task SaveTip(int matchId, TipState state)
+    {
+        if (string.IsNullOrEmpty(PlayerState.AuthId) || state.Home is null || state.Away is null) return;
+        await PredictionService.SaveTip(PlayerState.AuthId, matchId, state.Home.Value, state.Away.Value);
+        state.IsSaved = true;
+        state.IsEditing = false;
+        var dto = new PredictionDto { MatchId = matchId, HomeScore = state.Home.Value, AwayScore = state.Away.Value };
+        tips[matchId] = dto;
+    }
+
     private async void OnPlayerChanged()
     {
-        if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        if (!string.IsNullOrEmpty(PlayerState.AuthId))
         {
             try
             {
-                var tipList = await PredictionService.GetPredictions(PlayerState.PlayerName);
+                var tipList = await PredictionService.GetPredictions(PlayerState.AuthId);
                 tips = tipList.ToDictionary(t => t.MatchId);
             }
             catch { }
@@ -114,6 +149,7 @@ public partial class Matches : IAsyncDisposable
             tips = new();
         }
 
+        tipStates = new();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -136,6 +172,77 @@ public partial class Matches : IAsyncDisposable
                     .ToList()
             })
             .ToList();
+
+        // Default: expand groups that have live or today's matches
+        expandedStates = matchGroups.ToDictionary(
+            g => g.GroupKey,
+            g => g.Rounds.Any(r => r.Matches.Any(m =>
+                m.Status is "IN_PLAY" or "PAUSED" ||
+                m.KickoffTime.Date == DateTime.Now.Date)));
+
+        // If nothing is expanded, expand the first group with upcoming matches
+        if (!expandedStates.Values.Any(v => v))
+        {
+            var firstUpcoming = matchGroups.FirstOrDefault(g =>
+                g.Rounds.Any(r => r.Matches.Any(m => m.Status != "FINISHED")));
+            if (firstUpcoming is not null)
+                expandedStates[firstUpcoming.GroupKey] = true;
+        }
+    }
+
+    private List<MatchGroup> FilteredGroups => activeTab switch
+    {
+        1 => FilterGroups(m => m.KickoffTime.Date == DateTime.Now.Date),  // I dag
+        2 => FilterGroups(m => m.Status is "TIMED" or "SCHEDULED"),       // Kommende
+        3 => FilterGroups(m => m.Status == "FINISHED"),                    // Afsluttede
+        4 => FilterGroups(m => m.Status is "IN_PLAY" or "PAUSED"),        // Live
+        _ => matchGroups                                                   // Alle
+    };
+
+    private List<MatchGroup> FilterGroups(Func<MatchDto, bool> predicate) =>
+        matchGroups
+            .Select(g => new MatchGroup
+            {
+                GroupKey = g.GroupKey,
+                Rounds = g.Rounds
+                    .Select(r => new MatchRound
+                    {
+                        Matchday = r.Matchday,
+                        Matches = r.Matches.Where(predicate).ToList()
+                    })
+                    .Where(r => r.Matches.Count > 0)
+                    .ToList()
+            })
+            .Where(g => g.Rounds.Count > 0)
+            .ToList();
+
+    private static int CalculatePoints(MatchDto match, PredictionDto tip)
+    {
+        if (match.HomeScore is null || match.AwayScore is null)
+            return 0;
+        if (tip.HomeScore == match.HomeScore && tip.AwayScore == match.AwayScore)
+            return 3; // Exact
+        var actualDiff = match.HomeScore - match.AwayScore;
+        var tipDiff = tip.HomeScore - tip.AwayScore;
+        if (actualDiff > 0 && tipDiff > 0 || actualDiff < 0 && tipDiff < 0 || actualDiff == 0 && tipDiff == 0)
+            return 1; // Correct outcome
+        return 0;
+    }
+
+    private static string FormatDate(DateTime date)
+    {
+        var day = date.DayOfWeek switch
+        {
+            DayOfWeek.Monday => "mandag",
+            DayOfWeek.Tuesday => "tirsdag",
+            DayOfWeek.Wednesday => "onsdag",
+            DayOfWeek.Thursday => "torsdag",
+            DayOfWeek.Friday => "fredag",
+            DayOfWeek.Saturday => "lørdag",
+            DayOfWeek.Sunday => "søndag",
+            _ => ""
+        };
+        return $"{day} {date:dd-MM-yyyy}";
     }
 
     private static string FormatGroupName(string key) => key switch
@@ -172,6 +279,14 @@ public partial class Matches : IAsyncDisposable
     {
         public int Matchday { get; init; }
         public List<MatchDto> Matches { get; init; } = [];
+    }
+
+    private class TipState
+    {
+        public int? Home { get; set; }
+        public int? Away { get; set; }
+        public bool IsSaved { get; set; }
+        public bool IsEditing { get; set; }
     }
 
     public async ValueTask DisposeAsync()

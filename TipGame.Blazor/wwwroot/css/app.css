@@ -106,7 +106,7 @@ code {
     text-align: start;
 }
 
-/* PredictionInput styling */
+/* PredictionInput styling (used by PredictionInput component) */
 .tip-field .mud-input-slot {
     text-align: center;
 }
@@ -154,4 +154,98 @@ code {
 @keyframes pulse-dot {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.2; }
+}
+
+/* Flashscore-style match rows */
+.match-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    min-height: 52px;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.match-row:last-child {
+    border-bottom: none;
+}
+
+.match-row-live {
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 6%, transparent);
+}
+
+.match-time {
+    width: 48px;
+    flex-shrink: 0;
+    text-align: center;
+    line-height: 1.2;
+    margin-right: 8px;
+}
+
+.match-teams {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.match-team-line {
+    height: 22px;
+}
+
+.match-score {
+    width: 28px;
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.match-divider {
+    width: 1px;
+    height: 36px;
+    background-color: var(--mud-palette-lines-default);
+    margin: 0 8px;
+    flex-shrink: 0;
+}
+
+.match-tip-area {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 80px;
+    justify-content: flex-end;
+}
+
+/* Compact inline number inputs for predictions */
+.tip-inline-input {
+    width: 28px;
+    height: 22px;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    outline: none;
+    padding: 0;
+    -moz-appearance: textfield;
+    display: block;
+}
+
+.tip-inline-input::-webkit-outer-spin-button,
+.tip-inline-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.tip-inline-input:focus {
+    border-color: var(--mud-palette-primary);
+}
+
+.tip-inline-input::placeholder {
+    color: var(--mud-palette-text-disabled);
+}
+
+.tip-bold .mud-input-slot {
+    font-weight: 600;
+    font-size: 0.875rem;
 }

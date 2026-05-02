@@ -12,8 +12,6 @@ public partial class Stats
     private string? errorMessage;
 
     private List<ChartSeries<double>> pointSeries = [];
-    private List<ChartSeries<double>> popularSeries = [];
-    private string[] popularLabels = [];
     private string[] pointLabels = [];
 
     private string? h2hPlayer1;
@@ -31,12 +29,6 @@ public partial class Stats
             pointSeries = data.CumulativePoints
                 .Select(p => new ChartSeries<double> { Name = p.Name, Data = p.Values })
                 .ToList();
-
-            popularLabels = data.PopularTips.Select(t => t.Score).ToArray();
-            popularSeries =
-            [
-                new ChartSeries<double> { Name = "Antal tips", Data = data.PopularTips.Select(t => (double)t.Count).ToArray() }
-            ];
 
             if (data.PlayerNames.Count >= 2)
             {

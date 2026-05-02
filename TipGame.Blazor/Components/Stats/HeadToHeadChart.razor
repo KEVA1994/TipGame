@@ -1,9 +1,9 @@
 @using MudBlazor
 
 <MudPaper Class="pa-6" Elevation="0">
-    <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 700;">⚔️ Head-to-head</MudText>
+    <MudText Typo="Typo.h6" Class="mb-2">⚔️ Head-to-head</MudText>
     <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
-        Sammenlign to spillere kamp for kamp. Søjlerne viser point scoret per kamp for hver spiller.
+        Sammenlign to spillere kamp for kamp.
     </MudText>
 
     <MudGrid Spacing="3" Class="mb-4">
@@ -30,34 +30,85 @@
 
     @if (!string.IsNullOrEmpty(Player1) && !string.IsNullOrEmpty(Player2) && Player1 != Player2)
     {
-        <MudChart ChartType="ChartType.Bar"
-                  ChartSeries="@GetH2HSeries()"
-                  ChartLabels="@MatchLabels.ToArray()"
-                  Width="100%" Height="300px"
-                  ChartOptions="@barOptions"
-                  Class="mt-2" />
-
-        <MudDivider Class="my-4" />
-        <MudPaper Class="pa-4 d-flex justify-center" Elevation="1" Style="border-radius: 12px; background: var(--mud-palette-background-gray);">
-            <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
-                <MudStack AlignItems="AlignItems.Center" Spacing="0">
-                    <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 800;">@GetTotal(Player1)</MudText>
-                    <MudText Typo="Typo.caption" Style="font-weight: 600;">@Player1</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Default">@GetWins(Player1, Player2) sejre</MudText>
+        @* --- Scoreboard --- *@
+        <MudPaper Class="pa-5 rounded-xl mb-5" Elevation="1">
+            <MudStack Row="true" Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudAvatar Color="@(GetTotal(Player1) >= GetTotal(Player2) ? Color.Primary : Color.Default)"
+                               Size="Size.Large" Variant="Variant.Filled">
+                        @Player1![..1].ToUpper()
+                    </MudAvatar>
+                    <MudText Typo="Typo.subtitle1">@Player1</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Primary">@GetTotal(Player1)</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
                 </MudStack>
 
-                <MudStack AlignItems="AlignItems.Center" Spacing="0">
-                    <MudText Typo="Typo.h6" Color="Color.Default">—</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Default">@GetDraws() uafgjort</MudText>
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Size="Size.Small">@GetWins(Player1, Player2) V</MudChip>
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Text" Size="Size.Small">@GetDraws() U</MudChip>
+                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Text" Size="Size.Small">@GetWins(Player2, Player1) V</MudChip>
                 </MudStack>
 
-                <MudStack AlignItems="AlignItems.Center" Spacing="0">
-                    <MudText Typo="Typo.h5" Color="Color.Secondary" Style="font-weight: 800;">@GetTotal(Player2)</MudText>
-                    <MudText Typo="Typo.caption" Style="font-weight: 600;">@Player2</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Default">@GetWins(Player2, Player1) sejre</MudText>
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudAvatar Color="@(GetTotal(Player2) >= GetTotal(Player1) ? Color.Secondary : Color.Default)"
+                               Size="Size.Large" Variant="Variant.Filled">
+                        @Player2![..1].ToUpper()
+                    </MudAvatar>
+                    <MudText Typo="Typo.subtitle1">@Player2</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Secondary">@GetTotal(Player2)</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
                 </MudStack>
             </MudStack>
+
+            @* Win distribution bar *@
+            @if (MatchIds.Count > 0)
+            {
+                <MudStack Row="true" Class="mt-4 rounded-pill overflow-hidden" Style="height: 8px;">
+                    <div style="flex: @GetWins(Player1, Player2); background: var(--mud-palette-primary); transition: flex 0.3s;"></div>
+                    <div style="flex: @GetDraws(); background: var(--mud-palette-text-disabled); transition: flex 0.3s;"></div>
+                    <div style="flex: @GetWins(Player2, Player1); background: var(--mud-palette-secondary); transition: flex 0.3s;"></div>
+                </MudStack>
+            }
         </MudPaper>
+
+        @* --- Kamp-for-kamp liste --- *@
+        <MudText Typo="Typo.subtitle2" Class="mb-2" Color="Color.Default">Kamp for kamp</MudText>
+        <MudStack Spacing="2">
+            @foreach (var match in GetMatchResults())
+            {
+                <MudPaper Class="pa-3 rounded-lg" Elevation="0" Outlined="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="flex: 1; justify-content: flex-start;">
+                            @if (match.P1Points > match.P2Points)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Primary" Size="Size.Small" />
+                            }
+                            <MudChip T="string" Color="@(match.P1Points > match.P2Points ? Color.Primary : match.P1Points == match.P2Points ? Color.Default : Color.Default)"
+                                     Variant="@(match.P1Points > match.P2Points ? Variant.Filled : Variant.Outlined)"
+                                     Size="Size.Small">
+                                @match.P1Points pt
+                            </MudChip>
+                        </MudStack>
+
+                        <MudText Typo="Typo.body2" Align="Align.Center" Style="flex: 2; text-align: center;">
+                            @match.Label
+                        </MudText>
+
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="flex: 1; justify-content: flex-end;">
+                            <MudChip T="string" Color="@(match.P2Points > match.P1Points ? Color.Secondary : match.P1Points == match.P2Points ? Color.Default : Color.Default)"
+                                     Variant="@(match.P2Points > match.P1Points ? Variant.Filled : Variant.Outlined)"
+                                     Size="Size.Small">
+                                @match.P2Points pt
+                            </MudChip>
+                            @if (match.P2Points > match.P1Points)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Secondary" Size="Size.Small" />
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            }
+        </MudStack>
     }
     else if (Player1 == Player2 && !string.IsNullOrEmpty(Player1))
     {
@@ -70,45 +121,3 @@
         </MudAlert>
     }
 </MudPaper>
-
-@code {
-    [Parameter, EditorRequired] public List<HeadToHeadPlayer> HeadToHead { get; set; } = [];
-    [Parameter, EditorRequired] public List<int> MatchIds { get; set; } = [];
-    [Parameter, EditorRequired] public List<string> MatchLabels { get; set; } = [];
-    [Parameter, EditorRequired] public List<string> PlayerNames { get; set; } = [];
-    [Parameter] public string? Player1 { get; set; }
-    [Parameter] public string? Player2 { get; set; }
-
-    private readonly BarChartOptions barOptions = new()
-    {
-        XAxisTitle = "Kamp",
-        YAxisTitle = "Point",
-        XAxisLabelRotation = 90
-    };
-
-    private List<ChartSeries<double>> GetH2HSeries()
-    {
-        var p1 = HeadToHead.FirstOrDefault(h => h.Name == Player1);
-        var p2 = HeadToHead.FirstOrDefault(h => h.Name == Player2);
-        if (p1 is null || p2 is null) return [];
-
-        return
-        [
-            new() { Name = Player1!, Data = MatchIds.Select(id => (double)p1.PointsByMatch.GetValueOrDefault(id)).ToArray() },
-            new() { Name = Player2!, Data = MatchIds.Select(id => (double)p2.PointsByMatch.GetValueOrDefault(id)).ToArray() }
-        ];
-    }
-
-    private int GetTotal(string name) =>
-        MatchIds.Sum(id => HeadToHead.First(h => h.Name == name).PointsByMatch.GetValueOrDefault(id));
-
-    private int GetWins(string name, string opponent) =>
-        MatchIds.Count(id =>
-            HeadToHead.First(h => h.Name == name).PointsByMatch.GetValueOrDefault(id) >
-            HeadToHead.First(h => h.Name == opponent).PointsByMatch.GetValueOrDefault(id));
-
-    private int GetDraws() =>
-        MatchIds.Count(id =>
-            HeadToHead.First(h => h.Name == Player1!).PointsByMatch.GetValueOrDefault(id) ==
-            HeadToHead.First(h => h.Name == Player2!).PointsByMatch.GetValueOrDefault(id));
-}

@@ -24,12 +24,33 @@ public class LeaderboardService
             .Select(u =>
             {
                 var userPreds = predictions.Where(p => p.UserId == u.Id).ToList();
+                var scoredPreds = userPreds.Where(p => matchLookup.ContainsKey(p.MatchId)).ToList();
+                var matchesPlayed = scoredPreds.Count;
+                var exactHits = scoredPreds.Count(p => p.Points == 3);
+                var correctOutcomes = scoredPreds.Count(p => p.Points >= 1);
+
+                // Current streak: consecutive scored predictions (ordered by match time)
+                var orderedPoints = scoredPreds
+                    .OrderByDescending(p => matchLookup[p.MatchId].KickoffTime)
+                    .Select(p => p.Points)
+                    .ToList();
+                var streak = 0;
+                foreach (var pts in orderedPoints)
+                {
+                    if (pts > 0) streak++;
+                    else break;
+                }
+
                 return new LeaderboardDto
                 {
                     UserName = u.Name,
                     TotalPoints = userPreds.Sum(p => p.Points),
-                    DailyPoints = userPreds
-                        .Where(p => matchLookup.ContainsKey(p.MatchId))
+                    MatchesPlayed = matchesPlayed,
+                    ExactHits = exactHits,
+                    CorrectOutcomes = correctOutcomes,
+                    CurrentStreak = streak,
+                    AvgPoints = matchesPlayed > 0 ? Math.Round(userPreds.Sum(p => p.Points) / (double)matchesPlayed, 2) : 0,
+                    DailyPoints = scoredPreds
                         .GroupBy(p => matchLookup[p.MatchId].KickoffTime.ToString("dd/MM"))
                         .ToDictionary(g => g.Key, g => g.Sum(p => p.Points))
                 };

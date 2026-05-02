@@ -1,126 +1,242 @@
 ﻿@page "/matches"
 @using MudBlazor
-@using TipGame.Blazor.Components
 @using TipGame.Shared.Models
 
-<MudText Typo="Typo.h4" GutterBottom="true">Kampe</MudText>
+<MudStack Spacing="0" Class="mx-auto" Style="max-width: 900px;">
 
-@if (string.IsNullOrEmpty(PlayerState.PlayerName))
-{
-    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-2">
-        Indtast dit navn øverst til højre for at tippe.
-    </MudAlert>
-}
-
-@if (isLoading)
-{
-    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-}
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-2">
-        @errorMessage
-    </MudAlert>
-}
-
-@foreach (var group in matchGroups)
-{
-    <MudText Typo="Typo.h6" Class="mt-5 mb-1" Style="font-weight: 800;">@FormatGroupName(group.GroupKey)</MudText>
-    @foreach (var round in group.Rounds)
-    {
-        @if (round.Matchday > 0)
+    @* Header with title and filter tabs *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+        <MudText Typo="Typo.h4">⚽ Kampe</MudText>
+        @if (liveCount > 0)
         {
-            <MudText Typo="Typo.subtitle2" Class="mt-3 mb-1 ml-1" Style="font-weight: 600; color: var(--mud-palette-text-secondary);">Runde @round.Matchday</MudText>
+            <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
+                <span class="live-dot mr-1" style="width:6px;height:6px;"></span> @liveCount LIVE
+            </MudChip>
         }
-    <MudPaper Elevation="0" Class="rounded-lg mb-3" Style="overflow: hidden; border: 1px solid var(--mud-palette-lines-default);">
-        <MudTable Items="round.Matches" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Dense="true">
-            <HeaderContent>
-                <MudTh Style="width: 56px; text-align: center; font-weight: 700;">Tid</MudTh>
-                <MudTh Style="width: 250px; font-weight: 700;">Hjemme</MudTh>
-                <MudTh Style="width: 250px; font-weight: 700;">Ude</MudTh>
-                <MudTh Style="width: 56px; text-align: center; white-space: nowrap; font-weight: 700;">Score</MudTh>
-                <MudTh Style="width: 1%; white-space: nowrap; text-align: center; font-weight: 700;">Status</MudTh>
-                @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
-                {
-                    <MudTh Style="font-weight: 700; white-space: nowrap; text-align: right; padding-right: 110px;">Tip</MudTh>
-                }
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd Style="text-align: center;">
-                    <MudStack Spacing="0" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.caption">@context.KickoffTime.ToString("dd/MM")</MudText>
-                        <MudText Typo="Typo.caption">@context.KickoffTime.ToString("HH:mm")</MudText>
-                    </MudStack>
-                </MudTd>
-                <MudTd>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        @if (!string.IsNullOrEmpty(context.HomeCrest))
-                        {
-                            <MudImage Src="@context.HomeCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
-                        }
-                        <MudText Typo="Typo.body2">@context.HomeTeam</MudText>
-                    </MudStack>
-                </MudTd>
-                <MudTd>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        @if (!string.IsNullOrEmpty(context.AwayCrest))
-                        {
-                            <MudImage Src="@context.AwayCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
-                        }
-                        <MudText Typo="Typo.body2">@context.AwayTeam</MudText>
-                    </MudStack>
-                </MudTd>
-                <MudTd Style="text-align: center;">
-                    @if (context.Status is "IN_PLAY" or "PAUSED")
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">
-                            @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
-                        </MudText>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.body2" Style="font-weight: 700;">
-                            @(context.HomeScore?.ToString() ?? "-") - @(context.AwayScore?.ToString() ?? "-")
-                        </MudText>
-                    }
-                </MudTd>
-                <MudTd Style="text-align: center; white-space: nowrap;">
-                    @if (context.Status == "FINISHED")
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Text="FT" />
-                    }
-                    else if (context.Status == "PAUSED")
-                    {
-                        <div style="display: inline-flex; align-items: center; gap: 6px;">
-                            <span class="live-dot"></span>
-                            <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700; line-height: 1;">HT</MudText>
-                        </div>
-                    }
-                    else if (context.Status == "IN_PLAY")
-                    {
-                        <div style="display: inline-flex; align-items: center; gap: 6px;">
-                            <span class="live-dot"></span>
-                            <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700; line-height: 1;">@(context.Minute != null ? $"{context.Minute}'" : "LIVE")</MudText>
-                        </div>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Text="Planlagt" />
-                    }
-                </MudTd>
-                @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
-                {
-                    <MudTd Style="text-align: right;">
-                        <PredictionInput MatchId="@context.Id"
-                                     Kickoff="@context.KickoffTime"
-                                     PlayerName="@PlayerState.PlayerName"
-                                     ExistingTip="@(tips.GetValueOrDefault(context.Id))"
-                                     OnTipSaved="OnTipSaved" />
-                    </MudTd>
-                }
-            </RowTemplate>
-        </MudTable>
-    </MudPaper>
+    </MudStack>
+
+    @if (!PlayerState.IsLoggedIn)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Text" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Login">
+            Log ind øverst til højre for at tippe på kampene.
+        </MudAlert>
     }
-}
+
+    <MudTabs @bind-ActivePanelIndex="activeTab" Elevation="0" Rounded="true" ApplyEffectsToContainer="true"
+             Class="mb-4" MinimumTabWidth="0px" PanelClass="pa-0">
+        <MudTabPanel Text="Alle" BadgeColor="Color.Primary" />
+        <MudTabPanel Text="I dag" BadgeColor="Color.Primary" />
+        <MudTabPanel Text="Kommende" />
+        <MudTabPanel Text="Afsluttede" />
+        <MudTabPanel Text="Live" Disabled="@(liveCount == 0)" BadgeColor="Color.Error" BadgeDot="@(liveCount > 0)" />
+    </MudTabs>
+
+    @if (isLoading)
+    {
+        <MudStack Spacing="2" Class="mt-4">
+            @for (var i = 0; i < 4; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="52px" Class="rounded-lg" />
+            }
+        </MudStack>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-2">
+            @errorMessage
+        </MudAlert>
+    }
+    else if (!FilteredGroups.Any())
+    {
+        <MudStack AlignItems="AlignItems.Center" Class="mt-8 mb-8">
+            <MudIcon Icon="@Icons.Material.Outlined.SportsScore" Size="Size.Large" Color="Color.Default" />
+            <MudText Typo="Typo.body1" Color="Color.Secondary">Ingen kampe at vise.</MudText>
+        </MudStack>
+    }
+    else
+    {
+        @foreach (var group in FilteredGroups)
+        {
+            <MudExpansionPanels MultiExpansion="true" Elevation="0" Class="mb-3">
+                <MudExpansionPanel @bind-Expanded="expandedStates[group.GroupKey]" Dense="true" Class="rounded-lg"
+                                   Style="border: 1px solid var(--mud-palette-lines-default);">
+                    <TitleContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">@FormatGroupName(group.GroupKey)</MudText>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                                @group.Rounds.Sum(r => r.Matches.Count) kampe
+                            </MudChip>
+                            @{
+                                var groupLive = group.Rounds.Sum(r => r.Matches.Count(m => m.Status is "IN_PLAY" or "PAUSED"));
+                            }
+                            @if (groupLive > 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">
+                                    @groupLive live
+                                </MudChip>
+                            }
+                        </MudStack>
+                    </TitleContent>
+                    <ChildContent>
+                        @foreach (var round in group.Rounds)
+                        {
+                            @if (round.Matchday > 0)
+                            {
+                                <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mt-2 mb-1 ml-1">
+                                    RUNDE @round.Matchday
+                                </MudText>
+                            }
+
+                            @* Group matches by date *@
+                            @foreach (var dateGroup in round.Matches.GroupBy(m => m.KickoffTime.Date).OrderBy(d => d.Key))
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 mb-1 ml-1"
+                                         Style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                    @FormatDate(dateGroup.Key)
+                                </MudText>
+
+                                @foreach (var match in dateGroup)
+                                {
+                                    var isLive = match.Status is "IN_PLAY" or "PAUSED";
+                                    var isFinished = match.Status == "FINISHED";
+                                    var tip = tips.GetValueOrDefault(match.Id);
+                                    var rowClass = "match-row" + (isLive ? " match-row-live" : "");
+
+                                    <div class="@rowClass">
+                                        @* Time / Status column *@
+                                        <MudStack Spacing="0" AlignItems="AlignItems.Center" Class="match-time">
+                                            @if (isFinished)
+                                            {
+                                                <MudText Typo="Typo.caption" Style="font-weight: 600;">FT</MudText>
+                                            }
+                                            else if (isLive)
+                                            {
+                                                <span class="live-dot"></span>
+                                                <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 600;">
+                                                    @(match.Status == "PAUSED" ? "HT" : match.Minute != null ? $"{match.Minute}'" : "LIVE")
+                                                </MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption">@match.KickoffTime.ToString("HH:mm")</MudText>
+                                            }
+                                        </MudStack>
+
+                                        @* Teams *@
+                                        <MudStack Spacing="0" Class="match-teams">
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="match-team-line">
+                                                @if (!string.IsNullOrEmpty(match.HomeCrest))
+                                                {
+                                                    <MudImage Src="@match.HomeCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
+                                                }
+                                                <MudText Typo="Typo.body2" Style="@(isFinished && match.HomeScore > match.AwayScore ? "font-weight:700;" : "")">
+                                                    @match.HomeTeam
+                                                </MudText>
+                                            </MudStack>
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="match-team-line">
+                                                @if (!string.IsNullOrEmpty(match.AwayCrest))
+                                                {
+                                                    <MudImage Src="@match.AwayCrest" Width="20" Height="20" ObjectFit="ObjectFit.Contain" />
+                                                }
+                                                <MudText Typo="Typo.body2" Style="@(isFinished && match.AwayScore > match.HomeScore ? "font-weight:700;" : "")">
+                                                    @match.AwayTeam
+                                                </MudText>
+                                            </MudStack>
+                                        </MudStack>
+
+                                        @* Score *@
+                                        <MudStack Spacing="0" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="match-score">
+                                            @{
+                                                var scoreStyle = isLive ? "font-weight:700;" : isFinished ? "font-weight:600;" : "";
+                                                var scoreColor = isLive ? Color.Primary : Color.Default;
+                                            }
+                                            <MudText Typo="Typo.body2" Color="@scoreColor" Style="@scoreStyle">@(match.HomeScore?.ToString() ?? "-")</MudText>
+                                            <MudText Typo="Typo.body2" Color="@scoreColor" Style="@scoreStyle">@(match.AwayScore?.ToString() ?? "-")</MudText>
+                                        </MudStack>
+
+                                        @if (PlayerState.IsLoggedIn)
+                                        {
+                                            <div class="match-divider"></div>
+
+                                            @if (isFinished && tip is not null)
+                                            {
+                                                @* Finished match with a tip — show result chip *@
+                                                <div class="match-tip-area">
+                                                    @{
+                                                        var points = CalculatePoints(match, tip);
+                                                        var chipColor = points == 3 ? Color.Success : points == 1 ? Color.Warning : Color.Error;
+                                                        var chipIcon = points == 3 ? Icons.Material.Filled.CheckCircle : points == 1 ? Icons.Material.Filled.RemoveCircle : Icons.Material.Filled.Cancel;
+                                                    }
+                                                    <MudTooltip Text="@($"Dit tip: {tip.HomeScore}-{tip.AwayScore} ({points} point)")">
+                                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@chipColor" Icon="@chipIcon">
+                                                            @tip.HomeScore-@tip.AwayScore
+                                                        </MudChip>
+                                                    </MudTooltip>
+                                                </div>
+                                            }
+                                            else if (CanEdit(match))
+                                            {
+                                                @* Editable prediction — compact inline *@
+                                                var state = GetTipState(match.Id);
+                                                var isReadOnly = state.IsSaved && !state.IsEditing;
+                                                <div class="match-tip-area">
+                                                    <MudStack Spacing="0" AlignItems="AlignItems.Center" Class="match-score">
+                                                        @if (isReadOnly)
+                                                        {
+                                                            <MudText Typo="Typo.body2" Style="font-weight:600;">@state.Home</MudText>
+                                                            <MudText Typo="Typo.body2" Style="font-weight:600;">@state.Away</MudText>
+                                                        }
+                                                        else
+                                                        {
+                                                            <input type="number" min="0" max="20" @bind="state.Home"
+                                                                   class="tip-inline-input" placeholder="-" />
+                                                            <input type="number" min="0" max="20" @bind="state.Away"
+                                                                   class="tip-inline-input" placeholder="-" />
+                                                        }
+                                                    </MudStack>
+                                                    @if (isReadOnly)
+                                                    {
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                       Color="Color.Primary" OnClick="@(() => state.IsEditing = true)" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Check" Size="Size.Small"
+                                                                       Color="Color.Primary"
+                                                                       Disabled="@(state.Home is null || state.Away is null)"
+                                                                       OnClick="@(() => SaveTip(match.Id, state))" />
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                @* Not editable (live or locked) *@
+                                                <div class="match-tip-area">
+                                                    @if (tip is not null)
+                                                    {
+                                                        <MudStack Spacing="0" AlignItems="AlignItems.Center" Class="match-score">
+                                                            <MudText Typo="Typo.body2" Style="font-weight:600;">@tip.HomeScore</MudText>
+                                                            <MudText Typo="Typo.body2" Style="font-weight:600;">@tip.AwayScore</MudText>
+                                                        </MudStack>
+                                                        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Class="ml-1" Style="opacity:0.4;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default" Icon="@Icons.Material.Outlined.Block">
+                                                            Intet tip
+                                                        </MudChip>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            }
+                        }
+                    </ChildContent>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        }
+    }
+
+</MudStack>
