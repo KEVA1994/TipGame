@@ -3,8 +3,8 @@ public class PlayerState
     private readonly Supabase.Client _supabase;
 
     public string PlayerName { get; private set; } = string.Empty;
-    public string? AuthId => _supabase.Auth.CurrentUser?.Id;
-    public string Email => _supabase.Auth.CurrentUser?.Email ?? string.Empty;
+    public string? AuthId { get; private set; }
+    public string Email { get; private set; } = string.Empty;
     public bool IsLoggedIn => !string.IsNullOrEmpty(PlayerName);
     public bool IsInitialized { get; private set; }
 
@@ -23,12 +23,16 @@ public class PlayerState
         if (session?.User is not null)
         {
             PlayerName = ExtractDisplayName(session.User);
+            AuthId = session.User.Id;
+            Email = session.User.Email ?? string.Empty;
         }
 
         _supabase.Auth.AddStateChangedListener((sender, args) =>
         {
             var user = _supabase.Auth.CurrentUser;
             PlayerName = user is not null ? ExtractDisplayName(user) : string.Empty;
+            AuthId = user?.Id;
+            Email = user?.Email ?? string.Empty;
             OnChange?.Invoke();
         });
 
@@ -43,6 +47,8 @@ public class PlayerState
             if (session?.User is not null)
             {
                 PlayerName = ExtractDisplayName(session.User);
+                AuthId = session.User.Id;
+                Email = session.User.Email ?? string.Empty;
                 OnChange?.Invoke();
             }
             return null;
@@ -64,6 +70,8 @@ public class PlayerState
             if (session?.User is not null)
             {
                 PlayerName = displayName;
+                AuthId = session.User.Id;
+                Email = session.User.Email ?? string.Empty;
                 OnChange?.Invoke();
             }
             return null;
@@ -78,6 +86,8 @@ public class PlayerState
     {
         await _supabase.Auth.SignOut();
         PlayerName = string.Empty;
+        AuthId = null;
+        Email = string.Empty;
         OnChange?.Invoke();
     }
 

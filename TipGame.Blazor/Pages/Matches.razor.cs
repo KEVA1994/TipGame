@@ -105,7 +105,7 @@ public partial class Matches : IAsyncDisposable
     }
 
     private bool CanEdit(MatchDto match) =>
-        !string.IsNullOrEmpty(PlayerState.AuthId) && DateTime.UtcNow < match.KickoffTime.AddHours(-1);
+        !string.IsNullOrEmpty(PlayerState.AuthId) && DateTime.Now < match.KickoffTime.AddHours(-1);
 
     private TipState GetTipState(int matchId)
     {
