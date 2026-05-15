@@ -189,6 +189,15 @@ code {
 
 .match-team-line {
     height: 22px;
+    overflow: hidden;
+    flex-wrap: nowrap !important;
+}
+
+.match-team-line .mud-typography {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .match-score {
