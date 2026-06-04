@@ -1,11 +1,12 @@
 @page "/praemier"
 @using MudBlazor
+@inject NavigationManager Nav
 
 <MudStack Spacing="0" Class="mx-auto" Style="max-width: 1000px;">
 
     @* --- Header --- *@
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" Href="" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" OnClick="@(() => Nav.NavigateTo(""))" />
         <MudText Typo="Typo.h4">🏅 Præmier</MudText>
     </MudStack>
 
@@ -88,7 +89,7 @@
 
     </MudGrid>
 
-    <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" Href="">
+    <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Nav.NavigateTo(""))">
         Tilbage til forsiden
     </MudButton>
 
