@@ -45,19 +45,25 @@
 </MudAlert>
 
 @* --- Præmier (teaser → /praemier) --- *@
-<MudPaper Class="pa-5 rounded-xl mb-6" Elevation="1"
-          Style="background: linear-gradient(135deg, rgba(255,215,0,0.10) 0%, rgba(192,192,192,0.08) 50%, rgba(205,127,50,0.10) 100%);">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="3">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
-            <MudText Typo="Typo.h4">🥇🥈🥉</MudText>
-            <MudStack Spacing="0">
+<MudPaper Class="pa-4 pa-sm-5 rounded-xl mb-6" Elevation="1"
+          @onclick="@(() => Nav.NavigateTo("praemier"))"
+          Style="background: linear-gradient(135deg, rgba(255,215,0,0.10) 0%, rgba(192,192,192,0.08) 50%, rgba(205,127,50,0.10) 100%); cursor: pointer;">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Style="min-width: 0; flex: 1 1 220px;">
+            <MudText Typo="Typo.h4" Style="line-height: 1;">🥇🥈🥉</MudText>
+            <MudStack Spacing="0" Style="min-width: 0;">
                 <MudText Typo="Typo.h6" Style="font-weight: 700;">Præmier</MudText>
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
                     Der er præmier til top 3 — se hvad du spiller om.
                 </MudText>
             </MudStack>
         </MudStack>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward" Href="/praemier">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   EndIcon="@Icons.Material.Filled.ArrowForward"
+                   Href="praemier"
+                   Class="ml-auto flex-shrink-0"
+                   Style="white-space: nowrap;">
             Se præmier
         </MudButton>
     </MudStack>
