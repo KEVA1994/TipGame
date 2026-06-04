@@ -112,13 +112,7 @@ public partial class Matches : IAsyncDisposable
     {
         if (!tipStates.TryGetValue(matchId, out var state))
         {
-            var existing = tips.GetValueOrDefault(matchId);
-            state = new TipState
-            {
-                Home = existing?.HomeScore,
-                Away = existing?.AwayScore,
-                IsSaved = existing is not null
-            };
+            state = new TipState();
             tipStates[matchId] = state;
         }
         return state;
@@ -128,10 +122,21 @@ public partial class Matches : IAsyncDisposable
     {
         if (string.IsNullOrEmpty(PlayerState.AuthId) || state.Home is null || state.Away is null) return;
         await PredictionService.SaveTip(PlayerState.AuthId, matchId, state.Home.Value, state.Away.Value);
-        state.IsSaved = true;
-        state.IsEditing = false;
         var dto = new PredictionDto { MatchId = matchId, HomeScore = state.Home.Value, AwayScore = state.Away.Value };
         tips[matchId] = dto;
+    }
+
+    private async Task DeleteTip(int matchId)
+    {
+        if (string.IsNullOrEmpty(PlayerState.AuthId)) return;
+        try
+        {
+            await PredictionService.DeleteTip(PlayerState.AuthId, matchId);
+        }
+        catch { }
+        tips.Remove(matchId);
+        tipStates.Remove(matchId);
+        StateHasChanged();
     }
 
     private async Task TryAutoSaveTip(int matchId, TipState state)
@@ -139,12 +144,10 @@ public partial class Matches : IAsyncDisposable
         if (state.Home is null || state.Away is null) return;
         if (state.IsSaving) return;
 
-        // Avoid re-saving the same value (e.g. when blurring an unchanged input)
+        // Avoid re-saving the same value
         var existing = tips.GetValueOrDefault(matchId);
         if (existing is not null && existing.HomeScore == state.Home && existing.AwayScore == state.Away)
         {
-            state.IsSaved = true;
-            state.IsEditing = false;
             return;
         }
 
@@ -361,8 +364,6 @@ public partial class Matches : IAsyncDisposable
     {
         public int? Home { get; set; }
         public int? Away { get; set; }
-        public bool IsSaved { get; set; }
-        public bool IsEditing { get; set; }
         public bool IsSaving { get; set; }
     }
 

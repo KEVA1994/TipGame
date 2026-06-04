@@ -185,13 +185,12 @@
                                             {
                                                 @* Editable prediction — compact inline *@
                                                 var state = GetTipState(match.Id);
-                                                var isReadOnly = state.IsSaved && !state.IsEditing;
                                                 <div class="match-tip-area">
                                                     <MudStack Spacing="0" AlignItems="AlignItems.Center" Class="match-score">
-                                                        @if (isReadOnly)
+                                                        @if (tip is not null)
                                                         {
-                                                            <MudText Typo="Typo.body2" Style="font-weight:600;">@state.Home</MudText>
-                                                            <MudText Typo="Typo.body2" Style="font-weight:600;">@state.Away</MudText>
+                                                            <MudText Typo="Typo.body2" Style="font-weight:600;">@tip.HomeScore</MudText>
+                                                            <MudText Typo="Typo.body2" Style="font-weight:600;">@tip.AwayScore</MudText>
                                                         }
                                                         else
                                                         {
@@ -207,15 +206,17 @@
                                                                    class="tip-inline-input" placeholder="-" />
                                                         }
                                                     </MudStack>
-                                                    @if (isReadOnly)
+                                                    @if (tip is not null)
                                                     {
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                       Color="Color.Primary" OnClick="@(() => state.IsEditing = true)" />
+                                                        <MudTooltip Text="Slet tip og lav et nyt">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                           Color="Color.Error" OnClick="@(() => DeleteTip(match.Id))" />
+                                                        </MudTooltip>
                                                     }
                                                     else
                                                     {
-                                                        @* Invisible spacer so editable rows align with read-only rows that show the edit icon *@
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                        @* Invisible spacer so editable rows align with rows that show the delete icon *@
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                                                        Style="visibility:hidden;" tabindex="-1" aria-hidden="true" />
                                                     }
                                                 </div>

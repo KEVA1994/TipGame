@@ -58,6 +58,30 @@ public class PredictionService
         }
     }
 
+    public async Task DeleteTip(string authId, int matchId)
+    {
+        var userResponse = await _supabase.From<User>()
+            .Where(u => u.AuthId == authId)
+            .Get();
+
+        var user = userResponse.Models.FirstOrDefault();
+        if (user == null) return;
+
+        // Honor deadline on delete too
+        var matchResponse = await _supabase.From<Match>()
+            .Where(m => m.Id == matchId)
+            .Get();
+
+        var match = matchResponse.Models.FirstOrDefault();
+        if (match == null || DateTime.UtcNow >= match.KickoffTime.AddHours(-1))
+            return;
+
+        await _supabase.From<Prediction>()
+            .Where(p => p.UserId == user.Id)
+            .Where(p => p.MatchId == matchId)
+            .Delete();
+    }
+
     public async Task<List<PredictionDto>> GetPredictions(string authId)
     {
         var userResponse = await _supabase.From<User>()
