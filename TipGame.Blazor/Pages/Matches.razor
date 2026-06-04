@@ -22,6 +22,13 @@
         </MudAlert>
     }
 
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mb-3 rounded-lg" Icon="@Icons.Material.Filled.Schedule">
+        <MudText Typo="Typo.body2">
+            <strong>Bemærk:</strong> Indtil videre er det kun <strong>gruppespillet</strong> der ligger klar at tippe på.
+            Når vi kommer videre til slutspillet, bliver de nye kampe automatisk synlige her — så hold øje! 🏆
+        </MudText>
+    </MudAlert>
+
     <MudTabs @bind-ActivePanelIndex="activeTab" Elevation="0" Rounded="true" ApplyEffectsToContainer="true"
              Class="mb-4" MinimumTabWidth="0px" PanelClass="pa-0">
         <MudTabPanel Text="Alle" BadgeColor="Color.Primary" />
@@ -188,9 +195,15 @@
                                                         }
                                                         else
                                                         {
-                                                            <input type="number" min="0" max="20" @bind="state.Home" @bind:after="@(() => TryAutoSaveTip(match.Id, state))"
+                                                            <input type="number" min="0" max="20"
+                                                                   @bind="state.Home" @bind:event="oninput" @bind:after="@(() => TryAutoSaveTip(match.Id, state))"
+                                                                   id="@($"tip-home-{match.Id}")"
+                                                                   @onkeydown="@(e => HandleTipKeyDown(e, match.Id, state, isHome: true))"
                                                                    class="tip-inline-input" placeholder="-" />
-                                                            <input type="number" min="0" max="20" @bind="state.Away" @bind:after="@(() => TryAutoSaveTip(match.Id, state))"
+                                                            <input type="number" min="0" max="20"
+                                                                   @bind="state.Away" @bind:event="oninput" @bind:after="@(() => TryAutoSaveTip(match.Id, state))"
+                                                                   id="@($"tip-away-{match.Id}")"
+                                                                   @onkeydown="@(e => HandleTipKeyDown(e, match.Id, state, isHome: false))"
                                                                    class="tip-inline-input" placeholder="-" />
                                                         }
                                                     </MudStack>

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using TipGame.Shared.Models;
 
@@ -26,7 +27,7 @@ public partial class Matches : IAsyncDisposable
 
     protected override void OnInitialized()
     {
-        PlayerState.OnChange += OnPlayerChanged;
+        PlayerState.OnChange += HandlePlayerChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -136,6 +137,7 @@ public partial class Matches : IAsyncDisposable
     private async Task TryAutoSaveTip(int matchId, TipState state)
     {
         if (state.Home is null || state.Away is null) return;
+        if (state.IsSaving) return;
 
         // Avoid re-saving the same value (e.g. when blurring an unchanged input)
         var existing = tips.GetValueOrDefault(matchId);
@@ -146,10 +148,68 @@ public partial class Matches : IAsyncDisposable
             return;
         }
 
-        await SaveTip(matchId, state);
+        state.IsSaving = true;
+        try
+        {
+            await SaveTip(matchId, state);
+        }
+        finally
+        {
+            state.IsSaving = false;
+        }
     }
 
-    private async void OnPlayerChanged()
+    private async Task HandleTipKeyDown(KeyboardEventArgs e, int matchId, TipState state, bool isHome)
+    {
+        if (e.Key != "Enter") return;
+
+        if (isHome)
+        {
+            // Auto-fill empty home with 0
+            if (state.Home is null)
+            {
+                state.Home = 0;
+                await TryAutoSaveTip(matchId, state);
+            }
+            try { await JS.InvokeVoidAsync("tipInputs.focusById", $"tip-away-{matchId}"); } catch { }
+        }
+        else
+        {
+            // Auto-fill empty away with 0 (this is the only case where Enter itself triggers a save)
+            if (state.Away is null)
+            {
+                state.Away = 0;
+                await TryAutoSaveTip(matchId, state);
+            }
+            else
+            {
+                // If a save is still in flight from the last keystroke, wait briefly so we don't double-fire
+                if (state.IsSaving)
+                {
+                    var waited = 0;
+                    while (state.IsSaving && waited < 1500)
+                    {
+                        await Task.Delay(50);
+                        waited += 50;
+                    }
+                }
+                // Ensure persisted (no-op if already saved with same values)
+                await TryAutoSaveTip(matchId, state);
+            }
+
+            try { await JS.InvokeVoidAsync("tipInputs.blurById", $"tip-away-{matchId}"); } catch { }
+
+            // Jump to the next match's home field (tab-like across matches).
+            await Task.Yield();
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(50);
+            try { await JS.InvokeVoidAsync("tipInputs.focusNextHome", matchId); } catch { }
+        }
+    }
+
+    private void HandlePlayerChanged() => _ = OnPlayerChangedAsync();
+
+    private async Task OnPlayerChangedAsync()
     {
         if (!string.IsNullOrEmpty(PlayerState.AuthId))
         {
@@ -303,11 +363,12 @@ public partial class Matches : IAsyncDisposable
         public int? Away { get; set; }
         public bool IsSaved { get; set; }
         public bool IsEditing { get; set; }
+        public bool IsSaving { get; set; }
     }
 
     public async ValueTask DisposeAsync()
     {
-        PlayerState.OnChange -= OnPlayerChanged;
+        PlayerState.OnChange -= HandlePlayerChanged;
         try { await JS.InvokeVoidAsync("supabaseRealtime.unsubscribe"); } catch { }
         _dotNetRef?.Dispose();
     }

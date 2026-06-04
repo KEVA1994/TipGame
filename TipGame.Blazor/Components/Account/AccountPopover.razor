@@ -31,10 +31,16 @@
         else if (isSignUpMode)
         {
             <MudStack Spacing="2">
-                <MudTextField @bind-Value="signUpName"
-                              Label="Visningsnavn"
-                              Variant="Variant.Text"
-                              Immediate="true" />
+                <MudStack Row="true" Spacing="2">
+                    <MudTextField @bind-Value="signUpFirstName"
+                                  Label="Fornavn"
+                                  Variant="Variant.Text"
+                                  Immediate="true" />
+                    <MudTextField @bind-Value="signUpLastName"
+                                  Label="Efternavn"
+                                  Variant="Variant.Text"
+                                  Immediate="true" />
+                </MudStack>
                 <MudTextField @bind-Value="signUpEmail"
                               Label="Email"
                               InputType="InputType.Email"
@@ -92,7 +98,7 @@
             <MudButton OnClick="Close">Annuller</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary"
                        OnClick="HandleSignUp"
-                       Disabled="@(string.IsNullOrWhiteSpace(signUpName) || string.IsNullOrWhiteSpace(signUpEmail) || string.IsNullOrWhiteSpace(signUpPassword))">
+                       Disabled="@(string.IsNullOrWhiteSpace(signUpFirstName) || string.IsNullOrWhiteSpace(signUpLastName) || string.IsNullOrWhiteSpace(signUpEmail) || string.IsNullOrWhiteSpace(signUpPassword))">
                 Opret konto
             </MudButton>
         }

@@ -14,7 +14,8 @@ public partial class AccountPopover
     private bool isSignUpMode;
     private string emailInput = string.Empty;
     private string passwordInput = string.Empty;
-    private string signUpName = string.Empty;
+    private string signUpFirstName = string.Empty;
+    private string signUpLastName = string.Empty;
     private string signUpEmail = string.Empty;
     private string signUpPassword = string.Empty;
 
@@ -49,14 +50,16 @@ public partial class AccountPopover
 
     private async Task HandleSignUp()
     {
-        var error = await PlayerState.SignUpAsync(signUpEmail, signUpPassword, signUpName);
+        var displayName = $"{signUpFirstName.Trim()} {signUpLastName.Trim()}".Trim();
+        var error = await PlayerState.SignUpAsync(signUpEmail, signUpPassword, displayName);
         if (error is not null)
         {
             Snackbar.Add(error, Severity.Error);
         }
         else
         {
-            signUpName = string.Empty;
+            signUpFirstName = string.Empty;
+            signUpLastName = string.Empty;
             signUpEmail = string.Empty;
             signUpPassword = string.Empty;
             Snackbar.Add("Konto oprettet! Du er nu logget ind.", Severity.Success);
