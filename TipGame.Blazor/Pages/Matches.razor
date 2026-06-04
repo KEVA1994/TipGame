@@ -188,9 +188,9 @@
                                                         }
                                                         else
                                                         {
-                                                            <input type="number" min="0" max="20" @bind="state.Home"
+                                                            <input type="number" min="0" max="20" @bind="state.Home" @bind:after="@(() => TryAutoSaveTip(match.Id, state))"
                                                                    class="tip-inline-input" placeholder="-" />
-                                                            <input type="number" min="0" max="20" @bind="state.Away"
+                                                            <input type="number" min="0" max="20" @bind="state.Away" @bind:after="@(() => TryAutoSaveTip(match.Id, state))"
                                                                    class="tip-inline-input" placeholder="-" />
                                                         }
                                                     </MudStack>
@@ -201,10 +201,9 @@
                                                     }
                                                     else
                                                     {
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Check" Size="Size.Small"
-                                                                       Color="Color.Primary"
-                                                                       Disabled="@(state.Home is null || state.Away is null)"
-                                                                       OnClick="@(() => SaveTip(match.Id, state))" />
+                                                        @* Invisible spacer so editable rows align with read-only rows that show the edit icon *@
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                       Style="visibility:hidden;" tabindex="-1" aria-hidden="true" />
                                                     }
                                                 </div>
                                             }

@@ -133,6 +133,22 @@ public partial class Matches : IAsyncDisposable
         tips[matchId] = dto;
     }
 
+    private async Task TryAutoSaveTip(int matchId, TipState state)
+    {
+        if (state.Home is null || state.Away is null) return;
+
+        // Avoid re-saving the same value (e.g. when blurring an unchanged input)
+        var existing = tips.GetValueOrDefault(matchId);
+        if (existing is not null && existing.HomeScore == state.Home && existing.AwayScore == state.Away)
+        {
+            state.IsSaved = true;
+            state.IsEditing = false;
+            return;
+        }
+
+        await SaveTip(matchId, state);
+    }
+
     private async void OnPlayerChanged()
     {
         if (!string.IsNullOrEmpty(PlayerState.AuthId))

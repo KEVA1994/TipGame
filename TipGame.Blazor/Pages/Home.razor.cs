@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using TipGame.Shared.Models;
 
 namespace TipGame.Blazor.Pages;
@@ -7,6 +8,10 @@ public partial class Home
 {
     [Inject] private MatchService MatchService { get; set; } = default!;
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private const string ShareLink = "https://keva1994.github.io/TipGame/";
+    private bool linkCopied;
 
     private List<MatchDto> todayMatches = new();
     private List<LeaderboardDto> topPlayers = new();
@@ -38,5 +43,19 @@ public partial class Home
         catch { }
 
         isLoading = false;
+    }
+
+    private async Task CopyShareLink()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", ShareLink);
+            linkCopied = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            linkCopied = false;
+            StateHasChanged();
+        }
+        catch { }
     }
 }

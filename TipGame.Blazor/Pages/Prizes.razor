@@ -1,0 +1,95 @@
+@page "/praemier"
+@using MudBlazor
+
+<MudStack Spacing="0" Class="mx-auto" Style="max-width: 1000px;">
+
+    @* --- Header --- *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" Href="/" />
+        <MudText Typo="Typo.h4">🏅 Præmier</MudText>
+    </MudStack>
+
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+        De officielle præmier offentliggøres her, så snart puljen er fuldendt og alle deltagere har betalt.
+        Indtil da må I nøjes med en lille teaser — hold øje! 👀
+    </MudText>
+
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.HourglassTop" Class="mb-6 rounded-xl">
+        <MudText Typo="Typo.body2">
+            <strong>Status:</strong> Præmierne er endnu ikke afsløret. Billeder og beskrivelser tilføjes,
+            så snart puljen er på plads — så I ved præcis hvad I spiller om.
+        </MudText>
+    </MudAlert>
+
+    <MudGrid Spacing="4" Class="mb-6">
+
+        @* --- 1. præmie --- *@
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center" Elevation="3"
+                      Style="height: 100%; background: linear-gradient(180deg, rgba(255,215,0,0.15) 0%, var(--mud-palette-surface) 100%);">
+                <MudText Typo="Typo.h2">🥇</MudText>
+                <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: 700;">1. præmie</MudText>
+
+                <div class="d-flex align-center justify-center mt-3 mb-3 rounded-lg"
+                     style="width: 100%; aspect-ratio: 1 / 1; background: var(--mud-palette-background-gray); border: 1px dashed var(--mud-palette-lines-default);">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Outlined.Image" Size="Size.Large" Color="Color.Secondary" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Billede kommer snart</MudText>
+                    </MudStack>
+                </div>
+
+                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Style="font-style: italic;">
+                    Afsløres når puljen er fuldendt.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        @* --- 2. præmie --- *@
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center" Elevation="2"
+                      Style="height: 100%; background: linear-gradient(180deg, rgba(192,192,192,0.15) 0%, var(--mud-palette-surface) 100%);">
+                <MudText Typo="Typo.h2">🥈</MudText>
+                <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: 700;">2. præmie</MudText>
+
+                <div class="d-flex align-center justify-center mt-3 mb-3 rounded-lg"
+                     style="width: 100%; aspect-ratio: 1 / 1; background: var(--mud-palette-background-gray); border: 1px dashed var(--mud-palette-lines-default);">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Outlined.Image" Size="Size.Large" Color="Color.Secondary" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Billede kommer snart</MudText>
+                    </MudStack>
+                </div>
+
+                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Style="font-style: italic;">
+                    Afsløres når puljen er fuldendt.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        @* --- 3. præmie --- *@
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center" Elevation="1"
+                      Style="height: 100%; background: linear-gradient(180deg, rgba(205,127,50,0.15) 0%, var(--mud-palette-surface) 100%);">
+                <MudText Typo="Typo.h2">🥉</MudText>
+                <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: 700;">3. præmie</MudText>
+
+                <div class="d-flex align-center justify-center mt-3 mb-3 rounded-lg"
+                     style="width: 100%; aspect-ratio: 1 / 1; background: var(--mud-palette-background-gray); border: 1px dashed var(--mud-palette-lines-default);">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Outlined.Image" Size="Size.Large" Color="Color.Secondary" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Billede kommer snart</MudText>
+                    </MudStack>
+                </div>
+
+                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Style="font-style: italic;">
+                    Afsløres når puljen er fuldendt.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+    <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/">
+        Tilbage til forsiden
+    </MudButton>
+
+</MudStack>
