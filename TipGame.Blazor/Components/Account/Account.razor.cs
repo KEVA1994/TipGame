@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace TipGame.Blazor.Components.Account;
@@ -35,6 +36,8 @@ public partial class AccountPopover
 
     private async Task HandleLogin()
     {
+        if (string.IsNullOrWhiteSpace(emailInput) || string.IsNullOrWhiteSpace(passwordInput)) return;
+
         var error = await PlayerState.SignInAsync(emailInput, passwordInput);
         if (error is not null)
         {
@@ -50,6 +53,9 @@ public partial class AccountPopover
 
     private async Task HandleSignUp()
     {
+        if (string.IsNullOrWhiteSpace(signUpFirstName) || string.IsNullOrWhiteSpace(signUpLastName)
+            || string.IsNullOrWhiteSpace(signUpEmail) || string.IsNullOrWhiteSpace(signUpPassword)) return;
+
         var displayName = $"{signUpFirstName.Trim()} {signUpLastName.Trim()}".Trim();
         var error = await PlayerState.SignUpAsync(signUpEmail, signUpPassword, displayName);
         if (error is not null)
@@ -71,5 +77,10 @@ public partial class AccountPopover
     {
         await PlayerState.LogoutAsync();
         await Close();
+    }
+
+    private async Task HandleLoginKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await HandleLogin();
     }
 }

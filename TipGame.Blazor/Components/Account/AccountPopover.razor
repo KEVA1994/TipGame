@@ -67,12 +67,14 @@
                               Label="Email"
                               InputType="InputType.Email"
                               Variant="Variant.Text"
-                              Immediate="true" />
+                              Immediate="true"
+                              OnKeyDown="HandleLoginKey" />
                 <MudTextField @bind-Value="passwordInput"
                               Label="Kodeord"
                               InputType="InputType.Password"
                               Variant="Variant.Text"
-                              Immediate="true" />
+                              Immediate="true"
+                              OnKeyDown="HandleLoginKey" />
             </MudStack>
 
             <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Class="mt-4">
