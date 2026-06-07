@@ -8,17 +8,22 @@ public partial class AccountPopover
 {
     [Inject] private PlayerState PlayerState { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
 
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
 
     private bool isSignUpMode;
+    private bool isForgotPasswordMode;
+    private bool forgotPasswordSent;
+    private bool isSendingResetEmail;
     private string emailInput = string.Empty;
     private string passwordInput = string.Empty;
     private string signUpFirstName = string.Empty;
     private string signUpLastName = string.Empty;
     private string signUpEmail = string.Empty;
     private string signUpPassword = string.Empty;
+    private string forgotPasswordEmail = string.Empty;
 
     private readonly DialogOptions dialogOptions = new()
     {
@@ -82,5 +87,39 @@ public partial class AccountPopover
     private async Task HandleLoginKey(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await HandleLogin();
+    }
+
+    private async Task HandleForgotPassword()
+    {
+        if (string.IsNullOrWhiteSpace(forgotPasswordEmail) || isSendingResetEmail) return;
+
+        isSendingResetEmail = true;
+        try
+        {
+            // Build the absolute URL for the reset page. NavigateTo("nulstil-kodeord", false)
+            // would navigate locally; we just need the URL to give Supabase.
+            var baseUri = Nav.BaseUri.TrimEnd('/');
+            var redirect = $"{baseUri}/nulstil-kodeord";
+
+            var error = await PlayerState.SendPasswordResetAsync(forgotPasswordEmail.Trim(), redirect);
+            // Always show the same confirmation, regardless of whether the email exists,
+            // to avoid leaking account information.
+            forgotPasswordSent = true;
+
+            if (error is not null)
+            {
+                // Still surface a soft hint if something obviously failed (e.g. invalid email format).
+                Snackbar.Add("Vi forsøgte at sende e-mailen — modtager du intet, så prøv igen om lidt.", Severity.Info);
+            }
+        }
+        finally
+        {
+            isSendingResetEmail = false;
+        }
+    }
+
+    private async Task HandleForgotPasswordKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await HandleForgotPassword();
     }
 }

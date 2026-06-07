@@ -6,6 +6,10 @@
         {
             <MudText Typo="Typo.h6">Min konto</MudText>
         }
+        else if (isForgotPasswordMode)
+        {
+            <MudText Typo="Typo.h6">Glemt kodeord</MudText>
+        }
         else if (isSignUpMode)
         {
             <MudText Typo="Typo.h6">Opret konto</MudText>
@@ -26,6 +30,35 @@
                     <MudText Typo="Typo.h6">@PlayerState.PlayerName</MudText>
                     <MudText Typo="Typo.caption" Color="Color.Default">@PlayerState.Email</MudText>
                 </MudStack>
+            </MudStack>
+        }
+        else if (isForgotPasswordMode)
+        {
+            @if (forgotPasswordSent)
+            {
+                <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.MarkEmailRead">
+                    Hvis der findes en konto med <strong>@forgotPasswordEmail</strong>, har vi sendt en e-mail med et link til at nulstille dit kodeord. Tjek også din spam-mappe.
+                </MudAlert>
+            }
+            else
+            {
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Indtast din e-mail, så sender vi dig et link til at nulstille dit kodeord.
+                    </MudText>
+                    <MudTextField @bind-Value="forgotPasswordEmail"
+                                  Label="Email"
+                                  InputType="InputType.Email"
+                                  Variant="Variant.Text"
+                                  Immediate="true"
+                                  OnKeyDown="HandleForgotPasswordKey" />
+                </MudStack>
+            }
+
+            <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Class="mt-4">
+                <MudLink Typo="Typo.body2" Color="Color.Primary" OnClick="@(() => { isForgotPasswordMode = false; forgotPasswordSent = false; })">
+                    Tilbage til login
+                </MudLink>
             </MudStack>
         }
         else if (isSignUpMode)
@@ -77,6 +110,12 @@
                               OnKeyDown="HandleLoginKey" />
             </MudStack>
 
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-1">
+                <MudLink Typo="Typo.caption" Color="Color.Primary" OnClick="@(() => { isForgotPasswordMode = true; forgotPasswordEmail = emailInput; forgotPasswordSent = false; })">
+                    Glemt kodeord?
+                </MudLink>
+            </MudStack>
+
             <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Class="mt-4">
                 <MudText Typo="Typo.body2">Har du ikke en konto?</MudText>
                 <MudLink Typo="Typo.body2" Color="Color.Primary" OnClick="@(() => isSignUpMode = true)">
@@ -94,6 +133,18 @@
                        OnClick="HandleLogout">
                 Log ud
             </MudButton>
+        }
+        else if (isForgotPasswordMode)
+        {
+            <MudButton OnClick="Close">Luk</MudButton>
+            @if (!forgotPasswordSent)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="HandleForgotPassword"
+                           Disabled="@(string.IsNullOrWhiteSpace(forgotPasswordEmail) || isSendingResetEmail)">
+                    @(isSendingResetEmail ? "Sender…" : "Send nulstillingslink")
+                </MudButton>
+            }
         }
         else if (isSignUpMode)
         {

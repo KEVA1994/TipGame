@@ -70,3 +70,28 @@ window.tipInputs = {
         return false;
     }
 };
+
+window.authRecovery = {
+    // Supabase delivers recovery tokens in the URL fragment, e.g.
+    //   https://app.example.com/nulstil-kodeord#access_token=...&refresh_token=...&type=recovery
+    // Reads and clears the fragment, returning the parsed values (or null fields).
+    readAndClearFragment: function () {
+        var hash = window.location.hash || '';
+        if (hash.charAt(0) === '#') hash = hash.substring(1);
+
+        var params = new URLSearchParams(hash);
+        var result = {
+            accessToken: params.get('access_token'),
+            refreshToken: params.get('refresh_token'),
+            type: params.get('type'),
+            error: params.get('error_description') || params.get('error')
+        };
+
+        if (hash.length > 0) {
+            // Strip the fragment so the tokens don't linger in the address bar / history.
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+
+        return result;
+    }
+};

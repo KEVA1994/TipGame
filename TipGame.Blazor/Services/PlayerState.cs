@@ -91,6 +91,60 @@ public class PlayerState
         OnChange?.Invoke();
     }
 
+    public async Task<string?> SendPasswordResetAsync(string email, string redirectUrl)
+    {
+        try
+        {
+            // Supabase Gotrue v1.1.1 sends the email; the recovery link points to the
+            // redirect URL configured both here and in Supabase's Auth -> URL Configuration.
+            await _supabase.Auth.ResetPasswordForEmail(new Supabase.Gotrue.ResetPasswordForEmailOptions(email)
+            {
+                RedirectTo = redirectUrl
+            });
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public async Task<string?> ApplyRecoverySessionAsync(string accessToken, string refreshToken)
+    {
+        try
+        {
+            var session = await _supabase.Auth.SetSession(accessToken, refreshToken);
+            if (session?.User is not null)
+            {
+                PlayerName = ExtractDisplayName(session.User);
+                AuthId = session.User.Id;
+                Email = session.User.Email ?? string.Empty;
+                OnChange?.Invoke();
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public async Task<string?> UpdatePasswordAsync(string newPassword)
+    {
+        try
+        {
+            await _supabase.Auth.Update(new Supabase.Gotrue.UserAttributes
+            {
+                Password = newPassword
+            });
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
     private static string ExtractDisplayName(Supabase.Gotrue.User user)
     {
         if (user.UserMetadata?.TryGetValue("display_name", out var name) == true && name is not null)
