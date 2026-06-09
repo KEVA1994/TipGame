@@ -6,35 +6,8 @@
         Akkumulerede point per spiller over kampdage. Tryk på navnene for at filtrere.
     </MudText>
 
-    @if (Series.Count > 0)
+    @if (Series.Count > 0 && Labels.Length > 0)
     {
-        @* --- Aktuel stilling kort --- *@
-        <MudPaper Class="pa-4 rounded-xl mb-5" Elevation="1">
-            <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.End" Spacing="4" Style="flex-wrap: wrap;">
-                @foreach (var (player, index) in GetCurrentStandings())
-                {
-                    var rank = index + 1;
-                    var isLeader = rank == 1;
-                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                        @if (isLeader)
-                        {
-                            <MudText Typo="Typo.h4">👑</MudText>
-                        }
-                        <MudAvatar Color="@(isLeader ? Color.Primary : Color.Default)"
-                                   Size="@(isLeader ? Size.Large : Size.Medium)"
-                                   Variant="Variant.Filled">
-                            @player.Name[..1].ToUpper()
-                        </MudAvatar>
-                        <MudText Typo="@(isLeader ? Typo.h5 : Typo.h6)"
-                                 Color="@(isLeader ? Color.Primary : Color.Default)">
-                            @player.CurrentPoints
-                        </MudText>
-                        <MudText Typo="Typo.caption">@player.Name</MudText>
-                    </MudStack>
-                }
-            </MudStack>
-        </MudPaper>
-
         @* --- Filter chips --- *@
         <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-4">
             @foreach (var name in allNames)
@@ -63,7 +36,7 @@
     else
     {
         <MudAlert Severity="Severity.Normal" Variant="Variant.Text" Icon="@Icons.Material.Filled.Info">
-            Ingen data endnu.
+            Ingen kampe er afgjort endnu – grafen vises når de første resultater er registreret.
         </MudAlert>
     }
 </MudPaper>
