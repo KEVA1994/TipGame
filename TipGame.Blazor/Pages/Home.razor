@@ -112,7 +112,7 @@
             <MudText Typo="Typo.h6" Class="mb-4">🚀 Sådan deltager du</MudText>
             <MudTimeline TimelinePosition="TimelinePosition.Start">
                 <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
-                    <MudText Typo="Typo.body2"><strong>1.</strong> Betal <strong>50 kr</strong> via MobilePay (scan QR-koden →)</MudText>
+                    <MudText Typo="Typo.body2"><strong>1.</strong> Betal <strong>50 kr</strong> via MobilePay (tryk på knappen →)</MudText>
                 </MudTimelineItem>
                 <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
                     <MudText Typo="Typo.body2"><strong>2.</strong> Opret din profil med fornavn og efternavn</MudText>
@@ -165,13 +165,17 @@
         <MudPaper Class="pa-6 rounded-xl d-flex flex-column align-center" Elevation="2" Style="height: 100%; background: linear-gradient(180deg, var(--mud-palette-background-gray) 0%, var(--mud-palette-surface) 100%);">
             <MudText Typo="Typo.h6" Class="mb-2">💳 Betal med MobilePay</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center" Class="mb-4">
-                Scan QR-koden herunder og overfør <strong>50 kr</strong> for at deltage i tipspillet.
+                Tryk på knappen herunder og overfør <strong>50 kr</strong> for at deltage i tipspillet.
             </MudText>
-            <MudPaper Class="pa-4 rounded-xl" Elevation="0" Style="background: white;">
-                <img src="qr.png" alt="MobilePay QR-kode" style="width: 200px; height: 200px; display: block;" />
-            </MudPaper>
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-3">MobilePay Box</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Primary" Class="mt-1" Style="font-weight: 700;">50 kr</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 700;">50 kr</MudText>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Payment"
+                       Href="https://qr.mobilepay.dk/box/b5e6cfe0-139c-4018-b077-8953fb89038f/pay-in"
+                       Target="_blank"
+                       Class="mt-3">
+                Åbn MobilePay
+            </MudButton>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
                 Skriv dit navn i beskeden så vi kan matche betalingen.
             </MudText>
