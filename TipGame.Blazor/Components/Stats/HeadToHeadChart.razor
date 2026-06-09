@@ -32,33 +32,29 @@
     {
         @* --- Scoreboard --- *@
         <MudPaper Class="pa-5 rounded-xl mb-5" Elevation="1">
-            <MudStack Row="true" Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
-                <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                    <MudAvatar Color="@(GetTotal(Player1) >= GetTotal(Player2) ? Color.Primary : Color.Default)"
-                               Size="Size.Large" Variant="Variant.Filled">
-                        @Player1![..1].ToUpper()
-                    </MudAvatar>
-                    <MudText Typo="Typo.subtitle1">@Player1</MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Primary">@GetTotal(Player1)</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
-                </MudStack>
-
-                <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Size="Size.Small">@GetWins(Player1, Player2) V</MudChip>
-                    <MudChip T="string" Color="Color.Default" Variant="Variant.Text" Size="Size.Small">@GetDraws() U</MudChip>
-                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Text" Size="Size.Small">@GetWins(Player2, Player1) V</MudChip>
-                </MudStack>
-
-                <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                    <MudAvatar Color="@(GetTotal(Player2) >= GetTotal(Player1) ? Color.Secondary : Color.Default)"
-                               Size="Size.Large" Variant="Variant.Filled">
-                        @Player2![..1].ToUpper()
-                    </MudAvatar>
-                    <MudText Typo="Typo.subtitle1">@Player2</MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Secondary">@GetTotal(Player2)</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
-                </MudStack>
-            </MudStack>
+            <MudGrid Spacing="0" Justify="Justify.Center">
+                <MudItem xs="5">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText Typo="Typo.subtitle2" Align="Align.Center">@Player1</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@GetTotal(Player1)</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="2" Class="d-flex align-center justify-center">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Size="Size.Small">@GetWins(Player1, Player2) V</MudChip>
+                        <MudChip T="string" Color="Color.Default" Variant="Variant.Text" Size="Size.Small">@GetDraws() U</MudChip>
+                        <MudChip T="string" Color="Color.Secondary" Variant="Variant.Text" Size="Size.Small">@GetWins(Player2, Player1) V</MudChip>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="5">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText Typo="Typo.subtitle2" Align="Align.Center">@Player2</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Secondary">@GetTotal(Player2)</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
 
             @* Win distribution bar *@
             @if (MatchIds.Count > 0)
