@@ -71,6 +71,10 @@ window.tipInputs = {
     }
 };
 
+window.getUtcOffsetMinutes = function () {
+    return -new Date().getTimezoneOffset();
+};
+
 window.authRecovery = {
     // Supabase delivers recovery tokens in the URL fragment, e.g.
     //   https://app.example.com/nulstil-kodeord#access_token=...&refresh_token=...&type=recovery
