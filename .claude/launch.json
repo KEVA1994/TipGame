@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tipgame-blazor",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "TipGame.Blazor", "--urls", "http://localhost:5179"],
+      "port": 5179
+    }
+  ]
+}

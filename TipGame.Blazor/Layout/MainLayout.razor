@@ -52,7 +52,11 @@
         </MudNavMenu>
     </MudDrawer>
 
-    <MudMainContent Class="pa-4">
-        @Body
+    @* Padding lives on an inner div: putting pa-4 directly on MudMainContent would
+       override (with !important) the padding-top MudBlazor adds to clear the fixed appbar. *@
+    <MudMainContent>
+        <div class="pa-4">
+            @Body
+        </div>
     </MudMainContent>
 </MudLayout>
