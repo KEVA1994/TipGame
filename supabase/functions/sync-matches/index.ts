@@ -4,10 +4,7 @@ Deno.serve(async () => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const footballApiToken = Deno.env.get("FOOTBALL_API_TOKEN")!;
-  const competition = Deno.env.get("FOOTBALL_API_COMPETITION") ?? "PL";
-  const dateFrom = Deno.env.get("FOOTBALL_API_DATE_FROM") ?? "2026-03-30";
-  const dateTo = Deno.env.get("FOOTBALL_API_DATE_TO") ?? "2026-04-27";
-  const footballApiUrl = `https://api.football-data.org/v4/competitions/${competition}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+  const footballApiUrl = "https://api.football-data.org/v4/competitions/WC/matches";
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -47,6 +44,7 @@ Deno.serve(async () => {
 
   let newCount = 0;
   let updatedCount = 0;
+  const errors: string[] = [];
 
   for (const apiMatch of apiMatches) {
     const existing = existingMatches?.find(
@@ -54,7 +52,7 @@ Deno.serve(async () => {
     );
 
     if (!existing) {
-      await supabase.from("Matches").insert({
+      const { error } = await supabase.from("Matches").insert({
         ExternalId: apiMatch.id,
         HomeTeam: apiMatch.homeTeam.name,
         AwayTeam: apiMatch.awayTeam.name,
@@ -66,9 +64,9 @@ Deno.serve(async () => {
         Stage: apiMatch.stage ?? null,
         Matchday: apiMatch.matchday ?? null,
       });
-      newCount++;
+      if (error) errors.push(`insert ${apiMatch.id}: ${error.message}`);
+      else newCount++;
     } else {
-      const wasFinished = existing.Status === "FINISHED";
       const homeScore: number | null = apiMatch.score?.fullTime?.home ?? null;
       const awayScore: number | null = apiMatch.score?.fullTime?.away ?? null;
 
@@ -80,76 +78,49 @@ Deno.serve(async () => {
         minute = Math.min(Math.floor(elapsed), 120);
       }
 
-      await supabase
+      const update: Record<string, unknown> = {
+        Status: apiMatch.status,
+        KickoffTime: apiMatch.utcDate,
+        Minute: minute,
+        HomeCrest: apiMatch.homeTeam.crest,
+        AwayCrest: apiMatch.awayTeam.crest,
+        Group: apiMatch.group ?? null,
+        Stage: apiMatch.stage ?? null,
+        Matchday: apiMatch.matchday ?? null,
+      };
+
+      // The API occasionally reports a match without scores (even FINISHED ones).
+      // Never overwrite a known score with null — only write scores we actually got.
+      if (homeScore !== null) update.HomeScore = homeScore;
+      if (awayScore !== null) update.AwayScore = awayScore;
+
+      const { error } = await supabase
         .from("Matches")
-        .update({
-          Status: apiMatch.status,
-          HomeScore: homeScore,
-          AwayScore: awayScore,
-          KickoffTime: apiMatch.utcDate,
-          Minute: minute,
-          HomeCrest: apiMatch.homeTeam.crest,
-          AwayCrest: apiMatch.awayTeam.crest,
-          Group: apiMatch.group ?? null,
-          Stage: apiMatch.stage ?? null,
-          Matchday: apiMatch.matchday ?? null,
-        })
+        .update(update)
         .eq("Id", existing.Id);
 
-      updatedCount++;
-
-      // Calculate points when a match finishes
-      if (
-        apiMatch.status === "FINISHED" &&
-        !wasFinished &&
-        homeScore !== null &&
-        awayScore !== null
-      ) {
-        const { data: predictions } = await supabase
-          .from("Predictions")
-          .select("*")
-          .eq("MatchId", existing.Id);
-
-        if (predictions) {
-          for (const pred of predictions) {
-            let points = 0;
-
-            if (
-              pred.PredictedHome === homeScore &&
-              pred.PredictedAway === awayScore
-            ) {
-              // Exact score
-              points = 3;
-            } else if (
-              pred.PredictedHome === pred.PredictedAway &&
-              homeScore === awayScore
-            ) {
-              // Both predicted draw
-              points = 2;
-            } else if (
-              (pred.PredictedHome > pred.PredictedAway &&
-                homeScore > awayScore) ||
-              (pred.PredictedHome < pred.PredictedAway &&
-                homeScore < awayScore)
-            ) {
-              // Correct winner
-              points = 1;
-            }
-
-            await supabase
-              .from("Predictions")
-              .update({ Points: points })
-              .eq("Id", pred.Id);
-          }
-        }
-      }
+      if (error) errors.push(`update ${existing.Id}: ${error.message}`);
+      else updatedCount++;
     }
   }
+
+  // Settle points for all finished matches. Idempotent — recalculates every run,
+  // so a missed/failed run self-heals instead of leaving predictions at 0 forever.
+  let settled = 0;
+  const { data: settledCount, error: settleError } = await supabase.rpc(
+    "settle_points"
+  );
+  if (settleError) errors.push(`settle_points: ${settleError.message}`);
+  else settled = settledCount ?? 0;
+
+  if (errors.length > 0) console.error("sync-matches errors:", errors);
 
   return Response.json({
     total: apiMatches.length,
     new: newCount,
     updated: updatedCount,
+    settled,
+    errors,
   });
 });
 
