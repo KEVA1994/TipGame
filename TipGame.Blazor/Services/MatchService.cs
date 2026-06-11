@@ -24,7 +24,7 @@ public class MatchService
             AwayTeam = m.AwayTeam,
             HomeCrest = m.HomeCrest,
             AwayCrest = m.AwayCrest,
-            KickoffTime = DateTime.SpecifyKind(m.KickoffTime, DateTimeKind.Utc).ToLocalTime(),
+            KickoffTime = m.KickoffTime,
             Status = m.Status,
             HomeScore = m.HomeScore,
             AwayScore = m.AwayScore,
