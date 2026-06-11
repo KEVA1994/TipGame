@@ -67,6 +67,12 @@ Deno.serve(async () => {
       if (error) errors.push(`insert ${apiMatch.id}: ${error.message}`);
       else newCount++;
     } else {
+      // The API occasionally flip-flops and reports an already-finished match
+      // as TIMED/SCHEDULED again. A finished match never un-finishes — skip it.
+      if (existing.Status === "FINISHED" && apiMatch.status !== "FINISHED") {
+        continue;
+      }
+
       const homeScore: number | null = apiMatch.score?.fullTime?.home ?? null;
       const awayScore: number | null = apiMatch.score?.fullTime?.away ?? null;
 
