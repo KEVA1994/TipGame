@@ -166,9 +166,9 @@
                                                 @* Finished match with a tip — show result chip *@
                                                 <div class="match-tip-area">
                                                     @{
-                                                        var points = CalculatePoints(match, tip);
-                                                        var chipColor = points == 3 ? Color.Success : points == 1 ? Color.Warning : Color.Error;
-                                                        var chipIcon = points == 3 ? Icons.Material.Filled.CheckCircle : points == 1 ? Icons.Material.Filled.RemoveCircle : Icons.Material.Filled.Cancel;
+                                                        var points = tip.Points;
+                                                        var chipColor = points == 3 ? Color.Success : points == 2 ? Color.Info : points == 1 ? Color.Warning : Color.Error;
+                                                        var chipIcon = points == 3 ? Icons.Material.Filled.CheckCircle : points == 2 ? Icons.Material.Filled.RemoveCircle : points == 1 ? Icons.Material.Filled.RemoveCircle : Icons.Material.Filled.Cancel;
                                                     }
                                                     <MudTooltip Text="@($"Dit tip: {tip.HomeScore}-{tip.AwayScore} ({points} point)")">
                                                         <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@chipColor" Icon="@chipIcon">

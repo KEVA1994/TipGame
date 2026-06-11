@@ -100,11 +100,6 @@ public partial class Matches : IAsyncDisposable
         await InvokeAsync(StateHasChanged);
     }
 
-    private void OnTipSaved(PredictionDto tip)
-    {
-        tips[tip.MatchId] = tip;
-    }
-
     private bool CanEdit(MatchDto match) =>
         !string.IsNullOrEmpty(PlayerState.AuthId) && DateTime.Now < match.KickoffTime.AddHours(-1);
 
@@ -307,19 +302,6 @@ public partial class Matches : IAsyncDisposable
             })
             .Where(g => g.Rounds.Count > 0)
             .ToList();
-
-    private static int CalculatePoints(MatchDto match, PredictionDto tip)
-    {
-        if (match.HomeScore is null || match.AwayScore is null)
-            return 0;
-        if (tip.HomeScore == match.HomeScore && tip.AwayScore == match.AwayScore)
-            return 3; // Exact
-        var actualDiff = match.HomeScore - match.AwayScore;
-        var tipDiff = tip.HomeScore - tip.AwayScore;
-        if (actualDiff > 0 && tipDiff > 0 || actualDiff < 0 && tipDiff < 0 || actualDiff == 0 && tipDiff == 0)
-            return 1; // Correct outcome
-        return 0;
-    }
 
     private static string FormatDate(DateTime date)
     {

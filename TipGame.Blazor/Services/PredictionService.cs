@@ -100,7 +100,8 @@ public class PredictionService
         {
             MatchId = p.MatchId,
             HomeScore = p.PredictedHome,
-            AwayScore = p.PredictedAway
+            AwayScore = p.PredictedAway,
+            Points = p.Points
         }).ToList();
     }
 }
