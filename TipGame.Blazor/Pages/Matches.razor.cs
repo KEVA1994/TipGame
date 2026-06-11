@@ -235,21 +235,22 @@ public partial class Matches : IAsyncDisposable
     private void BuildGroupedMatches()
     {
         matchGroups = matches
-            .GroupBy(m => m.Group ?? m.Stage ?? "Øvrige")
-            .OrderBy(g => g.Key)
+            .GroupBy(m => m.Group is not null
+                ? $"RUNDE_{m.Matchday ?? 0}"
+                : m.Stage ?? "Øvrige")
             .Select(g => new MatchGroup
             {
                 GroupKey = g.Key,
-                Rounds = g
-                    .GroupBy(m => m.Matchday ?? 0)
-                    .OrderBy(r => r.Key)
-                    .Select(r => new MatchRound
+                Rounds =
+                [
+                    new MatchRound
                     {
-                        Matchday = r.Key,
-                        Matches = r.OrderBy(m => m.KickoffTime).ToList()
-                    })
-                    .ToList()
+                        Matchday = 0,
+                        Matches = g.OrderBy(m => m.KickoffTime).ToList()
+                    }
+                ]
             })
+            .OrderBy(g => g.Rounds[0].Matches[0].KickoffTime)
             .ToList();
 
         // Default: expand groups that have live or today's matches
@@ -277,6 +278,18 @@ public partial class Matches : IAsyncDisposable
         4 => FilterGroups(m => m.Status is "IN_PLAY" or "PAUSED"),        // Live
         _ => matchGroups                                                   // Alle
     };
+
+    private void OnTabChanged(int index)
+    {
+        activeTab = index;
+
+        // "I dag" tab: expand all groups so every today-match is visible
+        if (activeTab == 1)
+        {
+            foreach (var key in expandedStates.Keys)
+                expandedStates[key] = true;
+        }
+    }
 
     private List<MatchGroup> FilterGroups(Func<MatchDto, bool> predicate) =>
         matchGroups
@@ -326,18 +339,10 @@ public partial class Matches : IAsyncDisposable
 
     private static string FormatGroupName(string key) => key switch
     {
-        "GROUP_A" => "Gruppe A",
-        "GROUP_B" => "Gruppe B",
-        "GROUP_C" => "Gruppe C",
-        "GROUP_D" => "Gruppe D",
-        "GROUP_E" => "Gruppe E",
-        "GROUP_F" => "Gruppe F",
-        "GROUP_G" => "Gruppe G",
-        "GROUP_H" => "Gruppe H",
-        "GROUP_I" => "Gruppe I",
-        "GROUP_J" => "Gruppe J",
-        "GROUP_K" => "Gruppe K",
-        "GROUP_L" => "Gruppe L",
+        "RUNDE_1" => "Runde 1",
+        "RUNDE_2" => "Runde 2",
+        "RUNDE_3" => "Runde 3",
+        "RUNDE_0" => "Gruppespil",
         "GROUP_TEST" => "🧪 Test Gruppe",
         "LAST_32" => "1/16-finale",
         "LAST_16" => "1/8-finale",

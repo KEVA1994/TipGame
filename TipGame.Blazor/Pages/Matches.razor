@@ -29,7 +29,7 @@
         </MudText>
     </MudAlert>
 
-    <MudTabs @bind-ActivePanelIndex="activeTab" Elevation="0" Rounded="true" ApplyEffectsToContainer="true"
+    <MudTabs ActivePanelIndex="activeTab" ActivePanelIndexChanged="OnTabChanged" Elevation="0" Rounded="true" ApplyEffectsToContainer="true"
              Class="mb-4" MinimumTabWidth="0px" PanelClass="pa-0">
         <MudTabPanel Text="Alle" BadgeColor="Color.Primary" />
         <MudTabPanel Text="I dag" BadgeColor="Color.Primary" />
@@ -87,20 +87,16 @@
                     <ChildContent>
                         @foreach (var round in group.Rounds)
                         {
-                            @if (round.Matchday > 0)
-                            {
-                                <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mt-2 mb-1 ml-1">
-                                    RUNDE @round.Matchday
-                                </MudText>
-                            }
-
                             @* Group matches by date *@
                             @foreach (var dateGroup in round.Matches.GroupBy(m => m.KickoffTime.Date).OrderBy(d => d.Key))
                             {
-                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 mb-1 ml-1"
-                                         Style="text-transform: uppercase; letter-spacing: 0.05em;">
-                                    @FormatDate(dateGroup.Key)
-                                </MudText>
+                                @if (activeTab != 1)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 mb-1 ml-1"
+                                             Style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                        @FormatDate(dateGroup.Key)
+                                    </MudText>
+                                }
 
                                 @foreach (var match in dateGroup)
                                 {
