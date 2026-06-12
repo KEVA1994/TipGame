@@ -14,7 +14,8 @@ else if (!string.IsNullOrEmpty(errorMessage))
 }
 else if (data is not null)
 {
-    <MudTabs Elevation="1" Rounded="false" Ripple="true" Color="Color.Primary" SliderColor="Color.Inherit" TabPanelsClass="pt-6">
+    <MudTabs Elevation="1" Rounded="false" Ripple="true" Color="Color.Primary" SliderColor="Color.Inherit" TabPanelsClass="pt-6"
+             ActivePanelIndex="activeTab" ActivePanelIndexChanged="OnTabChanged" KeepPanelsAlive="true">
 
         <MudTabPanel Text="Point-udvikling" Icon="@Icons.Material.Filled.TrendingUp">
             <PointProgressionChart Series="@pointSeries" Labels="@pointLabels" />
@@ -32,9 +33,7 @@ else if (data is not null)
             <HeadToHeadChart HeadToHead="@data.HeadToHead"
                              MatchIds="@data.MatchIds"
                              MatchLabels="@data.MatchLabels"
-                             PlayerNames="@data.PlayerNames"
-                             Player1="@h2hPlayer1"
-                             Player2="@h2hPlayer2" />
+                             PlayerNames="@data.PlayerNames" />
         </MudTabPanel>
 
     </MudTabs>

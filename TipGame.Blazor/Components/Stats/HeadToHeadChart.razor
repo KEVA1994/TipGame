@@ -8,23 +8,21 @@
 
     <MudGrid Spacing="3" Class="mb-4">
         <MudItem xs="12" sm="5">
-            <MudSelect T="string" Label="Spiller 1" @bind-Value="Player1" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person">
-                @foreach (var name in PlayerNames)
-                {
-                    <MudSelectItem Value="@name">@name</MudSelectItem>
-                }
-            </MudSelect>
+            <MudAutocomplete T="string" Label="Spiller 1" Value="@Player1" ValueChanged="SetPlayer1"
+                             SearchFunc="SearchPlayer1" MinCharacters="0" MaxItems="100"
+                             Placeholder="Søg spiller..." Clearable="true"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                             Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person" />
         </MudItem>
         <MudItem xs="12" sm="2" Class="d-flex align-center justify-center">
             <MudText Typo="Typo.h6" Color="Color.Default">vs</MudText>
         </MudItem>
         <MudItem xs="12" sm="5">
-            <MudSelect T="string" Label="Spiller 2" @bind-Value="Player2" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person">
-                @foreach (var name in PlayerNames)
-                {
-                    <MudSelectItem Value="@name">@name</MudSelectItem>
-                }
-            </MudSelect>
+            <MudAutocomplete T="string" Label="Spiller 2" Value="@Player2" ValueChanged="SetPlayer2"
+                             SearchFunc="SearchPlayer2" MinCharacters="0" MaxItems="100"
+                             Placeholder="Søg spiller..." Clearable="true"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                             Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person" />
         </MudItem>
     </MudGrid>
 

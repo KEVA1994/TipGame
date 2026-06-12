@@ -3,7 +3,13 @@ using TipGame.Shared.Models;
 
 public class StatsService
 {
+    // Stats only move when the sync cron settles points (~every minute),
+    // so a short cache makes back-navigation instant without showing stale data for long.
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
+
     private readonly Supabase.Client _supabase;
+    private StatsData? _cached;
+    private DateTime _cachedAt;
 
     public StatsService(Supabase.Client supabase)
     {
@@ -12,13 +18,29 @@ public class StatsService
 
     public async Task<StatsData> GetStatsAsync()
     {
-        var users = (await _supabase.From<User>().Get()).Models;
-        var predictions = (await _supabase.From<Prediction>().Get()).Models;
-        var matches = (await _supabase.From<Match>()
+        if (_cached is not null && DateTime.UtcNow - _cachedAt < CacheTtl)
+            return _cached;
+        // Fetch in parallel — sequential awaits tripled the load time.
+        var usersTask = _supabase.From<User>().Get();
+        var predictionsTask = _supabase.GetAllAsync<Prediction>();
+        var matchesTask = _supabase.From<Match>()
             .Where(m => m.Status == "FINISHED")
-            .Get()).Models;
+            .Get();
+        await Task.WhenAll(usersTask, predictionsTask, matchesTask);
+
+        var users = usersTask.Result.Models;
+        var predictions = predictionsTask.Result;
+        var matches = matchesTask.Result.Models;
 
         Console.WriteLine($"[Stats] Users={users.Count}, Predictions={predictions.Count}, FinishedMatches={matches.Count}");
+
+        _cached = BuildStats(users, predictions, matches);
+        _cachedAt = DateTime.UtcNow;
+        return _cached;
+    }
+
+    private static StatsData BuildStats(List<User> users, List<Prediction> predictions, List<Match> matches)
+    {
 
         var matchLookup = matches.ToDictionary(m => m.Id);
         var userLookup = users.ToDictionary(u => u.Id, u => u.Name);

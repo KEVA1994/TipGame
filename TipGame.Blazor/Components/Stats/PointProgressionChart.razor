@@ -3,35 +3,55 @@
 <MudPaper Class="pa-6" Elevation="0">
     <MudText Typo="Typo.h6" Class="mb-2">📈 Point-udvikling</MudText>
     <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
-        Akkumulerede point per spiller over kampdage. Tryk på navnene for at filtrere.
+        Akkumulerede point per spiller over kampdage. Vælg hvem du vil følge i grafen.
     </MudText>
 
     @if (Series.Count > 0 && Labels.Length > 0)
     {
-        @* --- Filter chips --- *@
-        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-4">
-            @foreach (var name in allNames)
-            {
-                var n = name;
-                var active = visibleNames.Contains(n);
-                <MudChip T="string"
-                         Text="@n"
-                         Size="Size.Small"
-                         Variant="@(active ? Variant.Filled : Variant.Outlined)"
-                         Color="Color.Primary"
-                         OnClick="@(() => TogglePlayer(n))" />
-            }
-        </MudStack>
+        @* --- Searchable player list --- *@
+        <MudAutocomplete T="string" @ref="playerSearch"
+                         Value="@null" ValueChanged="AddPlayer"
+                         SearchFunc="SearchPlayers" MinCharacters="0" MaxItems="100"
+                         Placeholder="Søg og tilføj spiller..." Clearable="true"
+                         Margin="Margin.Dense" Variant="Variant.Outlined" Dense="true"
+                         Class="mb-3" Style="max-width: 320px;"
+                         Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+
+        @* --- Selected players as removable chips --- *@
+        @if (visibleNames.Count > 0)
+        {
+            <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-4">
+                @foreach (var name in visibleNames.OrderBy(n => n))
+                {
+                    var n = name;
+                    <MudChip T="string"
+                             Text="@n"
+                             Size="Size.Small"
+                             Variant="Variant.Filled"
+                             Color="Color.Primary"
+                             OnClose="@(() => RemovePlayer(n))" />
+                }
+            </MudStack>
+        }
 
         @* --- Line chart --- *@
-        <MudChart ChartType="ChartType.Line"
-                  ChartSeries="@filteredSeries"
-                  ChartLabels="@Labels"
-                  ChartOptions="@lineOptions"
-                  MatchBoundsToSize="true"
-                  Height="350px"
-                  @bind-SelectedIndex="selectedIndex"
-                  Class="mt-2" />
+        @if (filteredSeries.Count > 0)
+        {
+            <MudChart ChartType="ChartType.Line"
+                      ChartSeries="@filteredSeries"
+                      ChartLabels="@Labels"
+                      ChartOptions="@lineOptions"
+                      MatchBoundsToSize="true"
+                      Height="350px"
+                      @bind-SelectedIndex="selectedIndex"
+                      Class="mt-2" />
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                Vælg en eller flere spillere for at se grafen.
+            </MudText>
+        }
     }
     else
     {

@@ -3,7 +3,13 @@ using TipGame.Shared.Models;
 
 public class LeaderboardService
 {
+    // Same short cache as StatsService: instant back-navigation, refreshed
+    // on the same ~1 minute cadence as the point-settling cron.
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
+
     private readonly Supabase.Client _supabase;
+    private List<LeaderboardDto>? _cached;
+    private DateTime _cachedAt;
 
     public LeaderboardService(Supabase.Client supabase)
     {
@@ -12,11 +18,19 @@ public class LeaderboardService
 
     public async Task<List<LeaderboardDto>> GetLeaderboard()
     {
-        var users = (await _supabase.From<User>().Get()).Models;
-        var predictions = (await _supabase.From<Prediction>().Get()).Models;
-        var matches = (await _supabase.From<Match>()
+        if (_cached is not null && DateTime.UtcNow - _cachedAt < CacheTtl)
+            return _cached;
+        // Parallel fetch + paged predictions (Supabase caps a request at 1000 rows).
+        var usersTask = _supabase.From<User>().Get();
+        var predictionsTask = _supabase.GetAllAsync<Prediction>();
+        var matchesTask = _supabase.From<Match>()
             .Where(m => m.Status == "FINISHED")
-            .Get()).Models;
+            .Get();
+        await Task.WhenAll(usersTask, predictionsTask, matchesTask);
+
+        var users = usersTask.Result.Models;
+        var predictions = predictionsTask.Result;
+        var matches = matchesTask.Result.Models;
 
         var matchLookup = matches.ToDictionary(m => m.Id);
 
@@ -86,6 +100,8 @@ public class LeaderboardService
             }
         }
 
+        _cached = leaderboard;
+        _cachedAt = DateTime.UtcNow;
         return leaderboard;
     }
 }
