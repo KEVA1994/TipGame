@@ -106,7 +106,7 @@ public partial class Matches : IAsyncDisposable
     private void OpenMatch(MatchDto match)
     {
         if (match.Status == "FINISHED")
-            Nav.NavigateTo($"/matches/{match.Id}");
+            Nav.NavigateTo($"matches/{match.Id}");
     }
 
     private bool CanEdit(MatchDto match) =>

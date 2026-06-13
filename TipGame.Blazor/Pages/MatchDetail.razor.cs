@@ -41,7 +41,7 @@ public partial class MatchDetail
         isLoading = false;
     }
 
-    private void GoBack() => Nav.NavigateTo("/matches");
+    private void GoBack() => Nav.NavigateTo("matches");
 
     // Danish names built by hand — WASM runs under the invariant culture, so
     // "dddd"/"MMMM" would render English month and day names.
