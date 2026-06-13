@@ -1,0 +1,108 @@
+@page "/matches/{Id:int}"
+@using MudBlazor
+@using TipGame.Shared.Models
+
+<MudStack Spacing="3" Class="mx-auto" Style="max-width: 700px;">
+
+    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Variant="Variant.Text" Size="Size.Small"
+               OnClick="GoBack" Class="align-self-start">Tilbage til kampe</MudButton>
+
+    @if (isLoading)
+    {
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" Class="rounded-lg" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="220px" Class="rounded-lg" />
+    }
+    else if (match is null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Kampen blev ikke fundet.</MudAlert>
+    }
+    else
+    {
+        @* Match header *@
+        <MudPaper Outlined="true" Class="pa-4 rounded-lg">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="4">
+
+                <MudStack AlignItems="AlignItems.Center" Spacing="2" Style="flex:1; min-width:0;">
+                    @if (!string.IsNullOrEmpty(match.HomeCrest))
+                    {
+                        <MudImage Src="@match.HomeCrest" Width="44" Height="44" ObjectFit="ObjectFit.Contain" />
+                    }
+                    <MudText Typo="Typo.subtitle1" Align="Align.Center" Style="font-weight:600;">@match.HomeTeam</MudText>
+                </MudStack>
+
+                <MudStack AlignItems="AlignItems.Center" Spacing="1" Style="flex-shrink:0;">
+                    <MudText Typo="Typo.h4" Style="font-weight:700; white-space:nowrap;">
+                        @(match.HomeScore?.ToString() ?? "-") : @(match.AwayScore?.ToString() ?? "-")
+                    </MudText>
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="@StatusColor">@StatusLabel</MudChip>
+                </MudStack>
+
+                <MudStack AlignItems="AlignItems.Center" Spacing="2" Style="flex:1; min-width:0;">
+                    @if (!string.IsNullOrEmpty(match.AwayCrest))
+                    {
+                        <MudImage Src="@match.AwayCrest" Width="44" Height="44" ObjectFit="ObjectFit.Contain" />
+                    }
+                    <MudText Typo="Typo.subtitle1" Align="Align.Center" Style="font-weight:600;">@match.AwayTeam</MudText>
+                </MudStack>
+
+            </MudStack>
+
+            <MudDivider Class="my-3" />
+
+            <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Class="d-block">
+                @FormatKickoff(match.KickoffTime)
+            </MudText>
+        </MudPaper>
+
+        @* Predictions *@
+        @if (match.Status != "FINISHED")
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Lock">
+                Alle spilleres tip bliver afsløret her, når kampen er færdig.
+            </MudAlert>
+        }
+        else if (!predictions.Any())
+        {
+            <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Block">
+                Ingen afgav et tip på denne kamp.
+            </MudAlert>
+        }
+        else
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="px-1">
+                <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Small" Color="Color.Secondary" />
+                <MudText Typo="Typo.subtitle2">@predictions.Count tip</MudText>
+                @if (exactCount > 0)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Success"
+                             Icon="@Icons.Material.Filled.CheckCircle">
+                        @exactCount ramte præcist
+                    </MudChip>
+                }
+            </MudStack>
+
+            <MudPaper Outlined="true" Class="rounded-lg pa-0">
+                @foreach (var (p, idx) in predictions.Select((pred, i) => (pred, i)))
+                {
+                    var isMe = !string.IsNullOrEmpty(PlayerState.PlayerName) && p.UserName == PlayerState.PlayerName;
+                    var chipColor = p.Points == 3 ? Color.Success : p.Points == 2 ? Color.Info : p.Points == 1 ? Color.Warning : Color.Error;
+                    var chipIcon = p.Points == 3 ? Icons.Material.Filled.CheckCircle
+                                 : p.Points >= 1 ? Icons.Material.Filled.RemoveCircle
+                                 : Icons.Material.Filled.Cancel;
+
+                    <div class="pred-row@(isMe ? " pred-row-me" : "")">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="pred-rank">@(idx + 1)</MudText>
+                        <MudText Typo="Typo.body2" Class="pred-name" Style="@(isMe ? "font-weight:700;" : "")">
+                            @p.UserName@(isMe ? " (dig)" : "")
+                        </MudText>
+                        <MudText Typo="Typo.body1" Class="pred-tip" Style="font-weight:700;">@p.HomeScore-@p.AwayScore</MudText>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@chipColor" Icon="@chipIcon" Class="pred-points">
+                            @p.Points p
+                        </MudChip>
+                    </div>
+                }
+            </MudPaper>
+        }
+    }
+
+</MudStack>

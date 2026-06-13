@@ -103,9 +103,9 @@
                                     var isLive = match.Status is "IN_PLAY" or "PAUSED";
                                     var isFinished = match.Status == "FINISHED";
                                     var tip = tips.GetValueOrDefault(match.Id);
-                                    var rowClass = "match-row" + (isLive ? " match-row-live" : "");
+                                    var rowClass = "match-row" + (isLive ? " match-row-live" : "") + (isFinished ? " match-row-clickable" : "");
 
-                                    <div class="@rowClass">
+                                    <div class="@rowClass" @onclick="() => OpenMatch(match)">
                                         @* Time / Status column *@
                                         <MudStack Spacing="0" AlignItems="AlignItems.Center" Class="match-time">
                                             @if (isFinished)
@@ -237,6 +237,11 @@
                                                     }
                                                 </div>
                                             }
+                                        }
+
+                                        @if (isFinished)
+                                        {
+                                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" Color="Color.Default" Class="ml-1" Style="opacity:0.35;" />
                                         }
                                     </div>
                                 }

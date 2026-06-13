@@ -13,6 +13,7 @@ public partial class Matches : IAsyncDisposable
     [Inject] private PlayerState PlayerState { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private IConfiguration Configuration { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
 
     private Dictionary<int, PredictionDto> tips = new();
     private Dictionary<int, TipState> tipStates = new();
@@ -98,6 +99,14 @@ public partial class Matches : IAsyncDisposable
 
         liveCount = matches.Count(m => m.Status is "IN_PLAY" or "PAUSED");
         await InvokeAsync(StateHasChanged);
+    }
+
+    // Only finished matches open the detail view; everything else keeps its
+    // inline tipping interaction, so a stray row click does nothing there.
+    private void OpenMatch(MatchDto match)
+    {
+        if (match.Status == "FINISHED")
+            Nav.NavigateTo($"/matches/{match.Id}");
     }
 
     private bool CanEdit(MatchDto match) =>

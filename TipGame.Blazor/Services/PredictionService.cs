@@ -96,6 +96,42 @@ public class PredictionService
             .Delete();
     }
 
+    /// <summary>
+    /// Every player's tip for a single match — but only once the match is
+    /// FINISHED. Before that, returning nothing keeps tips hidden so nobody
+    /// can peek at what the others guessed.
+    /// </summary>
+    public async Task<List<PredictionDto>> GetMatchPredictions(int matchId)
+    {
+        var matchTask = _supabase.From<Match>()
+            .Where(m => m.Id == matchId)
+            .Get();
+        var predsTask = _supabase.From<Prediction>()
+            .Where(p => p.MatchId == matchId)
+            .Get();
+        var usersTask = _supabase.From<User>().Get();
+        await Task.WhenAll(matchTask, predsTask, usersTask);
+
+        var match = matchTask.Result.Models.FirstOrDefault();
+        if (match is null || match.Status != "FINISHED")
+            return [];
+
+        var userNames = usersTask.Result.Models.ToDictionary(u => u.Id, u => u.Name);
+
+        return predsTask.Result.Models
+            .Select(p => new PredictionDto
+            {
+                MatchId = p.MatchId,
+                UserName = userNames.GetValueOrDefault(p.UserId, "Ukendt"),
+                HomeScore = p.PredictedHome,
+                AwayScore = p.PredictedAway,
+                Points = p.Points
+            })
+            .OrderByDescending(p => p.Points)
+            .ThenBy(p => p.UserName)
+            .ToList();
+    }
+
     public async Task<List<PredictionDto>> GetPredictions(string authId)
     {
         if (await GetUserIdAsync(authId) is not int userId)
