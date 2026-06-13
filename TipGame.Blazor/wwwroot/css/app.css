@@ -173,6 +173,15 @@ code {
     background-color: color-mix(in srgb, var(--mud-palette-primary) 6%, transparent);
 }
 
+.match-row-clickable {
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.match-row-clickable:hover {
+    background-color: var(--mud-palette-action-default-hover);
+}
+
 .match-time {
     width: 48px;
     flex-shrink: 0;
@@ -221,6 +230,47 @@ code {
     gap: 2px;
     min-width: 80px;
     justify-content: flex-end;
+}
+
+/* Match detail — all players' predictions */
+.pred-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.pred-row:last-child {
+    border-bottom: none;
+}
+
+.pred-row-me {
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 8%, transparent);
+}
+
+.pred-rank {
+    width: 20px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.pred-name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pred-tip {
+    flex-shrink: 0;
+    width: 44px;
+    text-align: center;
+}
+
+.pred-points {
+    flex-shrink: 0;
 }
 
 /* Compact inline number inputs for predictions */
