@@ -17,16 +17,16 @@ else if (players.Count == 0)
 else
 {
     @* --- Podium top 3 --- *@
-    <MudPaper Class="pa-5 rounded-xl mb-5" Elevation="1">
-        <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.End" Spacing="6">
+    <MudPaper Class="pa-3 pa-sm-5 rounded-xl mb-5" Elevation="1">
+        <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.End" Spacing="2" Class="podium">
             @if (players.Count > 1)
             {
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 100px;">
+                <div class="podium-col">
                     <MudText Typo="Typo.h5">🥈</MudText>
                     <MudAvatar Color="Color.Default" Size="Size.Medium" Variant="Variant.Filled">
                         @players[1].UserName[..1].ToUpper()
                     </MudAvatar>
-                    <MudText Typo="Typo.body2">@players[1].UserName</MudText>
+                    <MudText Typo="Typo.body2" Class="podium-name">@players[1].UserName</MudText>
                     <MudText Typo="Typo.h6" Color="Color.Default">@players[1].TotalPoints</MudText>
                     <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
                     @if (players[1].CurrentStreak > 0)
@@ -35,16 +35,16 @@ else
                             <MudChip T="string" Color="Color.Warning" Variant="Variant.Text" Size="Size.Small">🔥 @players[1].CurrentStreak</MudChip>
                         </MudTooltip>
                     }
-                    <div style="width: 100%; height: 40px; background: var(--mud-palette-surface); border-radius: 8px 8px 0 0; margin-top: 8px;"></div>
+                    <div class="podium-bar podium-bar-silver"></div>
                 </div>
             }
 
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 120px;">
+            <div class="podium-col podium-col-gold">
                 <MudText Typo="Typo.h3">🥇</MudText>
                 <MudAvatar Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled">
                     @players[0].UserName[..1].ToUpper()
                 </MudAvatar>
-                <MudText Typo="Typo.h6">@players[0].UserName</MudText>
+                <MudText Typo="Typo.h6" Class="podium-name">@players[0].UserName</MudText>
                 <MudText Typo="Typo.h4" Color="Color.Primary">@players[0].TotalPoints</MudText>
                 <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
                 @if (players[0].CurrentStreak > 0)
@@ -53,17 +53,17 @@ else
                         <MudChip T="string" Color="Color.Warning" Variant="Variant.Text" Size="Size.Small">🔥 @players[0].CurrentStreak</MudChip>
                     </MudTooltip>
                 }
-                <div style="width: 100%; height: 64px; background: var(--mud-palette-primary); border-radius: 8px 8px 0 0; margin-top: 8px;"></div>
+                <div class="podium-bar podium-bar-gold"></div>
             </div>
 
             @if (players.Count > 2)
             {
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 100px;">
+                <div class="podium-col">
                     <MudText Typo="Typo.h5">🥉</MudText>
                     <MudAvatar Color="Color.Default" Size="Size.Medium" Variant="Variant.Filled">
                         @players[2].UserName[..1].ToUpper()
                     </MudAvatar>
-                    <MudText Typo="Typo.body2">@players[2].UserName</MudText>
+                    <MudText Typo="Typo.body2" Class="podium-name">@players[2].UserName</MudText>
                     <MudText Typo="Typo.h6" Color="Color.Default">@players[2].TotalPoints</MudText>
                     <MudText Typo="Typo.caption" Color="Color.Default">point</MudText>
                     @if (players[2].CurrentStreak > 0)
@@ -72,7 +72,7 @@ else
                             <MudChip T="string" Color="Color.Warning" Variant="Variant.Text" Size="Size.Small">🔥 @players[2].CurrentStreak</MudChip>
                         </MudTooltip>
                     }
-                    <div style="width: 100%; height: 24px; background: var(--mud-palette-surface); border-radius: 8px 8px 0 0; margin-top: 8px;"></div>
+                    <div class="podium-bar podium-bar-bronze"></div>
                 </div>
             }
         </MudStack>
@@ -106,9 +106,9 @@ else
                         </MudAvatar>
 
                         @* Name + change *@
-                        <MudStack Spacing="0" Style="flex: 1;">
+                        <MudStack Spacing="0" Style="flex: 1;" Class="card-name">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1">@player.UserName</MudText>
+                                <MudText Typo="Typo.body1" Class="card-name-text">@player.UserName</MudText>
                                 @if (player.Change > 0)
                                 {
                                     <MudIcon Icon="@Icons.Material.Filled.ArrowUpward" Color="Color.Success" Size="Size.Small" />
@@ -120,12 +120,20 @@ else
                                     <MudText Typo="Typo.caption" Color="Color.Error">@Math.Abs(player.Change)</MudText>
                                 }
                             </MudStack>
-                            <MudText Typo="Typo.caption" Color="Color.Default">
+                            <MudText Typo="Typo.caption" Color="Color.Default" Class="card-sub">
                                 @player.MatchesPlayed kampe · @player.AvgPoints pts pr kamp
                             </MudText>
                         </MudStack>
 
-                        @* Stats chips *@
+                        @* Total points *@
+                        <MudText Typo="Typo.h6" Color="@(isTop3 ? Color.Primary : Color.Default)" Style="min-width: 50px; text-align: right;">
+                            @player.TotalPoints
+                        </MudText>
+                    </MudStack>
+
+                    @* Stats chips — egen række så navnet ikke bliver klemt *@
+                    @if (player.ExactHits > 0 || player.CurrentStreak > 0 || latestPts > 0)
+                    {
                         <MudStack Row="true" Spacing="1" Style="flex-wrap: wrap;">
                             @if (player.ExactHits > 0)
                             {
@@ -146,12 +154,7 @@ else
                                 </MudTooltip>
                             }
                         </MudStack>
-
-                        @* Total points *@
-                        <MudText Typo="Typo.h6" Color="@(isTop3 ? Color.Primary : Color.Default)" Style="min-width: 50px; text-align: right;">
-                            @player.TotalPoints
-                        </MudText>
-                    </MudStack>
+                    }
 
                     @* Progress bar *@
                     <MudProgressLinear Value="@pct"

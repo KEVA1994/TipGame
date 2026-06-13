@@ -258,3 +258,76 @@ code {
     font-weight: 600;
     font-size: 0.875rem;
 }
+
+/* --- Leaderboard: podium (top 3) --- */
+.podium {
+    gap: 8px !important;
+    width: 100%;
+}
+
+.podium-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 130px;
+}
+
+.podium-col-gold {
+    max-width: 150px;
+}
+
+.podium-name {
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.podium-bar {
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+    margin-top: 8px;
+}
+
+.podium-bar-gold {
+    height: 64px;
+    background: var(--mud-palette-primary);
+}
+
+.podium-bar-silver {
+    height: 40px;
+    background: var(--mud-palette-surface);
+}
+
+.podium-bar-bronze {
+    height: 24px;
+    background: var(--mud-palette-surface);
+}
+
+/* --- Leaderboard: player cards --- */
+/* Allow the name column to shrink so the total never gets pushed off-screen */
+.card-name {
+    min-width: 0;
+}
+
+.card-name-text {
+    min-width: 0;
+}
+
+.card-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 600px) {
+    .podium {
+        gap: 4px !important;
+    }
+
+    .podium-name {
+        font-size: 0.8rem;
+    }
+}
