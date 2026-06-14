@@ -71,7 +71,7 @@
 
 @* --- Feature Cards --- *@
 <MudGrid Class="mb-6" Spacing="4">
-    <MudItem xs="12" sm="6" md="3">
+    <MudItem xs="12" sm="6" md="4">
         <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
                   Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("matches"))">
             <MudIcon Icon="@Icons.Material.Filled.SportsSoccer" Size="Size.Large" Color="Color.Primary" />
@@ -79,7 +79,7 @@
             <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Forudsig resultater på alle VM-kampe</MudText>
         </MudPaper>
     </MudItem>
-    <MudItem xs="12" sm="6" md="3">
+    <MudItem xs="12" sm="6" md="4">
         <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
                   Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("leaderboard"))">
             <MudIcon Icon="@Icons.Material.Filled.Leaderboard" Size="Size.Large" Color="Color.Warning" />
@@ -87,20 +87,12 @@
             <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Følg med i hvem der fører</MudText>
         </MudPaper>
     </MudItem>
-    <MudItem xs="12" sm="6" md="3">
+    <MudItem xs="12" sm="6" md="4">
         <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
                   Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("stats"))">
             <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Color="Color.Info" />
             <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Center">Statistik</MudText>
             <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Detaljeret overblik over din træfsikkerhed</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
-                  Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("praemier"))">
-            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Color="Color.Success" />
-            <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Center">Vind puljen</MudText>
-            <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Mest præcise tipper vinder det hele</MudText>
         </MudPaper>
     </MudItem>
 </MudGrid>
