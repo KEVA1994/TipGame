@@ -88,22 +88,34 @@ public class StatsService
             };
         }).OrderByDescending(a => a.Exact).ThenByDescending(a => a.CorrectDraw).ToList();
 
-        // 3. Mest tippede resultater
+        // 3. Mest tippede resultater (spejlvendte resultater som 2-0 og 0-2 slås sammen)
         var popularTips = predictions
             .Where(p => matchLookup.ContainsKey(p.MatchId))
-            .GroupBy(p => $"{p.PredictedHome}-{p.PredictedAway}")
+            .GroupBy(p =>
+            {
+                var hi = p.PredictedHome >= p.PredictedAway ? p.PredictedHome : p.PredictedAway;
+                var lo = p.PredictedHome >= p.PredictedAway ? p.PredictedAway : p.PredictedHome;
+                return $"{hi}-{lo}";
+            })
             .Select(g =>
             {
-                var score = g.Key;
-                var parts = score.Split('-');
-                var home = int.Parse(parts[0]);
-                var away = int.Parse(parts[1]);
+                var parts = g.Key.Split('-');
+                var hi = int.Parse(parts[0]);
+                var lo = int.Parse(parts[1]);
+                var isDraw = hi == lo;
+                var score = isDraw ? $"{hi}-{lo}" : $"{hi}-{lo} / {lo}-{hi}";
+
+                // De faktiske resultater der tæller som ramt for denne (eventuelt spejlvendte) scoring
+                var scorelines = isDraw
+                    ? new[] { (Home: hi, Away: lo) }
+                    : new[] { (Home: hi, Away: lo), (Home: lo, Away: hi) };
+
                 var hitMatchList = matches
-                    .Where(m => m.HomeScore == home && m.AwayScore == away)
+                    .Where(m => scorelines.Any(s => m.HomeScore == s.Home && m.AwayScore == s.Away))
                     .Select(m =>
                     {
                         var players = predictions
-                            .Where(p => p.MatchId == m.Id && p.PredictedHome == home && p.PredictedAway == away)
+                            .Where(p => p.MatchId == m.Id && p.PredictedHome == m.HomeScore && p.PredictedAway == m.AwayScore)
                             .Select(p => userLookup.GetValueOrDefault(p.UserId, "?"))
                             .ToList();
                         return new HitMatchInfo
@@ -113,17 +125,19 @@ public class StatsService
                         };
                     })
                     .ToList();
+
                 var tippedMatches = g
-                    .GroupBy(p => p.MatchId)
-                    .Where(mg => matchLookup.ContainsKey(mg.Key))
+                    .GroupBy(p => new { p.MatchId, p.PredictedHome, p.PredictedAway })
+                    .Where(mg => matchLookup.ContainsKey(mg.Key.MatchId))
                     .Select(mg =>
                     {
-                        var match = matchLookup[mg.Key];
+                        var match = matchLookup[mg.Key.MatchId];
                         return new TipMatchInfo
                         {
                             MatchLabel = $"{match.HomeTeam} {match.HomeScore}-{match.AwayScore} {match.AwayTeam}",
+                            PredictedScore = $"{mg.Key.PredictedHome}-{mg.Key.PredictedAway}",
                             Players = mg.Select(p => userLookup.GetValueOrDefault(p.UserId, "?")).ToList(),
-                            WasCorrect = match.HomeScore == home && match.AwayScore == away
+                            WasCorrect = match.HomeScore == mg.Key.PredictedHome && match.AwayScore == mg.Key.PredictedAway
                         };
                     })
                     .OrderByDescending(t => t.WasCorrect)
@@ -140,7 +154,6 @@ public class StatsService
                 };
             })
             .OrderByDescending(x => x.Count)
-            .Take(10)
             .ToList();
 
         // 4. Head-to-head data
@@ -217,6 +230,7 @@ public class HitMatchInfo
 public class TipMatchInfo
 {
     public string MatchLabel { get; set; } = "";
+    public string PredictedScore { get; set; } = "";
     public List<string> Players { get; set; } = [];
     public bool WasCorrect { get; set; }
 }

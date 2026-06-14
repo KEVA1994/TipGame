@@ -127,6 +127,8 @@
                                             {
                                                 <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" />
                                             }
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                                     Color="@(m.WasCorrect ? Color.Success : Color.Default)">@m.PredictedScore</MudChip>
                                             <MudText Typo="Typo.body2"><b>@m.MatchLabel</b></MudText>
                                         </MudStack>
                                         <MudStack Row="true" Spacing="1" Class="mt-1" Style="flex-wrap: wrap;">
