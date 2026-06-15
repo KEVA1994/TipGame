@@ -46,6 +46,19 @@
         window._supabaseCreateClient = createClient;
     </script>
     <script src="js/realtime.js"></script>
+    <script>
+        // Smoothly scroll a target element into view and briefly highlight it.
+        window.scrollToElement = function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('flash-highlight');
+            setTimeout(function () { el.classList.remove('flash-highlight'); }, 2000);
+        };
+
+        // Expose the browser user agent (used to pre-select the install guide tab).
+        window.getUserAgent = function () { return navigator.userAgent; };
+    </script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js'); }</script>
 </body>

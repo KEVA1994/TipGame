@@ -1,0 +1,98 @@
+@page "/info"
+@using MudBlazor
+@inject NavigationManager Nav
+
+<MudStack Spacing="0" Class="mx-auto" Style="max-width: 1000px;">
+
+    @* --- Header --- *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" OnClick="@(() => Nav.NavigateTo(""))" />
+        <MudText Typo="Typo.h4">ℹ️ Info & regler</MudText>
+    </MudStack>
+
+    <MudPaper Class="pa-6 rounded-xl mb-6" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-4">🚀 Sådan deltager du</MudText>
+        <MudTimeline TimelinePosition="TimelinePosition.Start">
+            <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                <MudText Typo="Typo.body2">
+                    <strong>1.</strong> Betal <strong>50 kr</strong> via MobilePay
+                    (<MudLink Typo="Typo.body2" Color="Color.Primary" Underline="Underline.Always"
+                              @onclick="GoToMobilePay" Style="cursor: pointer;">gå til betalingsknappen</MudLink>)
+                </MudText>
+            </MudTimelineItem>
+            <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                <MudText Typo="Typo.body2"><strong>2.</strong> Opret din profil med fornavn og efternavn</MudText>
+            </MudTimelineItem>
+            <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                <MudText Typo="Typo.body2"><strong>3.</strong> Gå til <strong>Kampe</strong> og indtast dit gæt på resultatet for hver kamp</MudText>
+            </MudTimelineItem>
+            <MudTimelineItem Color="Color.Info" Variant="Variant.Filled" Size="Size.Small" Icon="@Icons.Material.Filled.CloudDone">
+                <MudText Typo="Typo.body2">
+                    <strong>4.</strong> Dit tip <strong>gemmes automatisk</strong>, så snart du har indtastet både hjemme- og udebanescore!
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Vil du ændre dit tip? Klik på <strong>skraldespanden</strong> ud for kampen og indtast et nyt — du kan slette og lave et nyt indtil 1 time før kampstart.
+                </MudText>
+            </MudTimelineItem>
+            <MudTimelineItem Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
+                <MudText Typo="Typo.body2"><strong>5.</strong> Følg med på ranglisten og vind! 🏆</MudText>
+            </MudTimelineItem>
+        </MudTimeline>
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-3">📋 Pointsystem</MudText>
+        <MudStack Spacing="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">3p</MudChip>
+                <MudText Typo="Typo.body2">Helt korrekt resultat (f.eks. 2-1 = 2-1)</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Filled">2p</MudChip>
+                <MudText Typo="Typo.body2">Korrekt uafgjort (f.eks. 1-1 når kampen ender 0-0)</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">1p</MudChip>
+                <MudText Typo="Typo.body2">Korrekt vinder (f.eks. 2-0 når kampen ender 3-1)</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">0p</MudChip>
+                <MudText Typo="Typo.body2">Forkert udfald</MudText>
+            </MudStack>
+        </MudStack>
+
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Text" Dense="true" Class="mt-4">
+            Tips låses <strong>1 time</strong> før kampstart — tip i god tid!
+        </MudAlert>
+    </MudPaper>
+
+    @* --- Installér app (teaser → /info/installer) --- *@
+    <MudPaper Class="pa-4 pa-sm-5 rounded-xl mb-6" Elevation="1"
+              @onclick="@(() => Nav.NavigateTo("info/installer"))"
+              Style="cursor: pointer;">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="3">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Style="min-width: 0; flex: 1 1 220px;">
+                <MudIcon Icon="@Icons.Material.Filled.InstallMobile" Size="Size.Large" Color="Color.Primary" />
+                <MudStack Spacing="0" Style="min-width: 0;">
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Læg appen på din telefon</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Guide til iPhone og Android — få den på hjemmeskærmen som en app.
+                    </MudText>
+                </MudStack>
+            </MudStack>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       EndIcon="@Icons.Material.Filled.ArrowForward"
+                       Href="info/installer"
+                       Class="ml-auto flex-shrink-0"
+                       Style="white-space: nowrap;">
+                Se guide
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+</MudStack>
+
+@code {
+    private void GoToMobilePay() => Nav.NavigateTo($"{Nav.BaseUri}?goto=pay");
+}

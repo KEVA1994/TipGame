@@ -381,3 +381,16 @@ code {
         font-size: 0.8rem;
     }
 }
+/* Brief highlight when navigating to an anchored element (e.g. MobilePay from Info page) */
+.flash-highlight {
+    animation: flash-highlight 2s ease-out;
+}
+
+@keyframes flash-highlight {
+    0%, 30% {
+        box-shadow: 0 0 0 3px var(--mud-palette-primary);
+    }
+    100% {
+        box-shadow: 0 0 0 0 transparent;
+    }
+}

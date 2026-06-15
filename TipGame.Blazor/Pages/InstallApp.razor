@@ -1,0 +1,99 @@
+@page "/info/installer"
+@using MudBlazor
+@inject NavigationManager Nav
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+<MudStack Spacing="0" Class="mx-auto" Style="max-width: 1000px;">
+
+    @* --- Header --- *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" OnClick="@(() => Nav.NavigateTo("info"))" />
+        <MudText Typo="Typo.h4">📲 Læg appen på din telefon</MudText>
+    </MudStack>
+
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+        Du kan lægge VM Tips ned på din hjemmeskærm, så den åbner som en rigtig app — i fuld skærm og uden adresselinje.
+        Vælg din telefon herunder.
+    </MudText>
+
+    <MudPaper Class="pa-2 pa-sm-4 rounded-xl mb-6" Elevation="1">
+        <MudTabs Elevation="0" Rounded="true" Centered="true" Color="Color.Primary" PanelClass="pt-4" @bind-ActivePanelIndex="activeTab">
+
+            <MudTabPanel Text="iPhone" Icon="@Icons.Material.Filled.PhoneIphone">
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-4">
+                    På iPhone skal du bruge <strong>Safari</strong> — det virker ikke i Chrome eller andre browsere.
+                </MudAlert>
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                    <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                        <MudText Typo="Typo.body2"><strong>1.</strong> Åbn <strong>keva1994.github.io/TipGame</strong> i <strong>Safari</strong>.</MudText>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                        <MudText Typo="Typo.body2">
+                            <strong>2.</strong> Tryk på <strong>Del</strong>-ikonet
+                            (firkanten med pil opad <MudIcon Icon="@Icons.Material.Filled.IosShare" Size="Size.Small" Style="vertical-align: middle;" />)
+                            nederst på skærmen.
+                        </MudText>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                        <MudText Typo="Typo.body2"><strong>3.</strong> Rul ned og vælg <strong>“Føj til hjemmeskærm”</strong>.</MudText>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Success" Variant="Variant.Filled" Size="Size.Small" Icon="@Icons.Material.Filled.Check">
+                        <MudText Typo="Typo.body2"><strong>4.</strong> Tryk <strong>“Tilføj”</strong> øverst til højre — så ligger ikonet på din hjemmeskærm! 🎉</MudText>
+                    </MudTimelineItem>
+                </MudTimeline>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Android" Icon="@Icons.Material.Filled.PhoneAndroid">
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-4">
+                    På Android virker det bedst i <strong>Chrome</strong>.
+                </MudAlert>
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                    <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                        <MudText Typo="Typo.body2"><strong>1.</strong> Åbn <strong>keva1994.github.io/TipGame</strong> i <strong>Chrome</strong>.</MudText>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                        <MudText Typo="Typo.body2">
+                            <strong>2.</strong> Tryk på <strong>menuen</strong>
+                            (de tre prikker <MudIcon Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Style="vertical-align: middle;" />)
+                            øverst til højre.
+                        </MudText>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                        <MudText Typo="Typo.body2">
+                            <strong>3.</strong> Vælg <strong>“Føj til startskærm”</strong> (eller <strong>“Installér app”</strong>).
+                        </MudText>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Success" Variant="Variant.Filled" Size="Size.Small" Icon="@Icons.Material.Filled.Check">
+                        <MudText Typo="Typo.body2"><strong>4.</strong> Bekræft med <strong>“Tilføj”</strong> / <strong>“Installér”</strong> — så ligger ikonet på din startskærm! 🎉</MudText>
+                    </MudTimelineItem>
+                </MudTimeline>
+            </MudTabPanel>
+
+        </MudTabs>
+    </MudPaper>
+
+</MudStack>
+
+@code {
+    private int activeTab;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        // Forvælg fanen ud fra telefonens styresystem.
+        try
+        {
+            var ua = await JS.InvokeAsync<string>("getUserAgent");
+            if (ua.Contains("Android", StringComparison.OrdinalIgnoreCase))
+            {
+                activeTab = 1;
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            // Kunne ikke læse user agent — bliv på iPhone-fanen.
+        }
+    }
+}

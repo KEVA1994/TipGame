@@ -10,14 +10,14 @@ public partial class Home
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
+    [SupplyParameterFromQuery(Name = "goto")]
+    public string? GoTo { get; set; }
+
     private const string ShareLink = "https://keva1994.github.io/TipGame/";
     private bool linkCopied;
 
-    private List<MatchDto> todayMatches = new();
-    private List<LeaderboardDto> topPlayers = new();
     private int totalMatches;
     private int totalPlayers;
-    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -26,23 +26,27 @@ public partial class Home
 
         try
         {
-            var allMatches = await matchesTask;
-            totalMatches = allMatches.Count;
-            todayMatches = allMatches
-                .Where(m => m.KickoffTime.Date == DateTime.Today)
-                .ToList();
+            totalMatches = (await matchesTask).Count;
         }
         catch { }
 
         try
         {
-            var leaderboard = await leaderboardTask;
-            totalPlayers = leaderboard.Count;
-            topPlayers = leaderboard.Take(3).ToList();
+            totalPlayers = (await leaderboardTask).Count;
         }
         catch { }
+    }
 
-        isLoading = false;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && string.Equals(GoTo, "pay", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("scrollToElement", "mobilepay");
+            }
+            catch { }
+        }
     }
 
     private async Task CopyShareLink()
