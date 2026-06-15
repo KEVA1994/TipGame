@@ -43,9 +43,23 @@
             <MudNavLink Href="leaderboard" Icon="@Icons.Material.Filled.EmojiEvents">
                 Stilling
             </MudNavLink>
-            <MudNavLink Href="stats" Icon="@Icons.Material.Filled.BarChart">
-                Statistik
-            </MudNavLink>
+            <MudNavGroup Title="Statistik" Icon="@Icons.Material.Filled.BarChart" Expanded="true">
+                <MudNavLink Href="stats?tab=0" Icon="@Icons.Material.Filled.TrendingUp">
+                    Point-udvikling
+                </MudNavLink>
+                <MudNavLink Href="stats?tab=1" Icon="@Icons.Material.Filled.PieChart">
+                    Træfsikkerhed
+                </MudNavLink>
+                <MudNavLink Href="stats?tab=2" Icon="@Icons.Material.Filled.BarChart">
+                    Populære tips
+                </MudNavLink>
+                <MudNavLink Href="stats?tab=3" Icon="@Icons.Material.Filled.CalendarMonth">
+                    Point per kampdag
+                </MudNavLink>
+                <MudNavLink Href="stats?tab=4" Icon="@Icons.Material.Filled.CompareArrows">
+                    Head-to-head
+                </MudNavLink>
+            </MudNavGroup>
             <MudNavLink Href="praemier" Icon="@Icons.Material.Filled.WorkspacePremium">
                 Præmier
             </MudNavLink>

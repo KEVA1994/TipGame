@@ -13,6 +13,9 @@ public partial class Stats
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
+    [SupplyParameterFromQuery(Name = "tab")]
+    public int? TabQuery { get; set; }
+
     private StatsData? data;
     private bool isLoading = true;
     private string? errorMessage;
@@ -25,19 +28,33 @@ public partial class Stats
     private List<string> matchDays = [];
     private Dictionary<string, int> maxPointsByDay = [];
 
+    protected override void OnParametersSet()
+    {
+        // A ?tab= query parameter (e.g. from the nav sub-menu) takes priority.
+        if (TabQuery is >= 0 and <= 4)
+            activeTab = TabQuery.Value;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
-        try
+        // Only fall back to the persisted tab when no explicit tab was requested.
+        if (TabQuery is null)
         {
-            var storedTab = await JS.InvokeAsync<string?>("localStorage.getItem", TabStorageKey);
-            if (int.TryParse(storedTab, out var tab) && tab is >= 0 and <= 4)
-                activeTab = tab;
-        }
-        catch
-        {
-            // Storage unavailable — start on the first tab.
+            try
+            {
+                var storedTab = await JS.InvokeAsync<string?>("localStorage.getItem", TabStorageKey);
+                if (int.TryParse(storedTab, out var tab) && tab is >= 0 and <= 4)
+                {
+                    activeTab = tab;
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                // Storage unavailable — start on the first tab.
+            }
         }
 
         try
