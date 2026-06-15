@@ -1,0 +1,108 @@
+@using MudBlazor
+@using TipGame.Shared.Models
+
+<MudPaper Class="pa-6" Elevation="0">
+    <MudText Typo="Typo.h6" Class="mb-2">📅 Point per kampdag</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-6">
+        Hvem scorede flest point på de enkelte kampdage? Den bedste på dagen er fremhævet.
+    </MudText>
+
+    @if (Players.Count > 0 && MatchDays.Count > 0)
+    {
+        var totalPages = (int)Math.Ceiling(MatchDays.Count / (double)PageSize);
+        var pageDays = MatchDays.Skip(page * PageSize).Take(PageSize).ToList();
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                           Disabled="@(page == 0)"
+                           OnClick="PrevPage" Size="Size.Small" />
+            <MudText Typo="Typo.body2" Color="Color.Default">
+                Kampdage @(MatchDays.Count == 0 ? 0 : page * PageSize + 1)–@(Math.Min((page + 1) * PageSize, MatchDays.Count)) af @MatchDays.Count
+            </MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                           Disabled="@(page >= totalPages - 1)"
+                           OnClick="NextPage" Size="Size.Small" />
+        </MudStack>
+
+        <MudPaper Elevation="0" Class="rounded-lg" Outlined="true">
+            <MudSimpleTable Dense="true" Hover="true" Style="overflow-x: auto;">
+                <thead>
+                    <tr>
+                        <th>Spiller</th>
+                        @foreach (var day in pageDays)
+                        {
+                            <th style="text-align: center; min-width: 50px;">@day</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var player in Players)
+                    {
+                        <tr>
+                            <td>@player.UserName</td>
+                            @foreach (var day in pageDays)
+                            {
+                                var pts = player.DailyPoints.GetValueOrDefault(day);
+                                var isBest = pts > 0 && pts == MaxPointsByDay.GetValueOrDefault(day);
+                                <td style="text-align: center;">
+                                    @if (pts > 0)
+                                    {
+                                        <MudChip T="string"
+                                                 Color="@(isBest ? Color.Primary : Color.Success)"
+                                                 Variant="@(isBest ? Variant.Filled : Variant.Text)"
+                                                 Size="Size.Small">
+                                            @pts
+                                        </MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Default">–</MudText>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Text" Icon="@Icons.Material.Filled.Info">
+            Ingen kampe er afgjort endnu – point per kampdag vises når de første resultater er registreret.
+        </MudAlert>
+    }
+</MudPaper>
+
+@code {
+    private const int PageSize = 5;
+
+    [Parameter] public List<LeaderboardDto> Players { get; set; } = [];
+    [Parameter] public List<string> MatchDays { get; set; } = [];
+    [Parameter] public Dictionary<string, int> MaxPointsByDay { get; set; } = [];
+
+    // Start on the last page so the most recent kampdage are shown first.
+    private int page;
+    private int lastMatchDayCount = -1;
+
+    protected override void OnParametersSet()
+    {
+        if (MatchDays.Count != lastMatchDayCount)
+        {
+            lastMatchDayCount = MatchDays.Count;
+            var totalPages = Math.Max(1, (int)Math.Ceiling(MatchDays.Count / (double)PageSize));
+            page = totalPages - 1;
+        }
+    }
+
+    private void PrevPage()
+    {
+        if (page > 0) page--;
+    }
+
+    private void NextPage()
+    {
+        var totalPages = (int)Math.Ceiling(MatchDays.Count / (double)PageSize);
+        if (page < totalPages - 1) page++;
+    }
+}

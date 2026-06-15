@@ -29,6 +29,10 @@ else if (data is not null)
             <PopularTipsChart Tips="@data.PopularTips" />
         </MudTabPanel>
 
+        <MudTabPanel Text="Point per kampdag" Icon="@Icons.Material.Filled.CalendarMonth">
+            <MatchDayPointsChart Players="@players" MatchDays="@matchDays" MaxPointsByDay="@maxPointsByDay" />
+        </MudTabPanel>
+
         <MudTabPanel Text="Head-to-head" Icon="@Icons.Material.Filled.CompareArrows">
             <HeadToHeadChart HeadToHead="@data.HeadToHead"
                              MatchIds="@data.MatchIds"

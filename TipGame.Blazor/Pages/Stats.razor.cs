@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
+using TipGame.Shared.Models;
 
 namespace TipGame.Blazor.Pages;
 
@@ -9,6 +10,7 @@ public partial class Stats
     private const string TabStorageKey = "stats.activeTab";
 
     [Inject] private StatsService StatsService { get; set; } = default!;
+    [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private StatsData? data;
@@ -19,6 +21,10 @@ public partial class Stats
     private List<ChartSeries<double>> pointSeries = [];
     private string[] pointLabels = [];
 
+    private List<LeaderboardDto> players = [];
+    private List<string> matchDays = [];
+    private Dictionary<string, int> maxPointsByDay = [];
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -26,7 +32,7 @@ public partial class Stats
         try
         {
             var storedTab = await JS.InvokeAsync<string?>("localStorage.getItem", TabStorageKey);
-            if (int.TryParse(storedTab, out var tab) && tab is >= 0 and <= 3)
+            if (int.TryParse(storedTab, out var tab) && tab is >= 0 and <= 4)
                 activeTab = tab;
         }
         catch
@@ -43,6 +49,15 @@ public partial class Stats
                 .Select(p => new ChartSeries<double> { Name = p.Name, Data = p.Values })
                 .ToList();
 
+            players = await LeaderboardService.GetLeaderboard();
+            matchDays = players
+                .SelectMany(p => p.DailyPoints.Keys)
+                .Distinct()
+                .OrderBy(d => DateTime.ParseExact(d, "dd/MM", null))
+                .ToList();
+            maxPointsByDay = matchDays.ToDictionary(
+                day => day,
+                day => players.Max(p => p.DailyPoints.GetValueOrDefault(day)));
         }
         catch (Exception ex)
         {
