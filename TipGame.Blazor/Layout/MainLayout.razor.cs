@@ -9,8 +9,6 @@ public partial class MainLayout : IDisposable
     [Inject] private PlayerState PlayerState { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
-    private const string MessengerChannelUrl = "https://m.me/ch/AbatfbUrvBfn2f7q/?send_source=cm:copy_invite_link";
-
     private bool drawerOpen = true;
     private bool isDarkMode = true;
     private bool accountPopoverOpen;
