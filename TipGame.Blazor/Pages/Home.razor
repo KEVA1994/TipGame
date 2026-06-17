@@ -44,6 +44,30 @@
     </MudStack>
 </MudAlert>
 
+@* --- Messenger-kanal invitation --- *@
+<MudPaper Class="pa-4 pa-sm-5 rounded-xl mb-6" Elevation="1"
+          Style="background: linear-gradient(135deg, rgba(0,132,255,0.12) 0%, rgba(166,0,255,0.10) 100%);">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Style="min-width: 0; flex: 1 1 220px;">
+            <MudIcon Icon="@CustomIcons.Messenger" Size="Size.Large" Style="color: #0084FF;" />
+            <MudStack Spacing="0" Style="min-width: 0;">
+                <MudText Typo="Typo.h6" Style="font-weight: 700;">Bliv medlem af vores Messenger-kanal</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Join kanalen for nyheder, hygge og snak om kampene. 💬
+                </MudText>
+            </MudStack>
+        </MudStack>
+        <MudButton Variant="Variant.Filled"
+                   StartIcon="@CustomIcons.Messenger"
+                   Href="@MessengerChannelUrl"
+                   Target="_blank"
+                   Class="ml-auto flex-shrink-0"
+                   Style="background-color: #0084FF; color: white; white-space: nowrap;">
+            Join kanalen
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
 @* --- Præmier (teaser → /praemier) --- *@
 <MudPaper Class="pa-4 pa-sm-5 rounded-xl mb-6" Elevation="1"
           @onclick="@(() => Nav.NavigateTo("praemier"))"

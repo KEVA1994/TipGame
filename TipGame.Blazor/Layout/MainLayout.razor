@@ -9,6 +9,13 @@
 <MudLayout>
     <MudAppBar Elevation="2" Color="Color.Primary">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudTooltip Text="Følg os på Messenger-kanalen">
+            <MudIconButton Icon="@CustomIcons.Messenger"
+                           Color="Color.Inherit"
+                           Href="@MessengerChannelUrl"
+                           Target="_blank"
+                           aria-label="Åbn Messenger-kanal" />
+        </MudTooltip>
         <MudSpacer />
 
         @if (string.IsNullOrEmpty(PlayerState.PlayerName))

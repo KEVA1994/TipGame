@@ -14,6 +14,7 @@ public partial class Home
     public string? GoTo { get; set; }
 
     private const string ShareLink = "https://keva1994.github.io/TipGame/";
+    private const string MessengerChannelUrl = "https://m.me/ch/AbatfbUrvBfn2f7q/?send_source=cm:copy_invite_link";
     private bool linkCopied;
 
     private int totalMatches;
