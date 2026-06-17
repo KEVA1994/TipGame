@@ -6,6 +6,7 @@ namespace TipGame.Blazor.Pages;
 public partial class Leaderboard
 {
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
 
     private List<LeaderboardDto> players = [];
     private string latestDay = "";
@@ -33,4 +34,7 @@ public partial class Leaderboard
         isLoading = false;
         StateHasChanged();
     }
+
+    private void GoToPlayer(string userName) =>
+        Nav.NavigateTo($"player/{Uri.EscapeDataString(userName)}");
 }

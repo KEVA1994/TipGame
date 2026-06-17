@@ -89,7 +89,8 @@ else
             var pct = maxPoints > 0 ? (double)player.TotalPoints / maxPoints * 100 : 0;
             var latestPts = !string.IsNullOrEmpty(latestDay) ? player.DailyPoints.GetValueOrDefault(latestDay) : 0;
 
-            <MudPaper Class="pa-3 rounded-lg" Elevation="0" Outlined="true">
+            <MudPaper Class="pa-3 rounded-lg lb-card-clickable" Elevation="0" Outlined="true"
+                      @onclick="() => GoToPlayer(player.UserName)">
                 <MudStack Spacing="2">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
                         @* Rank *@

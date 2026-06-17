@@ -372,6 +372,27 @@ code {
     text-overflow: ellipsis;
 }
 
+/* Player cards are tappable — they open the player's scoring detail page */
+.lb-card-clickable {
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.lb-card-clickable:hover {
+    border-color: var(--mud-palette-primary);
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 5%, transparent);
+}
+
+/* Match rows on the player detail page open the match detail */
+.player-match-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.player-match-row:hover {
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 6%, transparent);
+}
+
 @media (max-width: 600px) {
     .podium {
         gap: 4px !important;

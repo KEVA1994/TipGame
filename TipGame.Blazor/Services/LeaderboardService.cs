@@ -104,4 +104,54 @@ public class LeaderboardService
         _cachedAt = DateTime.UtcNow;
         return leaderboard;
     }
+
+    /// <summary>
+    /// A single player's scoring history: every FINISHED match where they
+    /// earned points, newest first, with the tip they made and the points it
+    /// gave. Returns null when no player with that name exists.
+    /// </summary>
+    public async Task<PlayerDetailDto?> GetPlayerDetail(string userName)
+    {
+        var usersTask = _supabase.From<User>().Get();
+        var predictionsTask = _supabase.GetAllAsync<Prediction>();
+        var matchesTask = _supabase.From<Match>()
+            .Where(m => m.Status == "FINISHED")
+            .Get();
+        await Task.WhenAll(usersTask, predictionsTask, matchesTask);
+
+        var user = usersTask.Result.Models.FirstOrDefault(u => u.Name == userName);
+        if (user is null) return null;
+
+        var matchLookup = matchesTask.Result.Models.ToDictionary(m => m.Id);
+
+        var matches = predictionsTask.Result
+            .Where(p => p.UserId == user.Id && p.Points > 0 && matchLookup.ContainsKey(p.MatchId))
+            .Select(p =>
+            {
+                var m = matchLookup[p.MatchId];
+                return new PlayerMatchPointDto
+                {
+                    MatchId = m.Id,
+                    HomeTeam = m.HomeTeam,
+                    AwayTeam = m.AwayTeam,
+                    HomeCrest = m.HomeCrest,
+                    AwayCrest = m.AwayCrest,
+                    HomeScore = m.HomeScore,
+                    AwayScore = m.AwayScore,
+                    KickoffTime = m.KickoffTime,
+                    PredictedHome = p.PredictedHome,
+                    PredictedAway = p.PredictedAway,
+                    Points = p.Points
+                };
+            })
+            .OrderByDescending(m => m.KickoffTime)
+            .ToList();
+
+        return new PlayerDetailDto
+        {
+            UserName = user.Name,
+            TotalPoints = matches.Sum(m => m.Points),
+            Matches = matches
+        };
+    }
 }

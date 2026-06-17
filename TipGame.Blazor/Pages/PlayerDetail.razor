@@ -1,0 +1,77 @@
+@page "/player/{Name}"
+@using MudBlazor
+@using TipGame.Shared.Models
+
+<MudStack Spacing="3" Class="mx-auto" Style="max-width: 700px;">
+
+    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Variant="Variant.Text" Size="Size.Small"
+               OnClick="GoBack" Class="align-self-start">Tilbage til leaderboard</MudButton>
+
+    @if (isLoading)
+    {
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" Class="rounded-lg" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="220px" Class="rounded-lg" />
+    }
+    else if (player is null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Spilleren blev ikke fundet.</MudAlert>
+    }
+    else
+    {
+        @* Player header *@
+        <MudPaper Outlined="true" Class="pa-4 rounded-lg">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                <MudAvatar Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled">
+                    @player.UserName[..1].ToUpper()
+                </MudAvatar>
+                <MudStack Spacing="0" Style="flex:1; min-width:0;">
+                    <MudText Typo="Typo.h5" Style="font-weight:700;">@player.UserName</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Point på @player.Matches.Count @(player.Matches.Count == 1 ? "kamp" : "kampe")
+                    </MudText>
+                </MudStack>
+                <MudStack AlignItems="AlignItems.Center" Spacing="0" Style="flex-shrink:0;">
+                    <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight:700;">@player.TotalPoints</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">point i alt</MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        @* Matches the player scored on *@
+        @if (!player.Matches.Any())
+        {
+            <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Block">
+                @player.UserName har ikke lavet point på nogen kampe endnu.
+            </MudAlert>
+        }
+        else
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="px-1">
+                <MudIcon Icon="@Icons.Material.Filled.SportsSoccer" Size="Size.Small" Color="Color.Secondary" />
+                <MudText Typo="Typo.subtitle2">Kampe med point</MudText>
+            </MudStack>
+
+            <MudPaper Outlined="true" Class="rounded-lg pa-0">
+                @foreach (var m in player.Matches)
+                {
+                    var chipColor = m.Points == 3 ? Color.Success : m.Points == 2 ? Color.Info : Color.Warning;
+
+                    <div class="pred-row player-match-row" @onclick="() => GoToMatch(m.MatchId)">
+                        <MudStack Spacing="0" Style="flex:1; min-width:0;">
+                            <MudText Typo="Typo.body2" Style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                @m.HomeTeam @(m.HomeScore?.ToString() ?? "-")–@(m.AwayScore?.ToString() ?? "-") @m.AwayTeam
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @FormatDate(m.KickoffTime) · tip @m.PredictedHome-@m.PredictedAway
+                            </MudText>
+                        </MudStack>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@chipColor" Class="pred-points">
+                            @m.Points p
+                        </MudChip>
+                    </div>
+                }
+            </MudPaper>
+        }
+    }
+
+</MudStack>
