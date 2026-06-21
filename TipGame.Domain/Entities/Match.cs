@@ -30,6 +30,10 @@ namespace TipGame.Domain.Entities
         [Column("AwayScore")]
         public int? AwayScore { get; set; }
 
+        // When true, the score was corrected manually and the sync must not overwrite it.
+        [Column("ScoreLocked")]
+        public bool ScoreLocked { get; set; }
+
         [Column("KickoffTime")]
         public DateTime KickoffTime { get; set; }
 

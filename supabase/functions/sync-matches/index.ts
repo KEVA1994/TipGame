@@ -67,6 +67,12 @@ Deno.serve(async () => {
       if (error) errors.push(`insert ${apiMatch.id}: ${error.message}`);
       else newCount++;
     } else {
+      // Manually corrected match — the score was set by hand because the API had
+      // it wrong. Never let the sync overwrite it (status, score or anything else).
+      if (existing.ScoreLocked) {
+        continue;
+      }
+
       // The API occasionally flip-flops and reports an already-finished match
       // as TIMED/SCHEDULED again. A finished match never un-finishes — skip it.
       if (existing.Status === "FINISHED" && apiMatch.status !== "FINISHED") {
@@ -150,6 +156,7 @@ interface DbMatch {
   Status: string;
   HomeScore: number | null;
   AwayScore: number | null;
+  ScoreLocked: boolean;
   Group: string | null;
   Stage: string | null;
   Matchday: number | null;
