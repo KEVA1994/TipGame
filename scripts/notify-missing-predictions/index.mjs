@@ -13,9 +13,10 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const smtpUsername = process.env.SMTP_USERNAME;
 const smtpPassword = process.env.SMTP_PASSWORD;
 // Sender shown to recipients — must be your iCloud address or an alias on it.
-const fromAddress = process.env.REMINDER_FROM_ADDRESS ?? smtpUsername;
+// Use || (not ??) so an empty secret from GitHub Actions falls back too.
+const fromAddress = process.env.REMINDER_FROM_ADDRESS || smtpUsername;
 // Public site URL used in the email's call-to-action link.
-const siteUrl = process.env.SITE_URL ?? "https://keva1994.github.io/TipGame/";
+const siteUrl = process.env.SITE_URL || "https://keva1994.github.io/TipGame/";
 
 for (const [name, value] of Object.entries({
   SUPABASE_URL: supabaseUrl,
