@@ -114,11 +114,11 @@ function reminderHtml({ userName, homeTeam, awayTeam, kickoff }) {
 								</tr>
 							</table>
 
-							<p style="margin:0 0 8px 0;font-size:13px;color:#6b7280;line-height:1.5;">
+							<p style="margin:0 0 8px 0;font-size:13px;color:#6b7280;line-height:1.5;text-align:center;">
 								Virker knappen ikke? (Den slags sker.)
 								Kopiér så dette link ind i din browser:
 							</p>
-							<p style="margin:0 0 24px 0;font-size:12px;word-break:break-all;">
+							<p style="margin:0 0 24px 0;font-size:12px;word-break:break-all;text-align:center;">
 								<a href="${siteUrl}" style="color:#1B5E20;text-decoration:underline;">${siteUrl}</a>
 							</p>
 
