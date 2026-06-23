@@ -75,6 +75,76 @@ Slet eller omdøb `.github/workflows/sync-matches.yml` — Edge Function'en erst
 
 ## Nyttigt
 
+---
+
+## Tip-påmindelser på mail (GitHub Actions)
+
+Et planlagt GitHub Actions-job sender en mail til alle spillere, der **ikke** har
+registreret et tip til en kamp, der starter om ca. 24 timer. Det kører hver time
+og kigger på et vindue 24–25t før kampstart, så hver kamp rammes præcis én gang.
+En `SentReminders`-tabel sikrer mod dubletter ved genkørsler.
+
+> **Hvorfor ikke en Edge Function?** Mailen sendes via iCloud SMTP, og Supabase
+> Edge Functions kan ikke gennemføre en SMTP/STARTTLS-handshake pålideligt.
+> Derfor lever afsendelsen i `scripts/notify-missing-predictions/` og køres fra
+> workflow'en `.github/workflows/notify-missing-predictions.yml`.
+
+### 1. Kør migrationen (opretter `SentReminders`)
+
+Allerede kørt mod produktion. Hvis du genskaber databasen:
+
+```sql
+create table if not exists "SentReminders" (
+  "Id" bigint generated always as identity primary key,
+  "UserId" int not null references "Users"("Id") on delete cascade,
+  "MatchId" int not null references "Matches"("Id") on delete cascade,
+  "SentAt" timestamptz not null default now(),
+  constraint "UQ_SentReminders_UserId_MatchId" unique ("UserId", "MatchId")
+);
+```
+
+### 2. Lav et app-specifikt kodeord til iCloud
+
+Mails sendes via iCloud SMTP med din egen Apple-konto:
+
+1. Log ind på [appleid.apple.com](https://appleid.apple.com)
+2. **Log-in og sikkerhed → App-specifikke adgangskoder → Generér**
+3. Kopiér adgangskoden (vises kun én gang)
+
+> Kræver at to-faktor-godkendelse er slået til på dit Apple-ID.
+
+### 3. Sæt GitHub-secrets
+
+**GitHub repo → Settings → Secrets and variables → Actions → New repository secret** —
+opret disse:
+
+| Secret | Værdi |
+|--------|-------|
+| `SUPABASE_URL` | `https://ejcuoqbfssefkeinlkly.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role-nøglen (Project Settings → API) |
+| `SMTP_USERNAME` | `din@icloud.com` |
+| `SMTP_PASSWORD` | Det app-specifikke kodeord fra trin 2 |
+| `REMINDER_FROM_ADDRESS` | *(valgfri)* din iCloud-adresse eller et alias |
+| `SITE_URL` | *(valgfri)* defaulter til `https://keva1994.github.io/TipGame/` |
+
+> Service role-nøglen omgår Row Level Security — derfor må den **kun** ligge som
+> en GitHub-secret, aldrig i klient-koden.
+> `REMINDER_FROM_ADDRESS` skal være din iCloud-adresse (eller et alias) — iCloud
+> afviser mails fra fremmede afsendere. Udelades den, bruges `SMTP_USERNAME`.
+
+### 4. Test den
+
+**GitHub repo → Actions → Notify missing predictions → Run workflow** → sæt
+**Send a single test email** til `true` (og evt. en modtager-adresse). Det sender
+én eksempelmail uden at røre databasen.
+
+Når den virker, kører timeplanen automatisk.
+
+> **Bemærk:** Spillere uden en `AuthId` (ingen Supabase Auth-konto) kan ikke få
+> mail, da emailen hentes fra Supabase Auth.
+
+---
+
 ```sql
 -- Se planlagte jobs
 select * from cron.job;

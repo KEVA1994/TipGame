@@ -1,0 +1,45 @@
+name: Notify missing predictions
+
+on:
+  schedule:
+    # Every hour, on the hour (UTC). Each run reminds players about matches
+    # kicking off in the next 24–25h that they haven't predicted yet.
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      send_test:
+        description: 'Send a single test email instead of the real run'
+        type: boolean
+        default: false
+      test_email:
+        description: 'Recipient for the test email (defaults to the iCloud sender)'
+        type: string
+        required: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: scripts/notify-missing-predictions
+        run: npm ci
+
+      - name: Send reminders
+        working-directory: scripts/notify-missing-predictions
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          REMINDER_FROM_ADDRESS: ${{ secrets.REMINDER_FROM_ADDRESS }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          SEND_TEST: ${{ inputs.send_test }}
+          TEST_EMAIL_TO: ${{ inputs.test_email }}
+        run: node index.mjs

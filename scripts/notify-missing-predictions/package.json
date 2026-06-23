@@ -1,0 +1,15 @@
+{
+  "name": "notify-missing-predictions",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sends reminder emails to players who haven't predicted a match kicking off in ~24h.",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "nodemailer": "^6.9.14"
+  }
+}
