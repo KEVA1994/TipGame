@@ -1,7 +1,8 @@
-// Reminds players who haven't entered a prediction for a match that kicks off
-// in roughly 24 hours. Runs hourly from GitHub Actions: each run looks at a
-// one-hour window (24h–25h before kickoff) so every match is caught exactly
-// once. A "SentReminders" row guards against duplicates on re-runs.
+// Reminds players who haven't entered a prediction for any match kicking off
+// within the next 24 hours. Runs hourly from GitHub Actions. A "SentReminders"
+// row guards against duplicates, so each player gets at most one mail per
+// match — reminded the first run we notice they're missing a tip, whether
+// that's ~24h out or only minutes before kickoff (e.g. a late deletion).
 //
 // Email is sent over iCloud SMTP using an app-specific password. (SMTP can't run
 // reliably inside Supabase Edge Functions, so the sending lives here instead.)
@@ -126,7 +127,7 @@ function reminderHtml({ userName, homeTeam, awayTeam, kickoff }) {
 							<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FFF8E1;border:1px solid #FFE082;border-radius:10px;margin:16px 0;">
 								<tr>
 									<td style="padding:14px 16px;font-size:13px;color:#5d4500;line-height:1.5;">
-										⏰ <strong>Kampen starter om ca. 24 timer</strong> — derefter lukker tipningen hurtigere end Danmark i kvalifikationen.
+										⏰ <strong>Tipningen lukker, når dommeren fløjter op.</strong> Derefter er det for sent — og point-toget kører uden dig.
 									</td>
 								</tr>
 							</table>
@@ -184,10 +185,14 @@ if (process.env.SEND_TEST === "true") {
   process.exit(0);
 }
 
-const windowStart = new Date(now + 24 * 60 * 60 * 1000).toISOString();
-const windowEnd = new Date(now + 25 * 60 * 60 * 1000).toISOString();
+const windowStart = new Date(now).toISOString();
+const windowEnd = new Date(now + 24 * 60 * 60 * 1000).toISOString();
 
-// Matches kicking off in the 24h–25h window that aren't already underway/over.
+// Any not-yet-started match kicking off within the next 24 hours. Combined with
+// the SentReminders guard, this catches everyone exactly once: a player is
+// reminded the first time we notice they're missing a prediction — whether
+// that's 24h out or only an hour before kickoff (e.g. they deleted their tip
+// late). Each player still gets at most one mail per match.
 const { data: matches, error: matchError } = await supabase
   .from("Matches")
   .select("Id, HomeTeam, AwayTeam, KickoffTime, Status")
@@ -201,7 +206,7 @@ if (matchError) {
 }
 
 if (!matches || matches.length === 0) {
-  console.log("No matches in the 24–25h window. Nothing to do.");
+  console.log("No upcoming matches within the next 24 hours. Nothing to do.");
   process.exit(0);
 }
 
