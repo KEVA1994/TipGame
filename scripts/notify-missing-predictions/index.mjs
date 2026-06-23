@@ -18,6 +18,10 @@ const smtpPassword = process.env.SMTP_PASSWORD;
 const fromAddress = process.env.REMINDER_FROM_ADDRESS || smtpUsername;
 // Public site URL used in the email's call-to-action link.
 const siteUrl = process.env.SITE_URL || "https://keva1994.github.io/TipGame/";
+// Optional dry-run-ish guard: when set, only this address is mailed (the rest
+// of the real flow runs unchanged). Used to verify against production data
+// without notifying the whole league.
+const onlyEmail = (process.env.ONLY_EMAIL || "").trim().toLowerCase() || null;
 
 for (const [name, value] of Object.entries({
   SUPABASE_URL: supabaseUrl,
@@ -267,6 +271,8 @@ for (const match of matches) {
       if (authErr) errors.push(`auth ${user.Id}: ${authErr.message}`);
       continue;
     }
+
+    if (onlyEmail && email.toLowerCase() !== onlyEmail) continue;
 
     try {
       await transporter.sendMail({
