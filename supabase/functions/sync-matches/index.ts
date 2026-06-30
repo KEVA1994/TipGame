@@ -79,8 +79,20 @@ Deno.serve(async () => {
         continue;
       }
 
-      const homeScore: number | null = apiMatch.score?.fullTime?.home ?? null;
-      const awayScore: number | null = apiMatch.score?.fullTime?.away ?? null;
+      // The tip game scores against the 90-minute result. For knockout matches
+      // decided in extra time or on penalties, football-data.org's `fullTime`
+      // is the aggregate (regularTime + extraTime + penalties), e.g. a 1-1 that
+      // goes to a 3-4 shootout is reported as fullTime 4-5. `regularTime` holds
+      // the score after 90 minutes — prefer it, and fall back to `fullTime` for
+      // ordinary matches where `regularTime` is not populated.
+      const homeScore: number | null =
+        apiMatch.score?.regularTime?.home ??
+        apiMatch.score?.fullTime?.home ??
+        null;
+      const awayScore: number | null =
+        apiMatch.score?.regularTime?.away ??
+        apiMatch.score?.fullTime?.away ??
+        null;
 
       // Calculate minute from kickoff for live matches
       let minute: number | null = null;
@@ -143,7 +155,10 @@ interface ApiMatch {
   utcDate: string;
   homeTeam: { name: string; crest: string };
   awayTeam: { name: string; crest: string };
-  score: { fullTime: { home: number | null; away: number | null } } | null;
+  score: {
+    regularTime?: { home: number | null; away: number | null } | null;
+    fullTime: { home: number | null; away: number | null };
+  } | null;
   group: string | null;
   stage: string | null;
   matchday: number | null;
