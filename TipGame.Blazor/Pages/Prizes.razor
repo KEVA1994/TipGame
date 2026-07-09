@@ -15,13 +15,6 @@
         Indtil da må I nøjes med en lille teaser — hold øje! 👀
     </MudText>
 
-    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.HourglassTop" Class="mb-6 rounded-xl">
-        <MudText Typo="Typo.body2">
-            <strong>Status:</strong> Præmierne er endnu ikke afsløret. Billeder og beskrivelser tilføjes,
-            så snart puljen er på plads — så I ved præcis hvad I spiller om.
-        </MudText>
-    </MudAlert>
-
     <MudGrid Spacing="4" Class="mb-6">
 
         @* --- 1. præmie --- *@
@@ -51,15 +44,13 @@
                 <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: 700;">2. præmie</MudText>
 
                 <div class="d-flex align-center justify-center mt-3 mb-3 rounded-lg"
-                     style="width: 100%; aspect-ratio: 1 / 1; background: var(--mud-palette-background-gray); border: 1px dashed var(--mud-palette-lines-default);">
-                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                        <MudIcon Icon="@Icons.Material.Outlined.Image" Size="Size.Large" Color="Color.Secondary" />
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Billede kommer snart</MudText>
-                    </MudStack>
+                     style="width: 100%; aspect-ratio: 1 / 1; overflow: hidden;">
+                    <img src="images/prize-2.jpg" alt="2. præmie – gavekurv"
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" />
                 </div>
 
                 <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Style="font-style: italic;">
-                    Afsløres når puljen er fuldendt.
+                    Lækker gavekurv med vin og andre godter. 🎉
                 </MudText>
             </MudPaper>
         </MudItem>
