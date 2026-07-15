@@ -98,8 +98,9 @@ public class PredictionService
 
     /// <summary>
     /// Every player's tip for a single match — but only once the match is
-    /// FINISHED. Before that, returning nothing keeps tips hidden so nobody
-    /// can peek at what the others guessed.
+    /// locked (the tipping deadline, one hour before kickoff, has passed).
+    /// Before that, returning nothing keeps tips hidden so nobody can peek
+    /// at what the others guessed and tip accordingly.
     /// </summary>
     public async Task<List<PredictionDto>> GetMatchPredictions(int matchId)
     {
@@ -113,7 +114,7 @@ public class PredictionService
         await Task.WhenAll(matchTask, predsTask, usersTask);
 
         var match = matchTask.Result.Models.FirstOrDefault();
-        if (match is null || match.Status != "FINISHED")
+        if (match is null || DateTime.UtcNow < match.KickoffTime.AddHours(-1))
             return [];
 
         var userNames = usersTask.Result.Models.ToDictionary(u => u.Id, u => u.Name);

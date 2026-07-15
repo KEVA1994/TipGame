@@ -10,6 +10,12 @@ public class MatchDto
     public DateTime KickoffTime { get; set; }
     public string Status { get; set; }
 
+    /// <summary>
+    /// True once tipping is closed for this match — the same deadline that
+    /// blocks saving/deleting tips (one hour before kickoff).
+    /// </summary>
+    public bool IsLocked => DateTime.UtcNow >= KickoffTime.AddHours(-1);
+
     public int? HomeScore { get; set; }
     public int? AwayScore { get; set; }
     public int? Minute { get; set; }

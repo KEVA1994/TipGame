@@ -101,16 +101,19 @@ public partial class Matches : IAsyncDisposable
         await InvokeAsync(StateHasChanged);
     }
 
-    // Only finished matches open the detail view; everything else keeps its
-    // inline tipping interaction, so a stray row click does nothing there.
+    // Only locked matches (tipping deadline passed) open the detail view;
+    // everything else keeps its inline tipping interaction, so a stray row
+    // click does nothing there.
     private void OpenMatch(MatchDto match)
     {
-        if (match.Status == "FINISHED")
+        if (match.IsLocked)
             Nav.NavigateTo($"matches/{match.Id}");
     }
 
+    // UTC like the save/delete deadline in PredictionService, so a row is
+    // never editable and locked (clickable) at the same time.
     private bool CanEdit(MatchDto match) =>
-        !string.IsNullOrEmpty(PlayerState.AuthId) && DateTime.Now < match.KickoffTime.AddHours(-1);
+        !string.IsNullOrEmpty(PlayerState.AuthId) && !match.IsLocked;
 
     private TipState GetTipState(int matchId)
     {

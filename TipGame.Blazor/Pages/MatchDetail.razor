@@ -55,10 +55,10 @@
         </MudPaper>
 
         @* Predictions *@
-        @if (match.Status != "FINISHED")
+        @if (!match.IsLocked)
         {
             <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Lock">
-                Alle spilleres tip bliver afsløret her, når kampen er færdig.
+                Alle spilleres tip bliver afsløret her, når kampen låses en time før kickoff.
             </MudAlert>
         }
         else if (!predictions.Any())
@@ -69,10 +69,12 @@
         }
         else
         {
+            var isFinished = match.Status == "FINISHED";
+
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="px-1">
                 <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Small" Color="Color.Secondary" />
                 <MudText Typo="Typo.subtitle2">@predictions.Count tip</MudText>
-                @if (exactCount > 0)
+                @if (isFinished && exactCount > 0)
                 {
                     <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Success"
                              Icon="@Icons.Material.Filled.CheckCircle">
@@ -96,9 +98,13 @@
                             @p.UserName@(isMe ? " (dig)" : "")
                         </MudText>
                         <MudText Typo="Typo.body1" Class="pred-tip" Style="font-weight:700;">@p.HomeScore-@p.AwayScore</MudText>
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@chipColor" Icon="@chipIcon" Class="pred-points">
-                            @p.Points p
-                        </MudChip>
+                        @if (isFinished)
+                        {
+                            @* Points are only settled once the match is finished *@
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@chipColor" Icon="@chipIcon" Class="pred-points">
+                                @p.Points p
+                            </MudChip>
+                        }
                     </div>
                 }
             </MudPaper>
