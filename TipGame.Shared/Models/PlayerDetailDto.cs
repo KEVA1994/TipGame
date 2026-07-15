@@ -9,6 +9,25 @@ public class PlayerDetailDto
 
     /// <summary>Finished matches where the player earned points, newest first.</summary>
     public List<PlayerMatchPointDto> Matches { get; set; } = [];
+
+    /// <summary>
+    /// Locked matches (tipping deadline passed) the player never tipped,
+    /// newest first. Postponed and cancelled matches don't count.
+    /// </summary>
+    public List<PlayerMissedMatchDto> MissedMatches { get; set; } = [];
+}
+
+public class PlayerMissedMatchDto
+{
+    public int MatchId { get; set; }
+
+    public string HomeTeam { get; set; }
+    public string AwayTeam { get; set; }
+
+    public int? HomeScore { get; set; }
+    public int? AwayScore { get; set; }
+
+    public DateTime KickoffTime { get; set; }
 }
 
 public class PlayerMatchPointDto

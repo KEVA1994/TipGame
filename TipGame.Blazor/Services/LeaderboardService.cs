@@ -108,21 +108,48 @@ public class LeaderboardService
     /// <summary>
     /// A single player's scoring history: every FINISHED match where they
     /// earned points, newest first, with the tip they made and the points it
-    /// gave. Returns null when no player with that name exists.
+    /// gave — plus the locked matches they forgot to tip on. Returns null
+    /// when no player with that name exists.
     /// </summary>
     public async Task<PlayerDetailDto?> GetPlayerDetail(string userName)
     {
+        // All matches, not just FINISHED — missed tips include locked matches
+        // that haven't been played yet.
         var usersTask = _supabase.From<User>().Get();
         var predictionsTask = _supabase.GetAllAsync<Prediction>();
-        var matchesTask = _supabase.From<Match>()
-            .Where(m => m.Status == "FINISHED")
-            .Get();
+        var matchesTask = _supabase.From<Match>().Get();
         await Task.WhenAll(usersTask, predictionsTask, matchesTask);
 
         var user = usersTask.Result.Models.FirstOrDefault(u => u.Name == userName);
         if (user is null) return null;
 
-        var matchLookup = matchesTask.Result.Models.ToDictionary(m => m.Id);
+        var allMatches = matchesTask.Result.Models;
+        var matchLookup = allMatches
+            .Where(m => m.Status == "FINISHED")
+            .ToDictionary(m => m.Id);
+
+        var tippedMatchIds = predictionsTask.Result
+            .Where(p => p.UserId == user.Id)
+            .Select(p => p.MatchId)
+            .ToHashSet();
+
+        // Forgotten tips: the deadline passed without a tip. Postponed and
+        // cancelled matches don't count — there was nothing to tip on.
+        var missedMatches = allMatches
+            .Where(m => m.Status is not ("POSTPONED" or "CANCELLED")
+                && DateTime.UtcNow >= m.KickoffTime.AddHours(-1)
+                && !tippedMatchIds.Contains(m.Id))
+            .OrderByDescending(m => m.KickoffTime)
+            .Select(m => new PlayerMissedMatchDto
+            {
+                MatchId = m.Id,
+                HomeTeam = m.HomeTeam,
+                AwayTeam = m.AwayTeam,
+                HomeScore = m.HomeScore,
+                AwayScore = m.AwayScore,
+                KickoffTime = m.KickoffTime
+            })
+            .ToList();
 
         var matches = predictionsTask.Result
             .Where(p => p.UserId == user.Id && p.Points > 0 && matchLookup.ContainsKey(p.MatchId))
@@ -151,7 +178,8 @@ public class LeaderboardService
         {
             UserName = user.Name,
             TotalPoints = matches.Sum(m => m.Points),
-            Matches = matches
+            Matches = matches,
+            MissedMatches = missedMatches
         };
     }
 }

@@ -72,6 +72,37 @@
                 }
             </MudPaper>
         }
+
+        @* Matches the player forgot to tip on *@
+        @if (player.MissedMatches.Any())
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="px-1 mt-2">
+                <MudIcon Icon="@Icons.Material.Filled.EventBusy" Size="Size.Small" Color="Color.Secondary" />
+                <MudText Typo="Typo.subtitle2">
+                    Glemte tips (@player.MissedMatches.Count)
+                </MudText>
+            </MudStack>
+
+            <MudPaper Outlined="true" Class="rounded-lg pa-0">
+                @foreach (var m in player.MissedMatches)
+                {
+                    <div class="pred-row player-match-row" @onclick="() => GoToMatch(m.MatchId)">
+                        <MudStack Spacing="0" Style="flex:1; min-width:0;">
+                            <MudText Typo="Typo.body2" Style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                @m.HomeTeam @(m.HomeScore?.ToString() ?? "-")–@(m.AwayScore?.ToString() ?? "-") @m.AwayTeam
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @FormatDate(m.KickoffTime)
+                            </MudText>
+                        </MudStack>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                 Icon="@Icons.Material.Outlined.Block" Class="pred-points">
+                            Intet tip
+                        </MudChip>
+                    </div>
+                }
+            </MudPaper>
+        }
     }
 
 </MudStack>
