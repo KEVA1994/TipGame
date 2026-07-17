@@ -8,18 +8,24 @@ Deno.serve(async () => {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Check if there are any non-finished matches — skip API call if all are done
+  // Skip API call only when the tournament is actually over: every stored match
+  // is finished AND the final itself has been played. "All matches finished"
+  // alone is not enough — knockout fixtures are inserted as the API publishes
+  // them, so right after the semifinals every stored match is finished while
+  // the final and third-place match don't exist in the database yet.
   const { count: pendingCount } = await supabase
     .from("Matches")
     .select("Id", { count: "exact", head: true })
     .not("Status", "in", '("FINISHED","POSTPONED","CANCELLED")');
 
-  const { count: totalCount } = await supabase
+  const { count: finishedFinals } = await supabase
     .from("Matches")
-    .select("Id", { count: "exact", head: true });
+    .select("Id", { count: "exact", head: true })
+    .eq("Stage", "FINAL")
+    .eq("Status", "FINISHED");
 
-  if (totalCount && totalCount > 0 && (!pendingCount || pendingCount === 0)) {
-    return Response.json({ skipped: true, reason: "All matches finished" });
+  if (finishedFinals && finishedFinals > 0 && (!pendingCount || pendingCount === 0)) {
+    return Response.json({ skipped: true, reason: "Tournament finished" });
   }
 
   // Fetch from football-data.org
@@ -79,8 +85,20 @@ Deno.serve(async () => {
         continue;
       }
 
-      const homeScore: number | null = apiMatch.score?.fullTime?.home ?? null;
-      const awayScore: number | null = apiMatch.score?.fullTime?.away ?? null;
+      // The tip game scores against the 90-minute result. For knockout matches
+      // decided in extra time or on penalties, football-data.org's `fullTime`
+      // is the aggregate (regularTime + extraTime + penalties), e.g. a 1-1 that
+      // goes to a 3-4 shootout is reported as fullTime 4-5. `regularTime` holds
+      // the score after 90 minutes — prefer it, and fall back to `fullTime` for
+      // ordinary matches where `regularTime` is not populated.
+      const homeScore: number | null =
+        apiMatch.score?.regularTime?.home ??
+        apiMatch.score?.fullTime?.home ??
+        null;
+      const awayScore: number | null =
+        apiMatch.score?.regularTime?.away ??
+        apiMatch.score?.fullTime?.away ??
+        null;
 
       // Calculate minute from kickoff for live matches
       let minute: number | null = null;
@@ -143,7 +161,10 @@ interface ApiMatch {
   utcDate: string;
   homeTeam: { name: string; crest: string };
   awayTeam: { name: string; crest: string };
-  score: { fullTime: { home: number | null; away: number | null } } | null;
+  score: {
+    regularTime?: { home: number | null; away: number | null } | null;
+    fullTime: { home: number | null; away: number | null };
+  } | null;
   group: string | null;
   stage: string | null;
   matchday: number | null;
