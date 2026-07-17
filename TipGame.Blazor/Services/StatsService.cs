@@ -84,7 +84,8 @@ public class StatsService
                 Exact = userPreds.Count(p => p.Points == 3),
                 CorrectDraw = userPreds.Count(p => p.Points == 2),
                 CorrectOutcome = userPreds.Count(p => p.Points == 1),
-                Wrong = userPreds.Count(p => p.Points == 0)
+                Wrong = userPreds.Count(p => p.Points == 0),
+                Missing = matches.Count - userPreds.Count
             };
         }).OrderByDescending(a => a.Exact).ThenByDescending(a => a.CorrectDraw).ToList();
 
@@ -209,6 +210,7 @@ public class AccuracyData
     public int CorrectDraw { get; set; }
     public int CorrectOutcome { get; set; }
     public int Wrong { get; set; }
+    public int Missing { get; set; }
 }
 
 public class PopularTip

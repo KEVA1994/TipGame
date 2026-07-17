@@ -51,7 +51,7 @@
             @for (var i = 0; i < Players.Count; i++)
             {
                 var player = Players[i];
-                var total = player.Exact + player.CorrectDraw + player.CorrectOutcome + player.Wrong;
+                var total = player.Exact + player.CorrectDraw + player.CorrectOutcome + player.Wrong + player.Missing;
                 var rank = i + 1;
                 var isTop3 = rank <= 3;
                 var exactPct = total > 0 ? (double)player.Exact / total * 100 : 0;
@@ -93,6 +93,10 @@
                             {
                                 <MudChip T="string" Style="@($"width: {(player.Wrong * 100 / total)}%; min-width: 32px;")" Color="Color.Error" Variant="Variant.Filled" Size="Size.Small">@player.Wrong</MudChip>
                             }
+                            @if (player.Missing > 0)
+                            {
+                                <MudChip T="string" Style="@($"width: {(player.Missing * 100 / total)}%; min-width: 32px; background: #9E9E9E; color: white;")" Variant="Variant.Filled" Size="Size.Small">@player.Missing</MudChip>
+                            }
                         </MudStack>
                     </MudStack>
                 </MudPaper>
@@ -116,6 +120,10 @@
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                 <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--mud-palette-error);"></div>
                 <MudText Typo="Typo.caption">Forkert (0p)</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #9E9E9E;"></div>
+                <MudText Typo="Typo.caption">Intet tip</MudText>
             </MudStack>
         </MudStack>
     }
