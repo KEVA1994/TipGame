@@ -68,13 +68,25 @@ if (userError) {
   process.exit(1);
 }
 
-const { data: preds, error: predError } = await supabase
-  .from("Predictions")
-  .select("UserId, Points");
-if (predError) {
-  console.error("Failed to load predictions:", predError.message);
-  process.exit(1);
+// PostgREST caps responses at 1000 rows — with ~28 players × ~104 matches the
+// table is ~3x that, so page through everything or the standings come out
+// wrong (computed from only the earliest matches).
+const preds = [];
+const pageSize = 1000;
+for (let from = 0; ; from += pageSize) {
+  const { data: page, error: predError } = await supabase
+    .from("Predictions")
+    .select("UserId, Points")
+    .order("Id", { ascending: true })
+    .range(from, from + pageSize - 1);
+  if (predError) {
+    console.error("Failed to load predictions:", predError.message);
+    process.exit(1);
+  }
+  preds.push(...(page ?? []));
+  if (!page || page.length < pageSize) break;
 }
+console.log(`Loaded ${preds.length} predictions.`);
 
 const pointsByUser = new Map();
 for (const p of preds ?? []) {
