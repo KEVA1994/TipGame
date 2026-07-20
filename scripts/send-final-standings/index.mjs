@@ -167,8 +167,7 @@ function finalHtml({ userName, me }) {
 
 							<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">
 								Så blev der fløjtet af for sidste gang, og <strong>VM Tips Kuponen 2026</strong>
-								er officielt slut. Tak fordi du tippede med — uden jer var det bare
-								et regneark med følelser.
+								er officielt slut. Tak fordi du tippede med!
 							</p>
 
 							<!-- Podium box -->
@@ -184,7 +183,7 @@ function finalHtml({ userName, me }) {
 							</table>
 
 							<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">
-								Kæmpe tillykke til de tre på skamlen! 👏 ${personal}
+								Kæmpe tillykke til de tre på podiet! 👏 ${personal}
 							</p>
 
 							<!-- Full standings -->
@@ -203,6 +202,14 @@ function finalHtml({ userName, me }) {
 							</p>
 							<p style="margin:0 0 8px 0;font-size:12px;word-break:break-all;text-align:center;">
 								<a href="${siteUrl}" style="color:#1B5E20;text-decoration:underline;">${siteUrl}</a>
+							</p>
+
+							<!-- ROFUS -->
+							<p style="margin:24px 0 0 0;font-size:13px;color:#6b7280;line-height:1.5;text-align:center;">
+								🎰 Har tipningen taget overhånd? Så kan du helt gratis melde dig ind i
+								<a href="https://spillemyndigheden.dk/rofus" style="color:#1B5E20;text-decoration:underline;">ROFUS</a>
+								— Spillemyndighedens register over frivilligt udelukkede spillere.
+								(Vi regner nu med, at det kun var æren, der stod på spil. 😄)
 							</p>
 						</td>
 					</tr>
