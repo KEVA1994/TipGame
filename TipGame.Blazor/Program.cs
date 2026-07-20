@@ -24,6 +24,7 @@ builder.Services.AddScoped<PredictionService>();
 builder.Services.AddScoped<LeaderboardService>();
 builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<PlayerState>();
+builder.Services.AddScoped<CompetitionState>();
 
 var host = builder.Build();
 

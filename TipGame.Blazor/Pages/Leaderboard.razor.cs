@@ -6,6 +6,7 @@ namespace TipGame.Blazor.Pages;
 public partial class Leaderboard
 {
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
+    [Inject] private CompetitionState CompetitionState { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
 
     private List<LeaderboardDto> players = [];
@@ -16,9 +17,13 @@ public partial class Leaderboard
     {
         if (!firstRender) return;
 
+        await CompetitionState.InitializeAsync();
+
         try
         {
-            players = await LeaderboardService.GetLeaderboard();
+            players = CompetitionState.Current is { } comp
+                ? await LeaderboardService.GetLeaderboard(comp.Id)
+                : [];
         }
         catch
         {

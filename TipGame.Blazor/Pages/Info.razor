@@ -1,6 +1,8 @@
 @page "/info"
 @using MudBlazor
 @inject NavigationManager Nav
+@inject CompetitionState CompetitionState
+@implements IDisposable
 
 <MudStack Spacing="0" Class="mx-auto" Style="max-width: 1000px;">
 
@@ -10,32 +12,34 @@
         <MudText Typo="Typo.h4">ℹ️ Info & regler</MudText>
     </MudStack>
 
+    @* --- Konkurrencens egen info (skrives af admin) --- *@
+    @if (!string.IsNullOrWhiteSpace(CompetitionState.Current?.InfoText))
+    {
+        <MudPaper Class="pa-6 rounded-xl mb-6" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-3">📣 @CompetitionState.Current!.Name</MudText>
+            <TipGame.Blazor.Components.MarkdownView Content="@CompetitionState.Current!.InfoText" />
+        </MudPaper>
+    }
+
     <MudPaper Class="pa-6 rounded-xl mb-6" Elevation="1">
         <MudText Typo="Typo.h6" Class="mb-4">🚀 Sådan deltager du</MudText>
         <MudTimeline TimelinePosition="TimelinePosition.Start">
             <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
-                <MudText Typo="Typo.body2">
-                    <strong>1.</strong> Betal <strong>50 kr</strong> via MobilePay
-                    (<MudLink Typo="Typo.body2" Color="Color.Primary" Underline="Underline.Always"
-                              @onclick="GoToMobilePay" Style="cursor: pointer;">gå til betalingsknappen</MudLink>)
-                </MudText>
+                <MudText Typo="Typo.body2"><strong>1.</strong> Åbn invitationslinket fra din admin og opret din profil med fornavn og efternavn</MudText>
             </MudTimelineItem>
             <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
-                <MudText Typo="Typo.body2"><strong>2.</strong> Opret din profil med fornavn og efternavn</MudText>
-            </MudTimelineItem>
-            <MudTimelineItem Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
-                <MudText Typo="Typo.body2"><strong>3.</strong> Gå til <strong>Kampe</strong> og indtast dit gæt på resultatet for hver kamp</MudText>
+                <MudText Typo="Typo.body2"><strong>2.</strong> Gå til <strong>Kampe</strong> og indtast dit gæt på resultatet for hver kamp</MudText>
             </MudTimelineItem>
             <MudTimelineItem Color="Color.Info" Variant="Variant.Filled" Size="Size.Small" Icon="@Icons.Material.Filled.CloudDone">
                 <MudText Typo="Typo.body2">
-                    <strong>4.</strong> Dit tip <strong>gemmes automatisk</strong>, så snart du har indtastet både hjemme- og udebanescore!
+                    <strong>3.</strong> Dit tip <strong>gemmes automatisk</strong>, så snart du har indtastet både hjemme- og udebanescore!
                 </MudText>
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                     Vil du ændre dit tip? Klik på <strong>skraldespanden</strong> ud for kampen og indtast et nyt — du kan slette og lave et nyt indtil 1 time før kampstart.
                 </MudText>
             </MudTimelineItem>
             <MudTimelineItem Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
-                <MudText Typo="Typo.body2"><strong>5.</strong> Følg med på ranglisten og vind! 🏆</MudText>
+                <MudText Typo="Typo.body2"><strong>4.</strong> Følg med på ranglisten og vind! 🏆</MudText>
             </MudTimelineItem>
         </MudTimeline>
 
@@ -106,5 +110,18 @@
 </MudStack>
 
 @code {
-    private void GoToMobilePay() => Nav.NavigateTo($"{Nav.BaseUri}?goto=pay");
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        CompetitionState.OnChange += HandleChanged;
+        await CompetitionState.InitializeAsync();
+        StateHasChanged();
+    }
+
+    private void HandleChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        CompetitionState.OnChange -= HandleChanged;
+    }
 }

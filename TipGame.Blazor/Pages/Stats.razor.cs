@@ -11,6 +11,7 @@ public partial class Stats
 
     [Inject] private StatsService StatsService { get; set; } = default!;
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
+    [Inject] private CompetitionState CompetitionState { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
     [SupplyParameterFromQuery(Name = "tab")]
@@ -59,14 +60,23 @@ public partial class Stats
 
         try
         {
-            data = await StatsService.GetStatsAsync();
+            await CompetitionState.InitializeAsync();
+            if (CompetitionState.Current is not { } comp)
+            {
+                errorMessage = "Vælg en konkurrence for at se statistik.";
+                isLoading = false;
+                StateHasChanged();
+                return;
+            }
+
+            data = await StatsService.GetStatsAsync(comp.Id);
 
             pointLabels = data.Dates.ToArray();
             pointSeries = data.CumulativePoints
                 .Select(p => new ChartSeries<double> { Name = p.Name, Data = p.Values })
                 .ToList();
 
-            players = await LeaderboardService.GetLeaderboard();
+            players = await LeaderboardService.GetLeaderboard(comp.Id);
             matchDays = players
                 .SelectMany(p => p.DailyPoints.Keys)
                 .Distinct()

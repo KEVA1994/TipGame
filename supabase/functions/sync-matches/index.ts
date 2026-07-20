@@ -169,6 +169,13 @@ async function syncCompetition(
       if (homeScore !== null) update.HomeScore = homeScore;
       if (awayScore !== null) update.AwayScore = awayScore;
 
+      // Skip no-op writes. Every update fires realtime events at every open
+      // client and burns DB I/O — with a full league (380 matches) synced every
+      // minute, unconditional writes turned into a constant render storm.
+      if (isUnchanged(existing, update)) {
+        continue;
+      }
+
       const { error } = await supabase
         .from("Matches")
         .update(update)
@@ -219,6 +226,23 @@ async function syncCompetition(
   }
 
   return { total: apiMatches.length, new: newCount, updated: updatedCount };
+}
+
+// True when applying `update` to `existing` would change nothing.
+function isUnchanged(
+  existing: Record<string, unknown>,
+  update: Record<string, unknown>
+): boolean {
+  for (const [key, value] of Object.entries(update)) {
+    const current = existing[key];
+    if (key === "KickoffTime") {
+      // Same instant, possibly different textual offsets ("Z" vs "+00:00").
+      if (Date.parse(current as string) !== Date.parse(value as string)) return false;
+    } else if ((current ?? null) !== (value ?? null)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // Type definitions for football-data.org API response

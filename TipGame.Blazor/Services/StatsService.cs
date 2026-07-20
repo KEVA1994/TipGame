@@ -8,35 +8,43 @@ public class StatsService
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
 
     private readonly Supabase.Client _supabase;
-    private StatsData? _cached;
-    private DateTime _cachedAt;
+    private readonly Dictionary<int, (StatsData Data, DateTime At)> _cache = new();
 
     public StatsService(Supabase.Client supabase)
     {
         _supabase = supabase;
     }
 
-    public async Task<StatsData> GetStatsAsync()
+    public async Task<StatsData> GetStatsAsync(int competitionId)
     {
-        if (_cached is not null && DateTime.UtcNow - _cachedAt < CacheTtl)
-            return _cached;
+        if (_cache.TryGetValue(competitionId, out var cached)
+            && DateTime.UtcNow - cached.At < CacheTtl)
+            return cached.Data;
         // Fetch in parallel — sequential awaits tripled the load time.
+        var membersTask = _supabase.From<CompetitionMember>()
+            .Where(m => m.CompetitionId == competitionId)
+            .Get();
         var usersTask = _supabase.From<User>().Get();
         var predictionsTask = _supabase.GetAllAsync<Prediction>();
         var matchesTask = _supabase.From<Match>()
+            .Where(m => m.CompetitionId == competitionId)
             .Where(m => m.Status == "FINISHED")
             .Get();
-        await Task.WhenAll(usersTask, predictionsTask, matchesTask);
+        await Task.WhenAll(membersTask, usersTask, predictionsTask, matchesTask);
 
-        var users = usersTask.Result.Models;
-        var predictions = predictionsTask.Result;
+        var memberIds = membersTask.Result.Models.Select(m => m.UserId).ToHashSet();
+        var users = usersTask.Result.Models.Where(u => memberIds.Contains(u.Id)).ToList();
         var matches = matchesTask.Result.Models;
+        var matchIds = matches.Select(m => m.Id).ToHashSet();
+        var predictions = predictionsTask.Result
+            .Where(p => matchIds.Contains(p.MatchId) && memberIds.Contains(p.UserId))
+            .ToList();
 
         Console.WriteLine($"[Stats] Users={users.Count}, Predictions={predictions.Count}, FinishedMatches={matches.Count}");
 
-        _cached = BuildStats(users, predictions, matches);
-        _cachedAt = DateTime.UtcNow;
-        return _cached;
+        var data = BuildStats(users, predictions, matches);
+        _cache[competitionId] = (data, DateTime.UtcNow);
+        return data;
     }
 
     private static StatsData BuildStats(List<User> users, List<Prediction> predictions, List<Match> matches)

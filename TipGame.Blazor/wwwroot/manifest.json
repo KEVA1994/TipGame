@@ -1,7 +1,7 @@
 {
-  "name": "TipGame \u2013 VM Tipsspil",
+  "name": "TipGame \u2013 Tipskonkurrencer",
   "short_name": "TipGame",
-  "description": "Tip p\u00e5 VM-kampe og konkurr\u00e9r p\u00e5 ranglisten",
+  "description": "Tippekonkurrencer med venner og kolleger \u2014 tip kampe og konkurr\u00e9r p\u00e5 ranglisten",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -1,0 +1,20 @@
+@using Markdig
+
+@* Renders admin-authored competition text (Info/Prizes). Raw HTML is disabled
+   — the text is written by competition admins, not by us, so it must not be
+   able to inject markup into other members' browsers. *@
+@if (!string.IsNullOrWhiteSpace(Content))
+{
+    <div class="markdown-view">
+        @((MarkupString)Markdown.ToHtml(Content!, Pipeline))
+    </div>
+}
+
+@code {
+    [Parameter] public string? Content { get; set; }
+
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .DisableHtml()
+        .Build();
+}

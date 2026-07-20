@@ -8,6 +8,7 @@ public partial class PlayerDetail
     [Parameter] public string Name { get; set; } = "";
 
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
+    [Inject] private CompetitionState CompetitionState { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
 
     private PlayerDetailDto? player;
@@ -19,7 +20,10 @@ public partial class PlayerDetail
 
         try
         {
-            player = await LeaderboardService.GetPlayerDetail(Name);
+            await CompetitionState.InitializeAsync();
+            player = CompetitionState.Current is { } comp
+                ? await LeaderboardService.GetPlayerDetail(comp.Id, Name)
+                : null;
         }
         catch
         {

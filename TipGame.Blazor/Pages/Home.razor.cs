@@ -1,28 +1,48 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using TipGame.Shared.Models;
 
 namespace TipGame.Blazor.Pages;
 
-public partial class Home
+public partial class Home : IDisposable
 {
     [Inject] private MatchService MatchService { get; set; } = default!;
     [Inject] private LeaderboardService LeaderboardService { get; set; } = default!;
+    [Inject] private PlayerState PlayerState { get; set; } = default!;
+    [Inject] private CompetitionState CompetitionState { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
-    [SupplyParameterFromQuery(Name = "goto")]
-    public string? GoTo { get; set; }
-
-    private const string ShareLink = "https://keva1994.github.io/TipGame/";
     private bool linkCopied;
+    private bool accountPopoverOpen;
+    private bool isReady;
 
     private int totalMatches;
     private int totalPlayers;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var matchesTask = MatchService.GetMatches();
-        var leaderboardTask = LeaderboardService.GetLeaderboard();
+        if (!firstRender) return;
+
+        await PlayerState.InitializeAsync();
+        await CompetitionState.InitializeAsync();
+        PlayerState.OnChange += HandleStateChanged;
+        CompetitionState.OnChange += HandleStateChanged;
+
+        await LoadStatsAsync();
+        isReady = true;
+        StateHasChanged();
+    }
+
+    private async Task LoadStatsAsync()
+    {
+        if (CompetitionState.Current is not { } comp)
+        {
+            totalMatches = 0;
+            totalPlayers = 0;
+            return;
+        }
+
+        var matchesTask = MatchService.GetMatches(comp.Id);
+        var leaderboardTask = LeaderboardService.GetLeaderboard(comp.Id);
 
         try
         {
@@ -37,23 +57,21 @@ public partial class Home
         catch { }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private void HandleStateChanged() => _ = OnStateChangedAsync();
+
+    private async Task OnStateChangedAsync()
     {
-        if (firstRender && string.Equals(GoTo, "pay", StringComparison.OrdinalIgnoreCase))
-        {
-            try
-            {
-                await JS.InvokeVoidAsync("scrollToElement", "mobilepay");
-            }
-            catch { }
-        }
+        await LoadStatsAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task CopyShareLink()
     {
+        if (CompetitionState.Current is not { } comp) return;
         try
         {
-            await JS.InvokeVoidAsync("navigator.clipboard.writeText", ShareLink);
+            var link = $"{Nav.BaseUri}join/{comp.InviteToken}";
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", link);
             linkCopied = true;
             StateHasChanged();
             await Task.Delay(2000);
@@ -61,5 +79,11 @@ public partial class Home
             StateHasChanged();
         }
         catch { }
+    }
+
+    public void Dispose()
+    {
+        PlayerState.OnChange -= HandleStateChanged;
+        CompetitionState.OnChange -= HandleStateChanged;
     }
 }

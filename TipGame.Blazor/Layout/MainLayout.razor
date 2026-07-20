@@ -9,6 +9,40 @@
 <MudLayout>
     <MudAppBar Elevation="2" Color="Color.Primary">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+
+        @if (CompetitionState.Current is not null)
+        {
+            <MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+                <ActivatorContent>
+                    <MudButton Color="Color.Inherit"
+                               EndIcon="@(CompetitionState.MyCompetitions.Count > 1 ? Icons.Material.Filled.ArrowDropDown : null)"
+                               Style="text-transform: none; font-weight: 700;">
+                        @CompetitionState.Current.Name
+                    </MudButton>
+                </ActivatorContent>
+                <ChildContent>
+                    @foreach (var comp in CompetitionState.MyCompetitions)
+                    {
+                        <MudMenuItem OnClick="@(() => CompetitionState.SetCurrentAsync(comp.Id))">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                @if (comp.Id == CompetitionState.Current.Id)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Primary" />
+                                }
+                                <MudText>@comp.Name</MudText>
+                                @if (comp.Status != "active")
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">afsluttet</MudChip>
+                                }
+                            </MudStack>
+                        </MudMenuItem>
+                    }
+                    <MudDivider />
+                    <MudMenuItem Icon="@Icons.Material.Filled.Add" Href="opret">Opret ny konkurrence</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        }
+
         <MudSpacer />
 
         @if (string.IsNullOrEmpty(PlayerState.PlayerName))
@@ -66,6 +100,13 @@
             <MudNavLink Href="info" Icon="@Icons.Material.Filled.MenuBook">
                 Info & regler
             </MudNavLink>
+            @if (CompetitionState.IsAdmin)
+            {
+                <MudDivider Class="my-2" />
+                <MudNavLink Href="admin" Icon="@Icons.Material.Filled.AdminPanelSettings">
+                    Admin
+                </MudNavLink>
+            }
         </MudNavMenu>
     </MudDrawer>
 

@@ -12,6 +12,9 @@ namespace TipGame.Domain.Entities
         [Column("ExternalId")]
         public int ExternalId { get; set; }
 
+        [Column("CompetitionId")]
+        public int CompetitionId { get; set; }
+
         [Column("HomeTeam")]
         public string HomeTeam { get; set; }
 

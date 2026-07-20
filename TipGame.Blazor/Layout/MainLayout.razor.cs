@@ -7,6 +7,7 @@ namespace TipGame.Blazor.Layout;
 public partial class MainLayout : IDisposable
 {
     [Inject] private PlayerState PlayerState { get; set; } = default!;
+    [Inject] private CompetitionState CompetitionState { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private bool drawerOpen = true;
@@ -80,6 +81,8 @@ public partial class MainLayout : IDisposable
 
         await PlayerState.InitializeAsync();
         PlayerState.OnChange += StateHasChanged;
+        CompetitionState.OnChange += HandleCompetitionChanged;
+        await CompetitionState.InitializeAsync();
 
         var stored = await JS.InvokeAsync<string?>("localStorage.getItem", "darkMode");
         if (stored is not null)
@@ -98,8 +101,11 @@ public partial class MainLayout : IDisposable
         await JS.InvokeVoidAsync("localStorage.setItem", "darkMode", isDarkMode ? "true" : "false");
     }
 
+    private void HandleCompetitionChanged() => _ = InvokeAsync(StateHasChanged);
+
     public void Dispose()
     {
         PlayerState.OnChange -= StateHasChanged;
+        CompetitionState.OnChange -= HandleCompetitionChanged;
     }
 }

@@ -1,158 +1,189 @@
-﻿@page "/"
+@page "/"
 @using MudBlazor
 @using TipGame.Shared.Models
 @inject NavigationManager Nav
 
-@* --- Hero Section --- *@
-<MudPaper Class="pa-8 mt-4 rounded-xl mb-6" Elevation="3"
-          Style="background: linear-gradient(135deg, var(--mud-palette-primary-darken) 0%, var(--mud-palette-primary) 100%); color: white;">
-    <MudStack AlignItems="AlignItems.Center" Spacing="3">
-        <MudText Typo="Typo.h2" Align="Align.Center" Style="color: white; font-weight: 700;">⚽ VM Tips 2026</MudText>
-        <MudText Typo="Typo.h6" Align="Align.Center" Style="color: rgba(255,255,255,0.85); font-weight: 400;">
-            Tip på alle kampe — kæmp om æren og præmierne!
-        </MudText>
-        <MudStack Row="true" Spacing="4" Class="mt-2">
-            <MudStack AlignItems="AlignItems.Center" Spacing="0">
-                <MudText Typo="Typo.h4" Style="color: white; font-weight: 700;">@totalMatches</MudText>
-                <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">Kampe</MudText>
-            </MudStack>
-            <MudStack AlignItems="AlignItems.Center" Spacing="0">
-                <MudText Typo="Typo.h4" Style="color: white; font-weight: 700;">@totalPlayers</MudText>
-                <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">Spillere</MudText>
-            </MudStack>
-            <MudStack AlignItems="AlignItems.Center" Spacing="0">
-                <MudText Typo="Typo.h4" Style="color: white; font-weight: 700;">@(totalPlayers * 50) kr</MudText>
-                <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">💰 Pulje</MudText>
-            </MudStack>
+@if (!isReady)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-8" />
+}
+else if (!PlayerState.IsLoggedIn)
+{
+    @* --- Ikke logget ind: velkomst --- *@
+    <MudPaper Class="pa-8 mt-4 rounded-xl mb-6" Elevation="3"
+              Style="background: linear-gradient(135deg, var(--mud-palette-primary-darken) 0%, var(--mud-palette-primary) 100%); color: white;">
+        <MudStack AlignItems="AlignItems.Center" Spacing="3">
+            <MudText Typo="Typo.h2" Align="Align.Center" Style="color: white; font-weight: 700;">⚽ TipGame</MudText>
+            <MudText Typo="Typo.h6" Align="Align.Center" Style="color: rgba(255,255,255,0.85); font-weight: 400;">
+                Tippekonkurrencer med venner, familie og kolleger — VM, EM, Premier League og meget mere.
+            </MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Large" Class="mt-2"
+                       StartIcon="@Icons.Material.Filled.Login"
+                       OnClick="@(() => accountPopoverOpen = true)">
+                Log ind eller opret konto
+            </MudButton>
         </MudStack>
-    </MudStack>
-</MudPaper>
+    </MudPaper>
 
-@* --- Del med venner --- *@
-<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Share" Class="mb-6 rounded-xl">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
-        <MudText Typo="Typo.body2" Class="flex-grow-1">
-            Du er velkommen til at <strong>dele linket</strong> med familie eller venner du tænker kunne være med. Jo flere vi er, jo større bliver puljen! 🎉
-        </MudText>
-        <MudTooltip Text="@(linkCopied ? "Link kopieret!" : "Kopiér link")">
-            <MudIconButton Icon="@(linkCopied ? Icons.Material.Filled.Check : Icons.Material.Filled.ContentCopy)"
-                           Color="Color.Info"
-                           Size="Size.Small"
-                           Class="ml-auto"
-                           OnClick="CopyShareLink" />
-        </MudTooltip>
-    </MudStack>
-</MudAlert>
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Link" Class="mb-6 rounded-xl">
+        Har du fået et <strong>invitationslink</strong> til en konkurrence? Åbn linket — så bliver du meldt ind, når du har logget ind.
+    </MudAlert>
 
-@* --- Præmier (teaser → /praemier) --- *@
-<MudPaper Class="pa-4 pa-sm-5 rounded-xl mb-6" Elevation="1"
-          @onclick="@(() => Nav.NavigateTo("praemier"))"
-          Style="background: linear-gradient(135deg, rgba(255,215,0,0.10) 0%, rgba(192,192,192,0.08) 50%, rgba(205,127,50,0.10) 100%); cursor: pointer;">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="3">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Style="min-width: 0; flex: 1 1 220px;">
-            <MudText Typo="Typo.h4" Style="line-height: 1;">🥇🥈🥉</MudText>
-            <MudStack Spacing="0" Style="min-width: 0;">
-                <MudText Typo="Typo.h6" Style="font-weight: 700;">Præmier</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Der er præmier til top 3 — se hvad du spiller om.
+    <TipGame.Blazor.Components.Account.AccountPopover @bind-IsOpen="accountPopoverOpen" />
+}
+else if (CompetitionState.Current is null)
+{
+    @* --- Logget ind, men ingen konkurrencer --- *@
+    <MudPaper Class="pa-8 mt-4 rounded-xl mb-6" Elevation="3"
+              Style="background: linear-gradient(135deg, var(--mud-palette-primary-darken) 0%, var(--mud-palette-primary) 100%); color: white;">
+        <MudStack AlignItems="AlignItems.Center" Spacing="3">
+            <MudText Typo="Typo.h3" Align="Align.Center" Style="color: white; font-weight: 700;">Hej @PlayerState.PlayerName 👋</MudText>
+            <MudText Typo="Typo.h6" Align="Align.Center" Style="color: rgba(255,255,255,0.85); font-weight: 400;">
+                Du er ikke med i nogen konkurrence endnu.
+            </MudText>
+        </MudStack>
+    </MudPaper>
+
+    <MudGrid Spacing="4">
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-6 rounded-xl d-flex flex-column align-center" Elevation="1"
+                      Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("opret"))">
+                <MudIcon Icon="@Icons.Material.Filled.AddCircle" Size="Size.Large" Color="Color.Primary" />
+                <MudText Typo="Typo.h6" Class="mt-2">Opret en konkurrence</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+                    Vælg en turnering, invitér deltagerne og kom i gang på to minutter.
                 </MudText>
-            </MudStack>
-        </MudStack>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   EndIcon="@Icons.Material.Filled.ArrowForward"
-                   Href="praemier"
-                   Class="ml-auto flex-shrink-0"
-                   Style="white-space: nowrap;">
-            Se præmier
-        </MudButton>
-    </MudStack>
-</MudPaper>
-
-@* --- Feature Cards --- *@
-<MudGrid Class="mb-6" Spacing="4">
-    <MudItem xs="12" sm="6" md="4">
-        <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
-                  Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("matches"))">
-            <MudIcon Icon="@Icons.Material.Filled.SportsSoccer" Size="Size.Large" Color="Color.Primary" />
-            <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Center">Tip kampe</MudText>
-            <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Forudsig resultater på alle VM-kampe</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
-                  Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("leaderboard"))">
-            <MudIcon Icon="@Icons.Material.Filled.Leaderboard" Size="Size.Large" Color="Color.Warning" />
-            <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Center">Rangliste</MudText>
-            <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Følg med i hvem der fører</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
-                  Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("stats"))">
-            <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Color="Color.Info" />
-            <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Center">Statistik</MudText>
-            <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Detaljeret overblik over din træfsikkerhed</MudText>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
-
-@* --- Info & regler (teaser → /info) --- *@
-<MudPaper Class="pa-4 pa-sm-5 rounded-xl mb-6" Elevation="1"
-          @onclick="@(() => Nav.NavigateTo("info"))"
-          Style="cursor: pointer;">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="3">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Style="min-width: 0; flex: 1 1 220px;">
-            <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Large" Color="Color.Primary" />
-            <MudStack Spacing="0" Style="min-width: 0;">
-                <MudText Typo="Typo.h6" Style="font-weight: 700;">Sådan deltager du & pointsystem</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Læs reglerne og se hvordan du scorer point.
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-6 rounded-xl d-flex flex-column align-center" Elevation="1" Style="height: 100%;">
+                <MudIcon Icon="@Icons.Material.Filled.Link" Size="Size.Large" Color="Color.Info" />
+                <MudText Typo="Typo.h6" Class="mt-2">Har du et invitationslink?</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+                    Åbn linket fra din admin — så bliver du automatisk meldt ind i konkurrencen.
                 </MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+else
+{
+    @* --- Hero Section --- *@
+    <MudPaper Class="pa-8 mt-4 rounded-xl mb-6" Elevation="3"
+              Style="background: linear-gradient(135deg, var(--mud-palette-primary-darken) 0%, var(--mud-palette-primary) 100%); color: white;">
+        <MudStack AlignItems="AlignItems.Center" Spacing="3">
+            <MudText Typo="Typo.h3" Align="Align.Center" Style="color: white; font-weight: 700;">⚽ @CompetitionState.Current.Name</MudText>
+            @if (CompetitionState.Current.Status != "active")
+            {
+                <MudChip T="string" Color="Color.Secondary" Size="Size.Small">Konkurrencen er afsluttet</MudChip>
+            }
+            <MudStack Row="true" Spacing="4" Class="mt-2">
+                <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                    <MudText Typo="Typo.h4" Style="color: white; font-weight: 700;">@totalMatches</MudText>
+                    <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">Kampe</MudText>
+                </MudStack>
+                <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                    <MudText Typo="Typo.h4" Style="color: white; font-weight: 700;">@totalPlayers</MudText>
+                    <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">Spillere</MudText>
+                </MudStack>
             </MudStack>
         </MudStack>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   EndIcon="@Icons.Material.Filled.ArrowForward"
-                   Href="info"
-                   Class="ml-auto flex-shrink-0"
-                   Style="white-space: nowrap;">
-            Se info & regler
-        </MudButton>
-    </MudStack>
-</MudPaper>
+    </MudPaper>
 
-@* --- MobilePay --- *@
-<MudPaper id="mobilepay" Class="pa-6 rounded-xl mb-6 d-flex flex-column align-center" Elevation="2"
-          Style="background: linear-gradient(180deg, var(--mud-palette-background-gray) 0%, var(--mud-palette-surface) 100%);">
-    <MudText Typo="Typo.h6" Class="mb-2">💳 Betal med MobilePay</MudText>
-    <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center" Class="mb-4">
-        Tryk på knappen herunder og overfør <strong>50 kr</strong> for at deltage i tipspillet.
-    </MudText>
-    <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 700;">50 kr</MudText>
-    <MudButton Variant="Variant.Filled"
-               Color="Color.Primary"
-               StartIcon="@Icons.Material.Filled.Payment"
-               Href="https://qr.mobilepay.dk/box/b5e6cfe0-139c-4018-b077-8953fb89038f/pay-in"
-               Target="_blank"
-               Class="mt-3">
-        Åbn MobilePay
-    </MudButton>
-    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
-        Skriv dit navn i beskeden så vi kan matche betalingen.
-    </MudText>
-</MudPaper>
+    @* --- Invitér flere --- *@
+    @if (CompetitionState.Current.Status == "active")
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Share" Class="mb-6 rounded-xl">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                <MudText Typo="Typo.body2" Class="flex-grow-1">
+                    Du er velkommen til at <strong>dele invitationslinket</strong> med familie, venner eller kolleger. Jo flere, jo sjovere! 🎉
+                </MudText>
+                <MudTooltip Text="@(linkCopied ? "Link kopieret!" : "Kopiér invitationslink")">
+                    <MudIconButton Icon="@(linkCopied ? Icons.Material.Filled.Check : Icons.Material.Filled.ContentCopy)"
+                                   Color="Color.Info"
+                                   Size="Size.Small"
+                                   Class="ml-auto"
+                                   OnClick="CopyShareLink" />
+                </MudTooltip>
+            </MudStack>
+        </MudAlert>
+    }
 
-@* --- ROFUS disclaimer (med et glimt i øjet) --- *@
-<MudPaper Class="pa-4 rounded-xl mt-6 mb-4" Elevation="0"
-          Style="background: var(--mud-palette-background-gray); border: 1px dashed var(--mud-palette-lines-default);">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
-        <MudIcon Icon="@Icons.Material.Filled.Casino" Color="Color.Secondary" Size="Size.Medium" />
-        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-style: italic;">
-            Skulle dine 50 kr og dine vilde drømme om VM-storhed pludselig udvikle sig til noget mere alvorligt,
-            så fortvivl ikke — du kan altid melde dig selv ud af det danske spillemarked via
-            <MudLink Href="https://www.spillemyndigheden.dk/rofus" Target="_blank" Color="Color.Primary" Underline="Underline.Always">ROFUS</MudLink>.
-            Bare rolig, vi lover ikke at savne dig… ret meget. 🎲
-        </MudText>
-    </MudStack>
-</MudPaper>
+    @* --- Præmier (teaser → /praemier) --- *@
+    <MudPaper Class="pa-4 pa-sm-5 rounded-xl mb-6" Elevation="1"
+              @onclick="@(() => Nav.NavigateTo("praemier"))"
+              Style="background: linear-gradient(135deg, rgba(255,215,0,0.10) 0%, rgba(192,192,192,0.08) 50%, rgba(205,127,50,0.10) 100%); cursor: pointer;">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="3">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Style="min-width: 0; flex: 1 1 220px;">
+                <MudText Typo="Typo.h4" Style="line-height: 1;">🥇🥈🥉</MudText>
+                <MudStack Spacing="0" Style="min-width: 0;">
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Præmier</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Se hvad der spilles om i @CompetitionState.Current.Name.
+                    </MudText>
+                </MudStack>
+            </MudStack>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       EndIcon="@Icons.Material.Filled.ArrowForward"
+                       Href="praemier"
+                       Class="ml-auto flex-shrink-0"
+                       Style="white-space: nowrap;">
+                Se præmier
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    @* --- Feature Cards --- *@
+    <MudGrid Class="mb-6" Spacing="4">
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
+                      Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("matches"))">
+                <MudIcon Icon="@Icons.Material.Filled.SportsSoccer" Size="Size.Large" Color="Color.Primary" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Center">Tip kampe</MudText>
+                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Forudsig resultater på alle kampe</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
+                      Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("leaderboard"))">
+                <MudIcon Icon="@Icons.Material.Filled.Leaderboard" Size="Size.Large" Color="Color.Warning" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Center">Rangliste</MudText>
+                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Følg med i hvem der fører</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center feature-card" Elevation="1"
+                      Style="height: 100%; cursor: pointer;" @onclick="@(() => Nav.NavigateTo("stats"))">
+                <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Color="Color.Info" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Center">Statistik</MudText>
+                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">Detaljeret overblik over din træfsikkerhed</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @* --- Info & regler (teaser → /info) --- *@
+    <MudPaper Class="pa-4 pa-sm-5 rounded-xl mb-6" Elevation="1"
+              @onclick="@(() => Nav.NavigateTo("info"))"
+              Style="cursor: pointer;">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="3">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Style="min-width: 0; flex: 1 1 220px;">
+                <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Large" Color="Color.Primary" />
+                <MudStack Spacing="0" Style="min-width: 0;">
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Sådan deltager du & pointsystem</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Læs reglerne og se hvordan du scorer point.
+                    </MudText>
+                </MudStack>
+            </MudStack>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       EndIcon="@Icons.Material.Filled.ArrowForward"
+                       Href="info"
+                       Class="ml-auto flex-shrink-0"
+                       Style="white-space: nowrap;">
+                Se info & regler
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+}

@@ -1,6 +1,8 @@
 @page "/praemier"
 @using MudBlazor
 @inject NavigationManager Nav
+@inject CompetitionState CompetitionState
+@implements IDisposable
 
 <MudStack Spacing="0" Class="mx-auto" Style="max-width: 1000px;">
 
@@ -10,64 +12,52 @@
         <MudText Typo="Typo.h4">🏅 Præmier</MudText>
     </MudStack>
 
-    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
-        Så er præmierne på plads! Her kan I se, hvad der venter de tre bedste. Held og lykke! 🏆
-    </MudText>
-
-    <MudGrid Spacing="4" Class="mb-6">
-
-        @* --- 1. præmie --- *@
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center" Elevation="3"
-                      Style="height: 100%; background: linear-gradient(180deg, rgba(255,215,0,0.15) 0%, var(--mud-palette-surface) 100%);">
-                <MudText Typo="Typo.h2">🥇</MudText>
-                <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: 700;">1. præmie</MudText>
-
-                <img src="images/prize-1.jpg" alt="1. præmie – gavekurv" class="mt-3 mb-3 rounded-lg"
-                     style="display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover;" />
-
-                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Style="font-style: italic;">
-                    Lækker gavekurv med vin, chokolade og andre godter. 🎉
-                </MudText>
-            </MudPaper>
-        </MudItem>
-
-        @* --- 2. præmie --- *@
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center" Elevation="2"
-                      Style="height: 100%; background: linear-gradient(180deg, rgba(192,192,192,0.15) 0%, var(--mud-palette-surface) 100%);">
-                <MudText Typo="Typo.h2">🥈</MudText>
-                <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: 700;">2. præmie</MudText>
-
-                <img src="images/prize-2.jpg" alt="2. præmie – gavekurv" class="mt-3 mb-3 rounded-lg"
-                     style="display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover;" />
-
-                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Style="font-style: italic;">
-                    Lækker gavekurv med vin og andre godter. 🎉
-                </MudText>
-            </MudPaper>
-        </MudItem>
-
-        @* --- 3. præmie --- *@
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-5 rounded-xl d-flex flex-column align-center" Elevation="1"
-                      Style="height: 100%; background: linear-gradient(180deg, rgba(205,127,50,0.15) 0%, var(--mud-palette-surface) 100%);">
-                <MudText Typo="Typo.h2">🥉</MudText>
-                <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: 700;">3. præmie</MudText>
-
-                <img src="images/prize-3.jpg" alt="3. præmie – gavekurv" class="mt-3 mb-3 rounded-lg"
-                     style="display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover;" />
-
-                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Style="font-style: italic;">
-                    Lækker gavekurv med vin, øl og andre godter. 🎉
-                </MudText>
-            </MudPaper>
-        </MudItem>
-
-    </MudGrid>
+    @if (!string.IsNullOrWhiteSpace(CompetitionState.Current?.PrizesText))
+    {
+        <MudPaper Class="pa-6 rounded-xl mb-6" Elevation="1"
+                  Style="background: linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(192,192,192,0.05) 50%, rgba(205,127,50,0.08) 100%);">
+            <TipGame.Blazor.Components.MarkdownView Content="@CompetitionState.Current!.PrizesText" />
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Class="pa-8 rounded-xl mb-6 d-flex flex-column align-center" Elevation="1">
+            <MudText Typo="Typo.h2">🤷</MudText>
+            <MudText Typo="Typo.h6" Class="mt-2">Præmierne er ikke offentliggjort endnu</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center" Class="mt-1">
+                @(CompetitionState.IsAdmin
+                    ? "Du er admin — skriv præmieteksten under Admin → Præmie-tekst."
+                    : "Spørg din admin, hvad der spilles om. Æren er der i hvert fald altid.")
+            </MudText>
+            @if (CompetitionState.IsAdmin)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" Href="admin"
+                           StartIcon="@Icons.Material.Filled.Edit">
+                    Skriv præmietekst
+                </MudButton>
+            }
+        </MudPaper>
+    }
 
     <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Nav.NavigateTo(""))">
         Tilbage til forsiden
     </MudButton>
 
 </MudStack>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        CompetitionState.OnChange += HandleChanged;
+        await CompetitionState.InitializeAsync();
+        StateHasChanged();
+    }
+
+    private void HandleChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        CompetitionState.OnChange -= HandleChanged;
+    }
+}

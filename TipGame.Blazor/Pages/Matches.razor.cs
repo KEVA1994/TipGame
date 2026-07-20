@@ -11,6 +11,7 @@ public partial class Matches : IAsyncDisposable
     [Inject] private MatchService MatchService { get; set; } = default!;
     [Inject] private PredictionService PredictionService { get; set; } = default!;
     [Inject] private PlayerState PlayerState { get; set; } = default!;
+    [Inject] private CompetitionState CompetitionState { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private IConfiguration Configuration { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -36,32 +37,16 @@ public partial class Matches : IAsyncDisposable
         if (!firstRender) return;
 
         await PlayerState.InitializeAsync();
+        await CompetitionState.InitializeAsync();
+        CompetitionState.OnChange += HandleCompetitionChanged;
 
-        var matchesTask = MatchService.GetMatches();
+        await LoadMatchesAsync();
 
-        Task<List<PredictionDto>>? tipsTask = null;
         if (!string.IsNullOrEmpty(PlayerState.AuthId))
-        {
-            tipsTask = PredictionService.GetPredictions(PlayerState.AuthId);
-        }
-
-        try
-        {
-            matches = await matchesTask;
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
-        {
-            errorMessage = "Kunne ikke hente kampe.";
-        }
-
-        BuildGroupedMatches();
-        liveCount = matches.Count(m => m.Status is "IN_PLAY" or "PAUSED");
-
-        if (tipsTask is not null)
         {
             try
             {
-                var tipList = await tipsTask;
+                var tipList = await PredictionService.GetPredictions(PlayerState.AuthId);
                 tips = tipList.ToDictionary(t => t.MatchId);
             }
             catch { }
@@ -217,6 +202,35 @@ public partial class Matches : IAsyncDisposable
         }
     }
 
+    private async Task LoadMatchesAsync()
+    {
+        try
+        {
+            matches = CompetitionState.Current is { } comp
+                ? await MatchService.GetMatches(comp.Id)
+                : [];
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            errorMessage = "Kunne ikke hente kampe.";
+        }
+
+        BuildGroupedMatches();
+        liveCount = matches.Count(m => m.Status is "IN_PLAY" or "PAUSED");
+    }
+
+    // Switching competition in the app bar reloads the match list in place.
+    private void HandleCompetitionChanged() => _ = OnCompetitionChangedAsync();
+
+    private async Task OnCompetitionChangedAsync()
+    {
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+        await LoadMatchesAsync();
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
     private void HandlePlayerChanged() => _ = OnPlayerChangedAsync();
 
     private async Task OnPlayerChangedAsync()
@@ -241,8 +255,10 @@ public partial class Matches : IAsyncDisposable
 
     private void BuildGroupedMatches()
     {
+        // Group-stage (cup) and regular-season (league) matches both group by
+        // matchday ("Runde N"); knockout stages group by stage name.
         matchGroups = matches
-            .GroupBy(m => m.Group is not null
+            .GroupBy(m => m.Group is not null || m.Stage == "REGULAR_SEASON"
                 ? $"RUNDE_{m.Matchday ?? 0}"
                 : m.Stage ?? "Øvrige")
             .Select(g => new MatchGroup
@@ -333,10 +349,8 @@ public partial class Matches : IAsyncDisposable
 
     private static string FormatGroupName(string key) => key switch
     {
-        "RUNDE_1" => "Runde 1",
-        "RUNDE_2" => "Runde 2",
-        "RUNDE_3" => "Runde 3",
         "RUNDE_0" => "Gruppespil",
+        _ when key.StartsWith("RUNDE_") => $"Runde {key["RUNDE_".Length..]}",
         "GROUP_TEST" => "🧪 Test Gruppe",
         "LAST_32" => "1/16-finale",
         "LAST_16" => "1/8-finale",
@@ -369,6 +383,7 @@ public partial class Matches : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         PlayerState.OnChange -= HandlePlayerChanged;
+        CompetitionState.OnChange -= HandleCompetitionChanged;
         try { await JS.InvokeVoidAsync("supabaseRealtime.unsubscribe"); } catch { }
         _dotNetRef?.Dispose();
     }

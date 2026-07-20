@@ -1,0 +1,170 @@
+@page "/opret"
+@using MudBlazor
+@inject CompetitionState CompetitionState
+@inject PlayerState PlayerState
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Opret konkurrence</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mt-4 mb-4" Style="font-weight: 700;">🏆 Opret en ny konkurrence</MudText>
+
+@if (!PlayerState.IsLoggedIn)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="rounded-xl">
+        Du skal være logget ind for at oprette en konkurrence. Log ind via person-ikonet øverst til højre.
+    </MudAlert>
+}
+else if (createdInviteLink is not null)
+{
+    <MudPaper Class="pa-6 rounded-xl" Elevation="2">
+        <MudStack Spacing="3" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Style="font-weight: 700;">Konkurrencen er oprettet! 🎉</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                Del invitationslinket med dem, der skal være med — de bliver automatisk meldt ind, når de åbner det.
+            </MudText>
+            <MudPaper Class="pa-3 rounded-lg" Elevation="0" Style="background: var(--mud-palette-background-gray); max-width: 100%; overflow-x: auto;">
+                <MudText Typo="Typo.body2" Style="font-family: monospace; white-space: nowrap;">@createdInviteLink</MudText>
+            </MudPaper>
+            <MudStack Row="true" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@(linkCopied ? Icons.Material.Filled.Check : Icons.Material.Filled.ContentCopy)"
+                           OnClick="CopyInviteLink">
+                    @(linkCopied ? "Kopieret!" : "Kopiér link")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="">
+                    Gå til forsiden
+                </MudButton>
+            </MudStack>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+                Kampene hentes automatisk inden for et par minutter. Du kan altid finde linket igen under <strong>Admin</strong>.
+            </MudText>
+        </MudStack>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Class="pa-6 rounded-xl" Elevation="2">
+        <MudStack Spacing="4">
+            <MudTextField @bind-Value="name"
+                          Label="Navn på konkurrencen"
+                          Placeholder="fx Kontorets EM-kupon"
+                          Variant="Variant.Text"
+                          Immediate="true"
+                          MaxLength="80" />
+
+            <MudSelect T="string" @bind-Value="selectedCode" Label="Turnering" Variant="Variant.Text">
+                @foreach (var t in Tournaments)
+                {
+                    <MudSelectItem T="string" Value="@t.Code">@t.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Valgfrit: begræns til en periode (fx en enkelt sæson eller slutrunde). Uden datoer hentes hele turneringens aktuelle program.
+            </MudText>
+            <MudStack Row="true" Spacing="3">
+                <MudDatePicker @bind-Date="dateFrom" Label="Fra" Clearable="true" />
+                <MudDatePicker @bind-Date="dateTo" Label="Til" Clearable="true" />
+            </MudStack>
+
+            @if (errorMessage is not null)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">@errorMessage</MudAlert>
+            }
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.AddCircle"
+                       Disabled="@(string.IsNullOrWhiteSpace(name) || string.IsNullOrEmpty(selectedCode) || isCreating)"
+                       OnClick="Create">
+                @(isCreating ? "Opretter…" : "Opret konkurrence")
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+}
+
+@code {
+    // football-data.org's free tier covers these competitions. Adding a paid
+    // competition later = add it to this catalog, nothing else.
+    private static readonly (string Code, string Name)[] Tournaments =
+    [
+        ("WC", "VM (World Cup)"),
+        ("EC", "EM (European Championship)"),
+        ("PL", "Premier League"),
+        ("CL", "Champions League"),
+        ("BL1", "Bundesliga"),
+        ("PD", "La Liga"),
+        ("SA", "Serie A"),
+        ("FL1", "Ligue 1"),
+        ("DED", "Æresdivisionen (Eredivisie)"),
+        ("PPL", "Primeira Liga"),
+        ("ELC", "Championship"),
+        ("BSA", "Brasileirão"),
+    ];
+
+    private string name = "";
+    private string selectedCode = "";
+    private DateTime? dateFrom;
+    private DateTime? dateTo;
+    private bool isCreating;
+    private bool linkCopied;
+    private string? errorMessage;
+    private string? createdInviteLink;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await PlayerState.InitializeAsync();
+        await CompetitionState.InitializeAsync();
+        PlayerState.OnChange += StateHasChanged;
+        StateHasChanged();
+    }
+
+    private async Task Create()
+    {
+        isCreating = true;
+        errorMessage = null;
+
+        if (dateFrom is not null && dateTo is not null && dateTo < dateFrom)
+        {
+            errorMessage = "Slutdatoen skal være efter startdatoen.";
+            isCreating = false;
+            return;
+        }
+
+        var (id, error) = await CompetitionState.CreateCompetitionAsync(name.Trim(), selectedCode, dateFrom, dateTo);
+        if (error is not null || id is null)
+        {
+            errorMessage = error ?? "Noget gik galt. Prøv igen.";
+            isCreating = false;
+            return;
+        }
+
+        var comp = CompetitionState.MyCompetitions.FirstOrDefault(c => c.Id == id);
+        createdInviteLink = comp is not null ? $"{Nav.BaseUri}join/{comp.InviteToken}" : Nav.BaseUri;
+        isCreating = false;
+        StateHasChanged();
+    }
+
+    private async Task CopyInviteLink()
+    {
+        if (createdInviteLink is null) return;
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", createdInviteLink);
+            linkCopied = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            linkCopied = false;
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    public void Dispose()
+    {
+        PlayerState.OnChange -= StateHasChanged;
+    }
+}

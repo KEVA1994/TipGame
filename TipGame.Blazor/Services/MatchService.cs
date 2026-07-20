@@ -1,4 +1,4 @@
-﻿using TipGame.Domain.Entities;
+using TipGame.Domain.Entities;
 using TipGame.Shared.Models;
 using Supabase.Postgrest;
 
@@ -11,9 +11,10 @@ public class MatchService
         _supabase = supabase;
     }
 
-    public async Task<List<MatchDto>> GetMatches()
+    public async Task<List<MatchDto>> GetMatches(int competitionId)
     {
         var response = await _supabase.From<Match>()
+            .Where(m => m.CompetitionId == competitionId)
             .Order("KickoffTime", Constants.Ordering.Ascending)
             .Get();
 

@@ -8,29 +8,50 @@ public class LeaderboardService
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
 
     private readonly Supabase.Client _supabase;
-    private List<LeaderboardDto>? _cached;
-    private DateTime _cachedAt;
+    private readonly Dictionary<int, (List<LeaderboardDto> Data, DateTime At)> _cache = new();
 
     public LeaderboardService(Supabase.Client supabase)
     {
         _supabase = supabase;
     }
 
-    public async Task<List<LeaderboardDto>> GetLeaderboard()
+    /// <summary>
+    /// Competition-scoped data used by both the leaderboard and player detail:
+    /// the competition's members, its matches, and only the predictions that
+    /// belong to those matches.
+    /// </summary>
+    private async Task<(List<User> Users, List<Match> Matches, List<Prediction> Predictions)>
+        LoadCompetitionDataAsync(int competitionId)
     {
-        if (_cached is not null && DateTime.UtcNow - _cachedAt < CacheTtl)
-            return _cached;
-        // Parallel fetch + paged predictions (Supabase caps a request at 1000 rows).
+        var membersTask = _supabase.From<CompetitionMember>()
+            .Where(m => m.CompetitionId == competitionId)
+            .Get();
         var usersTask = _supabase.From<User>().Get();
         var predictionsTask = _supabase.GetAllAsync<Prediction>();
         var matchesTask = _supabase.From<Match>()
-            .Where(m => m.Status == "FINISHED")
+            .Where(m => m.CompetitionId == competitionId)
             .Get();
-        await Task.WhenAll(usersTask, predictionsTask, matchesTask);
+        await Task.WhenAll(membersTask, usersTask, predictionsTask, matchesTask);
 
-        var users = usersTask.Result.Models;
-        var predictions = predictionsTask.Result;
+        var memberIds = membersTask.Result.Models.Select(m => m.UserId).ToHashSet();
+        var users = usersTask.Result.Models.Where(u => memberIds.Contains(u.Id)).ToList();
         var matches = matchesTask.Result.Models;
+        var matchIds = matches.Select(m => m.Id).ToHashSet();
+        var predictions = predictionsTask.Result
+            .Where(p => matchIds.Contains(p.MatchId) && memberIds.Contains(p.UserId))
+            .ToList();
+
+        return (users, matches, predictions);
+    }
+
+    public async Task<List<LeaderboardDto>> GetLeaderboard(int competitionId)
+    {
+        if (_cache.TryGetValue(competitionId, out var cached)
+            && DateTime.UtcNow - cached.At < CacheTtl)
+            return cached.Data;
+
+        var (users, allMatches, predictions) = await LoadCompetitionDataAsync(competitionId);
+        var matches = allMatches.Where(m => m.Status == "FINISHED").ToList();
 
         var matchLookup = matches.ToDictionary(m => m.Id);
 
@@ -58,12 +79,12 @@ public class LeaderboardService
                 return new LeaderboardDto
                 {
                     UserName = u.Name,
-                    TotalPoints = userPreds.Sum(p => p.Points),
+                    TotalPoints = scoredPreds.Sum(p => p.Points),
                     MatchesPlayed = matchesPlayed,
                     ExactHits = exactHits,
                     CorrectOutcomes = correctOutcomes,
                     CurrentStreak = streak,
-                    AvgPoints = matchesPlayed > 0 ? Math.Round(userPreds.Sum(p => p.Points) / (double)matchesPlayed, 2) : 0,
+                    AvgPoints = matchesPlayed > 0 ? Math.Round(scoredPreds.Sum(p => p.Points) / (double)matchesPlayed, 2) : 0,
                     DailyPoints = scoredPreds
                         .GroupBy(p => matchLookup[p.MatchId].KickoffTime.ToString("dd/MM"))
                         .ToDictionary(g => g.Key, g => g.Sum(p => p.Points))
@@ -100,35 +121,30 @@ public class LeaderboardService
             }
         }
 
-        _cached = leaderboard;
-        _cachedAt = DateTime.UtcNow;
+        _cache[competitionId] = (leaderboard, DateTime.UtcNow);
         return leaderboard;
     }
 
     /// <summary>
-    /// A single player's scoring history: every FINISHED match where they
-    /// earned points, newest first, with the tip they made and the points it
-    /// gave — plus the locked matches they forgot to tip on. Returns null
-    /// when no player with that name exists.
+    /// A single player's scoring history within a competition: every FINISHED
+    /// match where they earned points, newest first, with the tip they made
+    /// and the points it gave — plus the locked matches they forgot to tip on.
+    /// Returns null when no player with that name exists in the competition.
     /// </summary>
-    public async Task<PlayerDetailDto?> GetPlayerDetail(string userName)
+    public async Task<PlayerDetailDto?> GetPlayerDetail(int competitionId, string userName)
     {
         // All matches, not just FINISHED — missed tips include locked matches
         // that haven't been played yet.
-        var usersTask = _supabase.From<User>().Get();
-        var predictionsTask = _supabase.GetAllAsync<Prediction>();
-        var matchesTask = _supabase.From<Match>().Get();
-        await Task.WhenAll(usersTask, predictionsTask, matchesTask);
+        var (users, allMatches, predictions) = await LoadCompetitionDataAsync(competitionId);
 
-        var user = usersTask.Result.Models.FirstOrDefault(u => u.Name == userName);
+        var user = users.FirstOrDefault(u => u.Name == userName);
         if (user is null) return null;
 
-        var allMatches = matchesTask.Result.Models;
         var matchLookup = allMatches
             .Where(m => m.Status == "FINISHED")
             .ToDictionary(m => m.Id);
 
-        var tippedMatchIds = predictionsTask.Result
+        var tippedMatchIds = predictions
             .Where(p => p.UserId == user.Id)
             .Select(p => p.MatchId)
             .ToHashSet();
@@ -151,7 +167,7 @@ public class LeaderboardService
             })
             .ToList();
 
-        var matches = predictionsTask.Result
+        var matches = predictions
             .Where(p => p.UserId == user.Id && p.Points > 0 && matchLookup.ContainsKey(p.MatchId))
             .Select(p =>
             {

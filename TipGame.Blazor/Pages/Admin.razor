@@ -1,0 +1,302 @@
+@page "/admin"
+@using MudBlazor
+@using TipGame.Domain.Entities
+@inject CompetitionState CompetitionState
+@inject PlayerState PlayerState
+@inject Supabase.Client Supabase
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<PageTitle>Admin</PageTitle>
+
+@if (!isReady)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-8" />
+}
+else if (CompetitionState.Current is null || !CompetitionState.IsAdmin)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-4 rounded-xl">
+        Kun konkurrencens admin har adgang til denne side.
+    </MudAlert>
+}
+else
+{
+    var comp = CompetitionState.Current;
+
+    <MudText Typo="Typo.h4" Class="mt-4 mb-4" Style="font-weight: 700;">🛠️ Admin — @comp.Name</MudText>
+
+    @* --- Invitationslink --- *@
+    <MudPaper Class="pa-5 rounded-xl mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Invitationslink</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+            Alle med linket kan melde sig ind. Er det havnet de forkerte steder, kan du lave et nyt — så dør det gamle.
+        </MudText>
+        <MudPaper Class="pa-3 rounded-lg mb-3" Elevation="0" Style="background: var(--mud-palette-background-gray); overflow-x: auto;">
+            <MudText Typo="Typo.body2" Style="font-family: monospace; white-space: nowrap;">@InviteLink</MudText>
+        </MudPaper>
+        <MudStack Row="true" Spacing="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@(linkCopied ? Icons.Material.Filled.Check : Icons.Material.Filled.ContentCopy)"
+                       OnClick="CopyInviteLink">
+                @(linkCopied ? "Kopieret!" : "Kopiér")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="RegenerateToken">
+                Nyt link
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    @* --- Medlemmer --- *@
+    <MudPaper Class="pa-5 rounded-xl mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-3">Medlemmer (@members.Count)</MudText>
+        <MudList T="string" Dense="true">
+            @foreach (var member in members)
+            {
+                <MudListItem T="string">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@(member.Role == "admin" ? Icons.Material.Filled.Shield : Icons.Material.Filled.Person)"
+                                     Size="Size.Small"
+                                     Color="@(member.Role == "admin" ? Color.Primary : Color.Default)" />
+                            <MudText>@member.Name</MudText>
+                            @if (member.Role == "admin")
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">admin</MudChip>
+                            }
+                        </MudStack>
+                        @if (member.Role != "admin")
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => RemoveMember(member))" />
+                        }
+                    </MudStack>
+                </MudListItem>
+            }
+        </MudList>
+    </MudPaper>
+
+    @* --- Indstillinger --- *@
+    <MudPaper Class="pa-5 rounded-xl mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-3">Indstillinger</MudText>
+        <MudSwitch T="bool" Value="remindersEnabled" ValueChanged="ToggleReminders" Color="Color.Primary"
+                   Label="Mail-påmindelser når deltagere mangler at tippe" />
+    </MudPaper>
+
+    @* --- Info & præmier --- *@
+    <MudPaper Class="pa-5 rounded-xl mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Info & regler-tekst</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">Vises på "Info & regler"-siden. Understøtter Markdown (overskrifter, lister, fed osv.).</MudText>
+        <MudTextField T="string" @bind-Value="infoText" Lines="8" Variant="Variant.Outlined" Class="mt-2"
+                      Placeholder="## Sådan deltager du&#10;- Tip inden kampstart&#10;- 3 point for præcist resultat …" />
+
+        <MudText Typo="Typo.h6" Class="mb-2 mt-4">Præmie-tekst</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">Vises på "Præmier"-siden.</MudText>
+        <MudTextField T="string" @bind-Value="prizesText" Lines="6" Variant="Variant.Outlined" Class="mt-2"
+                      Placeholder="🥇 1. plads: Æren og evig hæder …" />
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   Disabled="isSavingTexts"
+                   OnClick="SaveTexts">
+            @(isSavingTexts ? "Gemmer…" : "Gem tekster")
+        </MudButton>
+    </MudPaper>
+
+    @* --- Farezone --- *@
+    @if (comp.Status == "active")
+    {
+        <MudPaper Class="pa-5 rounded-xl mb-4" Elevation="1" Style="border: 1px solid var(--mud-palette-error);">
+            <MudText Typo="Typo.h6" Class="mb-2" Color="Color.Error">Afslut konkurrencen</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                Stopper kamp-synkroniseringen og lukker for tilmelding. Stillingen kan stadig ses bagefter. Kan ikke fortrydes.
+            </MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                       StartIcon="@Icons.Material.Filled.SportsScore"
+                       OnClick="FinishCompetition">
+                Afslut konkurrencen
+            </MudButton>
+        </MudPaper>
+    }
+}
+
+@code {
+    private bool isReady;
+    private bool linkCopied;
+    private bool isSavingTexts;
+    private bool remindersEnabled;
+    private string? infoText;
+    private string? prizesText;
+    private List<MemberRow> members = new();
+
+    private string InviteLink => CompetitionState.Current is { } c
+        ? $"{Nav.BaseUri}join/{c.InviteToken}"
+        : "";
+
+    private record MemberRow(int UserId, string Name, string Role);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await PlayerState.InitializeAsync();
+        await CompetitionState.InitializeAsync();
+        CompetitionState.OnChange += HandleStateChanged;
+
+        await LoadAsync();
+        isReady = true;
+        StateHasChanged();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (CompetitionState.Current is not { } comp || !CompetitionState.IsAdmin)
+        {
+            members = new();
+            return;
+        }
+
+        remindersEnabled = comp.RemindersEnabled;
+        infoText = comp.InfoText;
+        prizesText = comp.PrizesText;
+
+        var compId = comp.Id;
+        var membersTask = Supabase.From<CompetitionMember>()
+            .Where(m => m.CompetitionId == compId)
+            .Get();
+        var usersTask = Supabase.From<User>().Get();
+        await Task.WhenAll(membersTask, usersTask);
+
+        var names = usersTask.Result.Models.ToDictionary(u => u.Id, u => u.Name);
+        members = membersTask.Result.Models
+            .Select(m => new MemberRow(m.UserId, names.GetValueOrDefault(m.UserId, "Ukendt"), m.Role))
+            .OrderBy(m => m.Role == "admin" ? 0 : 1)
+            .ThenBy(m => m.Name)
+            .ToList();
+    }
+
+    private void HandleStateChanged() => _ = OnStateChangedAsync();
+
+    private async Task OnStateChangedAsync()
+    {
+        await LoadAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CopyInviteLink()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", InviteLink);
+            linkCopied = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            linkCopied = false;
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task RegenerateToken()
+    {
+        if (CompetitionState.Current is not { } comp) return;
+        var token = await CompetitionState.RegenerateInviteTokenAsync(comp.Id);
+        if (token is not null)
+            Snackbar.Add("Nyt invitationslink oprettet — det gamle virker ikke længere.", Severity.Success);
+        else
+            Snackbar.Add("Kunne ikke oprette nyt link.", Severity.Error);
+    }
+
+    private async Task RemoveMember(MemberRow member)
+    {
+        if (CompetitionState.Current is not { } comp) return;
+        try
+        {
+            var compId = comp.Id;
+            var userId = member.UserId;
+            await Supabase.From<CompetitionMember>()
+                .Where(m => m.CompetitionId == compId)
+                .Where(m => m.UserId == userId)
+                .Delete();
+            members.RemoveAll(m => m.UserId == member.UserId);
+            Snackbar.Add($"{member.Name} er fjernet fra konkurrencen.", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Kunne ikke fjerne medlemmet.", Severity.Error);
+        }
+    }
+
+    private async Task ToggleReminders(bool value)
+    {
+        if (CompetitionState.Current is not { } comp) return;
+        remindersEnabled = value;
+        try
+        {
+            var compId = comp.Id;
+            await Supabase.From<Competition>()
+                .Where(c => c.Id == compId)
+                .Set(c => c.RemindersEnabled, value)
+                .Update();
+            comp.RemindersEnabled = value;
+            Snackbar.Add(value ? "Påmindelser slået til." : "Påmindelser slået fra.", Severity.Success);
+        }
+        catch
+        {
+            remindersEnabled = !value;
+            Snackbar.Add("Kunne ikke gemme indstillingen.", Severity.Error);
+        }
+    }
+
+    private async Task SaveTexts()
+    {
+        if (CompetitionState.Current is not { } comp) return;
+        isSavingTexts = true;
+        try
+        {
+            var compId = comp.Id;
+            await Supabase.From<Competition>()
+                .Where(c => c.Id == compId)
+                .Set(c => c.InfoText!, infoText ?? "")
+                .Set(c => c.PrizesText!, prizesText ?? "")
+                .Update();
+            comp.InfoText = infoText;
+            comp.PrizesText = prizesText;
+            Snackbar.Add("Teksterne er gemt.", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Kunne ikke gemme teksterne.", Severity.Error);
+        }
+        isSavingTexts = false;
+    }
+
+    private async Task FinishCompetition()
+    {
+        if (CompetitionState.Current is not { } comp) return;
+        try
+        {
+            var compId = comp.Id;
+            await Supabase.From<Competition>()
+                .Where(c => c.Id == compId)
+                .Set(c => c.Status, "finished")
+                .Update();
+            await CompetitionState.ReloadAsync();
+            Snackbar.Add("Konkurrencen er afsluttet.", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Kunne ikke afslutte konkurrencen.", Severity.Error);
+        }
+    }
+
+    public void Dispose()
+    {
+        CompetitionState.OnChange -= HandleStateChanged;
+    }
+}

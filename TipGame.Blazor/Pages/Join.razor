@@ -1,0 +1,149 @@
+@page "/join/{Token}"
+@using MudBlazor
+@inject CompetitionState CompetitionState
+@inject PlayerState PlayerState
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Invitation</PageTitle>
+
+<MudStack AlignItems="AlignItems.Center" Class="mt-8">
+    <MudPaper Class="pa-8 rounded-xl" Elevation="3" Style="max-width: 480px; width: 100%;">
+        @if (isLoading)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                <MudText>Henter invitation…</MudText>
+            </MudStack>
+        }
+        else if (competitionName is null)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudIcon Icon="@Icons.Material.Filled.LinkOff" Color="Color.Error" Size="Size.Large" />
+                <MudText Typo="Typo.h6" Align="Align.Center">Ugyldigt invitationslink</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+                    Linket findes ikke længere — bed den, der inviterede dig, om et nyt.
+                </MudText>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="">Til forsiden</MudButton>
+            </MudStack>
+        }
+        else if (joinError is not null)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Warning" Size="Size.Large" />
+                <MudText Typo="Typo.h6" Align="Align.Center">@joinError</MudText>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="">Til forsiden</MudButton>
+            </MudStack>
+        }
+        else if (isJoining)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                <MudText>Melder dig ind i <strong>@competitionName</strong>…</MudText>
+            </MudStack>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudText Typo="Typo.h4" Style="line-height: 1;">⚽</MudText>
+                <MudText Typo="Typo.h6" Align="Align.Center">Du er inviteret til</MudText>
+                <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Primary" Style="font-weight: 700;">
+                    @competitionName
+                </MudText>
+
+                @if (PlayerState.IsLoggedIn)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.GroupAdd"
+                               OnClick="JoinNow">
+                        Deltag som @PlayerState.PlayerName
+                    </MudButton>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+                        Log ind eller opret en konto — så bliver du automatisk meldt ind.
+                    </MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.Login"
+                               OnClick="@(() => accountPopoverOpen = true)">
+                        Log ind / opret konto
+                    </MudButton>
+                }
+            </MudStack>
+        }
+    </MudPaper>
+</MudStack>
+
+<TipGame.Blazor.Components.Account.AccountPopover @bind-IsOpen="accountPopoverOpen" />
+
+@code {
+    [Parameter] public string Token { get; set; } = "";
+
+    private bool isLoading = true;
+    private bool isJoining;
+    private bool accountPopoverOpen;
+    private string? competitionName;
+    private string? competitionStatus;
+    private string? joinError;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await PlayerState.InitializeAsync();
+        await CompetitionState.InitializeAsync();
+        // Auto-join the moment the invitee finishes logging in or signing up.
+        PlayerState.OnChange += HandlePlayerChanged;
+
+        if (Guid.TryParse(Token, out var token))
+        {
+            var (name, status) = await CompetitionState.GetCompetitionByTokenAsync(token);
+            competitionName = name;
+            competitionStatus = status;
+            if (name is not null && status != "active")
+            {
+                joinError = "Konkurrencen er ikke åben for tilmelding.";
+            }
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void HandlePlayerChanged()
+    {
+        if (PlayerState.IsLoggedIn && competitionName is not null && joinError is null && !isJoining)
+        {
+            _ = JoinNow();
+        }
+        else
+        {
+            _ = InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task JoinNow()
+    {
+        if (!Guid.TryParse(Token, out var token)) return;
+
+        isJoining = true;
+        await InvokeAsync(StateHasChanged);
+
+        var (id, error) = await CompetitionState.JoinCompetitionAsync(token);
+        if (error is not null || id is null)
+        {
+            joinError = error ?? "Noget gik galt. Prøv igen.";
+            isJoining = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        Nav.NavigateTo("");
+    }
+
+    public void Dispose()
+    {
+        PlayerState.OnChange -= HandlePlayerChanged;
+    }
+}
