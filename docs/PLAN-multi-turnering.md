@@ -124,6 +124,42 @@ Oprettelse af en konkurrence skal på sigt være en betalt service. Derfor:
   PaidAt) til bogføring. Intet af det eksisterende skema skal laves om —
   betalingen er udelukkende et nyt led før aktivering.
 
+#### Prismodel: trappen (besluttet 20. juli 2026 — implementeres IKKE i v1)
+
+Når betalingen aktiveres, er modellen en trappe frem for et enten-eller:
+
+1. **Gratis** — små grupper (fx op til 10 deltagere). Fungerer som
+   markedsføring og validering.
+2. **Engangskøb pr. konkurrence** (fx 99–299 kr.) — vennegruppen der kun vil
+   køre én slutrunde. Stripe Checkout (one-off).
+3. **Årsabonnement** (firmaer/foreninger, fx 1.500–3.000 kr./år) —
+   ubegrænsede konkurrencer, alle turneringer, faktura. Stripe Billing.
+   Kræver en `Subscriptions`-tabel:
+
+   ```sql
+   create table "Subscriptions" (
+     "Id" bigint generated always as identity primary key,
+     "UserId" int not null references "Users"("Id"),
+     "StripeSubscriptionId" text not null unique,
+     "Status" text not null,           -- 'active' | 'past_due' | 'canceled'
+     "CurrentPeriodEnd" timestamptz not null,
+     "CreatedAt" timestamptz not null default now()
+   );
+   ```
+
+Alle tre trin lander i det samme kontrolpunkt — `activate_competition`
+tjekker i rækkefølge: (a) medlemstal under gratis-grænsen? (b) aktivt
+abonnement for kalderen? (c) gennemført engangsbetaling for konkurrencen?
+Én Stripe-webhook-funktion håndterer både Checkout- og Billing-events.
+Kunderne viser selv, hvilken model der bærer; arkitekturen er ligeglad.
+
+Målgruppevurdering (fra markedsanalysen): betalingsviljen ligger hos firmaer
+og foreninger (jf. RunYourPool/OfficeFootballPool-modellen i USA), ikke hos
+private vennegrupper, hvor konkurrenterne (Kicktipp, Tippr, Tippster) er
+gratis. Consumer-abonnement fravalgt pga. sæson-churn. Hold desuden altid
+indskud og præmier ude af platformen (kun platform-fee) — ellers kræver det
+spillelicens hos Spillemyndigheden.
+
 **Kobling bruger ↔ auth:** i dag oprettes `Users`-rækken løst koblet via
 `AuthId`. `join_competition` overtager ansvaret: findes der ingen `Users`-række
 for `auth.uid()`, oprettes den med `display_name` fra auth-metadata.
