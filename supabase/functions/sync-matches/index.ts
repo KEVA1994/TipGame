@@ -1,56 +1,100 @@
+// Syncs matches for every active competition (multi-tenant, etape 4 of
+// docs/PLAN-multi-turnering.md). Called by pg_cron every minute — the cron job
+// is scheduled once and never touched again: with no active competitions the
+// function no-ops without spending football-data.org quota.
+//
+// Per competition: fetch matches for its CompetitionCode (optionally windowed
+// by DateFrom/DateTo), upsert rows scoped to that competition, and auto-mark
+// the competition 'finished' when everything is played. settle_points runs
+// once at the end and is idempotent across competitions.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// football-data.org free tier allows 10 calls/min; pg_cron fires every minute.
+// With more active competitions than the budget, sync round-robin — oldest
+// LastSyncedAt first — so everyone still gets fresh data within a few minutes.
+const SYNC_BUDGET_PER_RUN = 8;
 
 Deno.serve(async () => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const footballApiToken = Deno.env.get("FOOTBALL_API_TOKEN")!;
-  const footballApiUrl = "https://api.football-data.org/v4/competitions/WC/matches";
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Skip API call only when the tournament is actually over: every stored match
-  // is finished AND the final itself has been played. "All matches finished"
-  // alone is not enough — knockout fixtures are inserted as the API publishes
-  // them, so right after the semifinals every stored match is finished while
-  // the final and third-place match don't exist in the database yet.
-  const { count: pendingCount } = await supabase
-    .from("Matches")
-    .select("Id", { count: "exact", head: true })
-    .not("Status", "in", '("FINISHED","POSTPONED","CANCELLED")');
+  const { data: competitions, error: compError } = await supabase
+    .from("Competitions")
+    .select("Id, Name, CompetitionCode, DateFrom, DateTo, LastSyncedAt")
+    .eq("Status", "active")
+    .order("LastSyncedAt", { ascending: true, nullsFirst: true })
+    .limit(SYNC_BUDGET_PER_RUN);
 
-  const { count: finishedFinals } = await supabase
-    .from("Matches")
-    .select("Id", { count: "exact", head: true })
-    .eq("Stage", "FINAL")
-    .eq("Status", "FINISHED");
-
-  if (finishedFinals && finishedFinals > 0 && (!pendingCount || pendingCount === 0)) {
-    return Response.json({ skipped: true, reason: "Tournament finished" });
+  if (compError) {
+    return Response.json({ error: compError.message }, { status: 500 });
+  }
+  if (!competitions || competitions.length === 0) {
+    return Response.json({ skipped: true, reason: "No active competitions" });
   }
 
-  // Fetch from football-data.org
-  const apiResponse = await fetch(footballApiUrl, {
+  const results: Record<string, unknown>[] = [];
+  const errors: string[] = [];
+
+  for (const comp of competitions) {
+    const result = await syncCompetition(supabase, comp, footballApiToken, errors);
+    results.push({ competition: comp.Name, ...result });
+
+    await supabase
+      .from("Competitions")
+      .update({ LastSyncedAt: new Date().toISOString() })
+      .eq("Id", comp.Id);
+  }
+
+  // Settle points for all finished matches. Idempotent — recalculates every
+  // run, so a missed/failed run self-heals instead of leaving predictions at 0.
+  let settled = 0;
+  const { data: settledCount, error: settleError } = await supabase.rpc(
+    "settle_points"
+  );
+  if (settleError) errors.push(`settle_points: ${settleError.message}`);
+  else settled = settledCount ?? 0;
+
+  if (errors.length > 0) console.error("sync-matches errors:", errors);
+
+  return Response.json({ competitions: results, settled, errors });
+});
+
+async function syncCompetition(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  comp: DbCompetition,
+  footballApiToken: string,
+  errors: string[]
+): Promise<Record<string, unknown>> {
+  let apiUrl = `https://api.football-data.org/v4/competitions/${comp.CompetitionCode}/matches`;
+  const params = new URLSearchParams();
+  if (comp.DateFrom) params.set("dateFrom", comp.DateFrom);
+  if (comp.DateTo) params.set("dateTo", comp.DateTo);
+  if ([...params].length > 0) apiUrl += `?${params}`;
+
+  const apiResponse = await fetch(apiUrl, {
     headers: { "X-Auth-Token": footballApiToken },
   });
 
   if (!apiResponse.ok) {
-    return Response.json(
-      { error: `football-data.org returned ${apiResponse.status}` },
-      { status: 502 }
-    );
+    // 429 = rate limited; skip this run, the round-robin catches up next minute.
+    errors.push(`${comp.CompetitionCode}: football-data.org returned ${apiResponse.status}`);
+    return { error: apiResponse.status };
   }
 
   const data = await apiResponse.json();
   const apiMatches: ApiMatch[] = data.matches ?? [];
 
-  // Get existing matches from Supabase
   const { data: existingMatches } = await supabase
     .from("Matches")
-    .select("*");
+    .select("*")
+    .eq("CompetitionId", comp.Id);
 
   let newCount = 0;
   let updatedCount = 0;
-  const errors: string[] = [];
 
   for (const apiMatch of apiMatches) {
     const existing = existingMatches?.find(
@@ -59,6 +103,7 @@ Deno.serve(async () => {
 
     if (!existing) {
       const { error } = await supabase.from("Matches").insert({
+        CompetitionId: comp.Id,
         ExternalId: apiMatch.id,
         HomeTeam: apiMatch.homeTeam.name,
         AwayTeam: apiMatch.awayTeam.name,
@@ -70,7 +115,7 @@ Deno.serve(async () => {
         Stage: apiMatch.stage ?? null,
         Matchday: apiMatch.matchday ?? null,
       });
-      if (error) errors.push(`insert ${apiMatch.id}: ${error.message}`);
+      if (error) errors.push(`insert ${comp.CompetitionCode}/${apiMatch.id}: ${error.message}`);
       else newCount++;
     } else {
       // Manually corrected match — the score was set by hand because the API had
@@ -129,30 +174,52 @@ Deno.serve(async () => {
         .update(update)
         .eq("Id", existing.Id);
 
-      if (error) errors.push(`update ${existing.Id}: ${error.message}`);
+      if (error) errors.push(`update ${comp.CompetitionCode}/${existing.Id}: ${error.message}`);
       else updatedCount++;
     }
   }
 
-  // Settle points for all finished matches. Idempotent — recalculates every run,
-  // so a missed/failed run self-heals instead of leaving predictions at 0 forever.
-  let settled = 0;
-  const { data: settledCount, error: settleError } = await supabase.rpc(
-    "settle_points"
-  );
-  if (settleError) errors.push(`settle_points: ${settleError.message}`);
-  else settled = settledCount ?? 0;
+  // Auto-finish detection. Two shapes of "done":
+  // - Cup: the FINAL has been played and nothing is pending. ("All matches
+  //   finished" alone is not enough — knockout fixtures appear as the API
+  //   publishes them, so right after the semis everything stored is finished
+  //   while the final doesn't exist in the database yet.)
+  // - League/date-window (no FINAL stage ever appears): the window has passed
+  //   and nothing is pending.
+  const { count: pendingCount } = await supabase
+    .from("Matches")
+    .select("Id", { count: "exact", head: true })
+    .eq("CompetitionId", comp.Id)
+    .not("Status", "in", '("FINISHED","POSTPONED","CANCELLED")');
 
-  if (errors.length > 0) console.error("sync-matches errors:", errors);
+  const { count: finishedFinals } = await supabase
+    .from("Matches")
+    .select("Id", { count: "exact", head: true })
+    .eq("CompetitionId", comp.Id)
+    .eq("Stage", "FINAL")
+    .eq("Status", "FINISHED");
 
-  return Response.json({
-    total: apiMatches.length,
-    new: newCount,
-    updated: updatedCount,
-    settled,
-    errors,
-  });
-});
+  const windowPassed =
+    comp.DateTo != null && new Date(comp.DateTo) < new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const nothingPending = (pendingCount ?? 0) === 0;
+  const hasAnyMatches = (existingMatches?.length ?? 0) + newCount > 0;
+
+  if (
+    hasAnyMatches &&
+    nothingPending &&
+    ((finishedFinals ?? 0) > 0 || windowPassed)
+  ) {
+    const { error } = await supabase
+      .from("Competitions")
+      .update({ Status: "finished" })
+      .eq("Id", comp.Id)
+      .eq("Status", "active");
+    if (error) errors.push(`finish ${comp.CompetitionCode}: ${error.message}`);
+    else return { total: apiMatches.length, new: newCount, updated: updatedCount, finished: true };
+  }
+
+  return { total: apiMatches.length, new: newCount, updated: updatedCount };
+}
 
 // Type definitions for football-data.org API response
 interface ApiMatch {
@@ -168,6 +235,15 @@ interface ApiMatch {
   group: string | null;
   stage: string | null;
   matchday: number | null;
+}
+
+interface DbCompetition {
+  Id: number;
+  Name: string;
+  CompetitionCode: string;
+  DateFrom: string | null;
+  DateTo: string | null;
+  LastSyncedAt: string | null;
 }
 
 // Type definition for Supabase Matches row
