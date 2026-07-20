@@ -1,5 +1,10 @@
 # Supabase Edge Function — Automatisk kamp-sync
 
+> **Status (20. juli 2026):** VM er slut, og al automatik er lukket ned —
+> pg_cron-jobbet er afmeldt og påmindelses-workflow'ens schedule er kommenteret
+> ud. Se [docs/REAKTIVERING.md](../docs/REAKTIVERING.md) for at tænde det hele
+> igen til en ny turnering.
+
 Edge Function'en `sync-matches` erstatter DataMiner-loopet. Den kører automatisk via `pg_cron` i Supabase — gratis, altid online, ingen lokal maskine nødvendig.
 
 ## Opsætning (én gang)

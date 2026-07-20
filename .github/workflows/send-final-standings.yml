@@ -1,0 +1,40 @@
+name: Send final standings email
+
+# Manual only — no schedule. Run it once when the tournament is over.
+# Tip: run first with only_email set to your own address to preview the mail,
+# then run again without inputs to mail every player. NOTE: there is no dedup
+# guard — a second full run mails everyone again.
+on:
+  workflow_dispatch:
+    inputs:
+      only_email:
+        description: 'Only mail this address (preview against real data). Leave empty for the real run.'
+        type: string
+        required: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: scripts/send-final-standings
+        run: npm ci
+
+      - name: Send final standings
+        working-directory: scripts/send-final-standings
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          REMINDER_FROM_ADDRESS: ${{ secrets.REMINDER_FROM_ADDRESS }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          ONLY_EMAIL: ${{ inputs.only_email }}
+        run: node index.mjs
