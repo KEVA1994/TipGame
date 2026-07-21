@@ -1,98 +1,48 @@
-# Genaktivering — sådan bruges appen til en ny turnering
+# Drift — multi-turnerings-platform
 
-Efter VM 2026 blev al automatik lukket ned (20. juli 2026). Denne guide beskriver
-præcis, hvad der blev slukket, og hvordan det hele tændes igen — fx til EM,
-Premier League eller et nyt VM.
+Siden 21. juli 2026 er TipGame en multi-turnerings-platform (se
+[PLAN-multi-turnering.md](PLAN-multi-turnering.md) for baggrund og design).
+Denne fil erstatter den gamle genaktiverings-guide, som er overflødig nu —
+alt herunder foregår i appens UI, ikke via SQL Editor eller secrets.
 
-## Hvad er slukket lige nu
+## Ny konkurrence (fx EM, Premier League, et nyt VM)
 
-| Ting | Hvor | Status |
-|------|------|--------|
-| `sync-matches` pg_cron-job (poll hvert minut) | Supabase | Afmeldt via `cron.unschedule('sync-matches')` |
-| Tip-påmindelser hver time | `.github/workflows/notify-missing-predictions.yml` | `schedule:`-blokken er kommenteret ud |
-| Edge Function `sync-matches` | Supabase | Stadig deployet, men kaldes ikke af nogen (koster intet) |
-| Deploy af Blazor-appen | `.github/workflows/deploy-blazor.yml` | Kører stadig ved push — appen er fortsat online |
+Kræver ingen kode- eller infrastrukturændringer:
 
-Selve appen (GitHub Pages) og databasen kører stadig, så alle kan se
-slutstillingen.
+1. Log ind i appen → **Opret en konkurrence**.
+2. Vælg navn og turnering fra kataloget (de turneringer football-data.org's
+   gratis-tier dækker — se listen på `/opret`-siden).
+3. Del invitationslinket, der vises efter oprettelse.
 
-## Tænd det hele igen (ny turnering)
+Kamp-synkroniseringen kører permanent i baggrunden (pg_cron kalder
+`sync-matches` hvert minut) og henter automatisk data for alle **aktive**
+konkurrencer — ingen manuel opsætning, ingen secrets at ændre.
 
-### 1. Nulstil data i Supabase
+## Turnering uden for gratis-tier'et (fx Superligaen)
 
-Kør i **SQL Editor** (sletter alt fra den gamle turnering — spillere og logins
-bevares):
+Ikke understøttet i dag. Opstår behovet, opgraderes football-data.org-planen,
+og turneringskoden tilføjes kataloget i
+[CreateCompetition.razor](../TipGame.Blazor/Pages/CreateCompetition.razor).
 
-```sql
-delete from "SentReminders";
-delete from "Predictions";
-delete from "Matches";
-```
+## Når en konkurrence er slut
 
-> Vil du starte helt forfra med nye deltagere, skal `"Users"` og de tilhørende
-> Supabase Auth-konti også ryddes — men typisk vil man beholde spillerne.
+Fra konkurrencens **Admin**-side:
 
-### 2. Opdater turnerings-secrets i Supabase
+1. **Send afslutningsmail** — lægger en anmodning i kø; sendes automatisk til
+   alle medlemmer inden for ca. 15 minutter (kan kun ske én gang pr.
+   konkurrence).
+2. **Afslut konkurrencen** — stopper synkronisering og lukker for tilmelding.
+   Stillingen kan stadig ses bagefter.
 
-Edge Function'en styres af disse secrets (se `supabase/SETUP.md`):
+(Konkurrencer afsluttes også automatisk, når slutrunden er spillet færdig
+eller det angivne datovindue er passeret.)
 
-```powershell
-npx supabase secrets set FOOTBALL_API_COMPETITION=EC        # fx EC (EM), PL (Premier League), WC (VM)
-npx supabase secrets set FOOTBALL_API_DATE_FROM=2028-06-09
-npx supabase secrets set FOOTBALL_API_DATE_TO=2028-07-09
-```
+## Hvis noget virker forkert
 
-`FOOTBALL_API_TOKEN` er der allerede. Kompetitionskoder: se
-[football-data.org](https://www.football-data.org/coverage).
-
-### 3. Genstart pg_cron-jobbet
-
-Kør i **SQL Editor**:
-
-```sql
-select cron.schedule(
-  'sync-matches',
-  '* * * * *',
-  $$
-  select net.http_post(
-    url := 'https://ejcuoqbfssefkeinlkly.supabase.co/functions/v1/sync-matches',
-    headers := '{"Content-Type": "application/json"}'::jsonb,
-    body := '{}'::jsonb
-  ) as request_id;
-  $$
-);
-```
-
-Tjek at kampene begynder at rulle ind: `select * from "Matches" limit 5;`
-
-### 4. Genaktivér mail-påmindelser
-
-Fjern udkommenteringen af `schedule:`-blokken i
-`.github/workflows/notify-missing-predictions.yml` og push til `main`.
-
-GitHub-secrets (`SMTP_*`, `SUPABASE_*` m.fl.) ligger der allerede — tjek dog at
-det app-specifikke iCloud-kodeord stadig virker (kør workflow'en manuelt med
-**Send a single test email** = `true`).
-
-> **OBS:** GitHub deaktiverer automatisk scheduled workflows efter 60 dages
-> inaktivitet i repoet. Kommer der en "workflow disabled"-mail, genaktivér den
-> under **Actions → Notify missing predictions → Enable workflow**.
-
-### 5. Tilpas tekster
-
-Turneringsnavnet er hardcodet et par steder — søg efter `VM Tips Kuponen` og
-`2026` i:
-
-- `scripts/notify-missing-predictions/index.mjs` (påmindelsesmail)
-- `scripts/send-final-standings/index.mjs` (afslutningsmail)
-- Blazor-appens UI-tekster
-
-## Når turneringen er slut igen
-
-1. Send afslutningsmailen: **Actions → Send final standings email → Run
-   workflow**. Kør først med `only_email` = din egen adresse som preview,
-   derefter uden input for at maile alle. (Ingen dublet-beskyttelse — kør kun
-   den rigtige kørsel én gang.)
-2. Stop polling: `select cron.unschedule('sync-matches');` i SQL Editor.
-3. Kommentér `schedule:`-blokken ud igen i
-   `notify-missing-predictions.yml`.
+- **Ingen kampe dukker op**: tjek at konkurrencen er `active` (ikke `draft`)
+  og at `sync-matches`-cron-jobbet kører: `select * from cron.job;` i
+  Supabase SQL Editor.
+- **Mail-påmindelser mangler**: admin kan slå dem til/fra pr. konkurrence
+  under Admin → Indstillinger.
+- Se `supabase/SETUP.md` for den tekniske baggrund om Edge Function'en og
+  hvordan man deployer en ny version af den.

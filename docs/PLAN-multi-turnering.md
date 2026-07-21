@@ -5,6 +5,11 @@ hvor enhver bruger kan oprette en tipskonkurrence, blive admin for den, vælge
 turnering (VM, EM, Premier League, …), invitere deltagere via link og styre
 mailudsendelser — uden at der skal røres ved kode, secrets eller pg_cron.
 
+**Status: Alle 7 etaper er implementeret og deployet (21. juli 2026).** Se
+[docs/REAKTIVERING.md](REAKTIVERING.md) for den korte driftsnote om hvordan
+platformen bruges i praksis. Planen herunder bevares som historisk
+beslutningsgrundlag og designdokumentation.
+
 **Status i dag (udgangspunkt):**
 
 - Skema: `Users` (Id, Name, AuthId), `Matches` (uden turnerings-kobling),

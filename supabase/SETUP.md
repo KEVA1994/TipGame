@@ -1,9 +1,12 @@
 # Supabase Edge Function — Automatisk kamp-sync
 
-> **Status (20. juli 2026):** VM er slut, og al automatik er lukket ned —
-> pg_cron-jobbet er afmeldt og påmindelses-workflow'ens schedule er kommenteret
-> ud. Se [docs/REAKTIVERING.md](../docs/REAKTIVERING.md) for at tænde det hele
-> igen til en ny turnering.
+> **Status (21. juli 2026):** TipGame er nu en multi-turnerings-platform —
+> `sync-matches` looper permanent over alle aktive konkurrencer i stedet for
+> én hardcodet turnering, og pg_cron kører uafbrudt (no-op'er billigt uden
+> aktive konkurrencer). Nye konkurrencer oprettes i appens UI, ikke via SQL
+> eller secrets. Se [docs/PLAN-multi-turnering.md](../docs/PLAN-multi-turnering.md)
+> for baggrund og [docs/REAKTIVERING.md](../docs/REAKTIVERING.md) for
+> drifts-noter.
 
 Edge Function'en `sync-matches` erstatter DataMiner-loopet. Den kører automatisk via `pg_cron` i Supabase — gratis, altid online, ingen lokal maskine nødvendig.
 
