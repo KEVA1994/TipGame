@@ -12,13 +12,23 @@
 
         @if (CompetitionState.Current is not null)
         {
-            <MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+            <MudMenu @bind-Open="competitionMenuOpen" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
                 <ActivatorContent>
-                    <MudButton Color="Color.Inherit"
-                               EndIcon="@Icons.Material.Filled.ArrowDropDown"
-                               Style="text-transform: none; font-weight: 700;">
-                        @CompetitionState.Current.Name
-                    </MudButton>
+                    @* MudMenu's own click-to-open detection on custom ActivatorContent
+                       is broken in this MudBlazor version — its ".mud-menu-activator"
+                       wrapper renders with `display:contents`, collapsing its own
+                       bounding box to zero, and the menu never opens no matter how
+                       precisely the visible content is clicked (confirmed: content
+                       renders fine once Open is set some other way — this is purely
+                       an activation problem, a known class of MudBlazor issue).
+                       Bypass it: drive Open ourselves from a plain @onclick instead
+                       of relying on MudMenu's internal handling. *@
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1"
+                              Style="cursor: pointer; padding: 6px 4px;"
+                              @onclick="@(() => competitionMenuOpen = !competitionMenuOpen)">
+                        <MudText Style="color: inherit; font-weight: 700;">@CompetitionState.Current.Name</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" Size="Size.Small" Style="color: inherit;" />
+                    </MudStack>
                 </ActivatorContent>
                 <ChildContent>
                     @foreach (var comp in CompetitionState.MyCompetitions)

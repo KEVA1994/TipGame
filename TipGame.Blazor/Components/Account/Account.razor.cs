@@ -13,6 +13,27 @@ public partial class AccountPopover
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
 
+    // PlayerState.PlayerName can change mid-flow (SignIn/SignUp update it —
+    // sometimes more than once, see CompetitionState's reload coalescing
+    // comment) — reacting to it live meant a successful login could flip the
+    // still-open dialog from the login form straight to "Min konto" for a
+    // moment before Close() caught up, reading as the dialog getting stuck on
+    // the wrong screen. Decide once, when the dialog opens, whether to show
+    // account info or the login form, and keep showing that for the dialog's
+    // whole lifetime — a login/signup in progress always finishes on the form
+    // it started on and then simply closes.
+    private bool showAccountView;
+    private bool wasOpen;
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen && !wasOpen)
+        {
+            showAccountView = !string.IsNullOrEmpty(PlayerState.PlayerName);
+        }
+        wasOpen = IsOpen;
+    }
+
     private bool isSignUpMode;
     private bool isForgotPasswordMode;
     private bool forgotPasswordSent;

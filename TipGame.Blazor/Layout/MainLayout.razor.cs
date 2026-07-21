@@ -13,6 +13,7 @@ public partial class MainLayout : IDisposable
     private bool drawerOpen = true;
     private bool isDarkMode = true;
     private bool accountPopoverOpen;
+    private bool competitionMenuOpen;
 
     private readonly MudTheme appTheme = new()
     {

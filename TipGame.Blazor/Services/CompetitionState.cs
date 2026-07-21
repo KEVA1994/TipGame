@@ -42,7 +42,40 @@ public class CompetitionState
         await ReloadAsync();
     }
 
-    public async Task ReloadAsync()
+    // PlayerState.OnChange can fire multiple times for a single login (Gotrue's
+    // own internal listener, our explicit set in PlayerState, and now also the
+    // SetSession call used to reliably wire up a fresh session) — without
+    // coalescing, each firing kicked off its own overlapping ReloadAsync,
+    // racing on the same mutable state (Current/MyCompetitions/_roles). That
+    // showed up as UI jank: dialogs stuck mid-transition, menus losing their
+    // open state during a stray re-render. Coalesce so only one reload ever
+    // runs at a time; a call that arrives mid-reload waits for the in-flight
+    // one and then triggers exactly one more pass (so it still reflects
+    // whatever just changed) instead of running concurrently with it.
+    private Task? _reloadTask;
+    private bool _reloadPending;
+
+    public Task ReloadAsync()
+    {
+        if (_reloadTask is { IsCompleted: false })
+        {
+            _reloadPending = true;
+            return _reloadTask;
+        }
+        _reloadTask = ReloadCoreAsync();
+        return _reloadTask;
+    }
+
+    private async Task ReloadCoreAsync()
+    {
+        do
+        {
+            _reloadPending = false;
+            await ReloadOnceAsync();
+        } while (_reloadPending);
+    }
+
+    private async Task ReloadOnceAsync()
     {
         try
         {

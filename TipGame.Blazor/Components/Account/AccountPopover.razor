@@ -2,7 +2,7 @@
 
 <MudDialog @bind-Visible="IsOpen" Options="dialogOptions">
     <TitleContent>
-        @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        @if (showAccountView)
         {
             <MudText Typo="Typo.h6">Min konto</MudText>
         }
@@ -20,7 +20,7 @@
         }
     </TitleContent>
     <DialogContent>
-        @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        @if (showAccountView)
         {
             <MudStack AlignItems="AlignItems.Center" Spacing="3">
                 <MudAvatar Color="Color.Primary" Size="Size.Large">
@@ -125,7 +125,7 @@
         }
     </DialogContent>
     <DialogActions>
-        @if (!string.IsNullOrEmpty(PlayerState.PlayerName))
+        @if (showAccountView)
         {
             <MudButton OnClick="Close">Luk</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Error"

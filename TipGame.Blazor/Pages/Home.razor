@@ -28,8 +28,6 @@ else if (!PlayerState.IsLoggedIn)
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Link" Class="mb-6 rounded-xl">
         Har du fået et <strong>invitationslink</strong> til en konkurrence? Åbn linket — så bliver du meldt ind, når du har logget ind.
     </MudAlert>
-
-    <TipGame.Blazor.Components.Account.AccountPopover @bind-IsOpen="accountPopoverOpen" />
 }
 else if (CompetitionState.Current is null)
 {
@@ -187,3 +185,10 @@ else
         </MudStack>
     </MudPaper>
 }
+
+@* Rendered unconditionally (not inside the login-state branches above): a
+   successful login/signup changes PlayerState.IsLoggedIn, which would flip
+   which branch above is active — if the dialog lived inside one of those
+   branches, that same login would tear the component down out from under
+   its own still-running Close() call, leaving it visually stuck open. *@
+<TipGame.Blazor.Components.Account.AccountPopover @bind-IsOpen="accountPopoverOpen" />
