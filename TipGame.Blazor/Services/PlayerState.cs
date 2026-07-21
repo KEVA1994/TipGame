@@ -44,6 +44,7 @@ public class PlayerState
         try
         {
             var session = await _supabase.Auth.SignIn(email, password);
+            session = await EnsureSessionWiredAsync(session);
             if (session?.User is not null)
             {
                 PlayerName = ExtractDisplayName(session.User);
@@ -67,6 +68,7 @@ public class PlayerState
             {
                 Data = new Dictionary<string, object> { ["display_name"] = displayName }
             });
+            session = await EnsureSessionWiredAsync(session);
             if (session?.User is not null)
             {
                 PlayerName = displayName;
@@ -142,6 +144,28 @@ public class PlayerState
         catch (Exception ex)
         {
             return ex.Message;
+        }
+    }
+
+    // SignUp/SignIn establish a session object in memory, but the Supabase C#
+    // SDK does not reliably wire that session into outgoing Postgrest/RPC
+    // requests (or persist it) the same way a session restored via SetSession
+    // does — observed as RPC calls failing with "Not authenticated" right
+    // after signup even though the user is clearly logged in client-side.
+    // Re-applying the session through SetSession forces the same code path
+    // that a page-load session restore uses, which reliably wires headers.
+    private async Task<Supabase.Gotrue.Session?> EnsureSessionWiredAsync(Supabase.Gotrue.Session? session)
+    {
+        if (session?.AccessToken is null || session.RefreshToken is null)
+            return session;
+
+        try
+        {
+            return await _supabase.Auth.SetSession(session.AccessToken, session.RefreshToken);
+        }
+        catch
+        {
+            return session;
         }
     }
 
