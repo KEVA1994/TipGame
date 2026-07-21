@@ -108,6 +108,43 @@ else
         </MudButton>
     </MudPaper>
 
+    @* --- Mails --- *@
+    <MudPaper Class="pa-5 rounded-xl mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Afslutningsmail</MudText>
+        @if (finalStandingsRequest is null)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                Sender én gang for alle en mail til alle deltagere med slutstillingen og vinderne.
+                Kan ikke fortrydes eller sendes igen, så vent til turneringen reelt er slut.
+                Sendes automatisk inden for ca. 15 minutter, når du anmoder om den.
+            </MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.MarkEmailRead"
+                       Disabled="@(comp.Status != "finished" || isRequestingEmail)"
+                       OnClick="RequestFinalStandingsEmail">
+                @(isRequestingEmail ? "Anmoder…" : "Send afslutningsmail")
+            </MudButton>
+            @if (comp.Status != "finished")
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2" Style="display:block;">
+                    Kun muligt når konkurrencen er afsluttet.
+                </MudText>
+            }
+        }
+        else if (finalStandingsRequest.ProcessedAt is null)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                Anmodet @finalStandingsRequest.RequestedAt.ToLocalTime().ToString("dd/MM HH:mm") — sendes inden for kort tid.
+            </MudAlert>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">
+                Sendt @finalStandingsRequest.ProcessedAt.Value.ToLocalTime().ToString("dd/MM HH:mm").
+            </MudAlert>
+        }
+    </MudPaper>
+
     @* --- Farezone --- *@
     @if (comp.Status == "active")
     {
@@ -129,10 +166,12 @@ else
     private bool isReady;
     private bool linkCopied;
     private bool isSavingTexts;
+    private bool isRequestingEmail;
     private bool remindersEnabled;
     private string? infoText;
     private string? prizesText;
     private List<MemberRow> members = new();
+    private EmailRequest? finalStandingsRequest;
 
     private string InviteLink => CompetitionState.Current is { } c
         ? $"{Nav.BaseUri}join/{c.InviteToken}"
@@ -170,7 +209,11 @@ else
             .Where(m => m.CompetitionId == compId)
             .Get();
         var usersTask = Supabase.From<User>().Get();
-        await Task.WhenAll(membersTask, usersTask);
+        var emailRequestsTask = Supabase.From<EmailRequest>()
+            .Where(r => r.CompetitionId == compId)
+            .Where(r => r.Kind == "final_standings")
+            .Get();
+        await Task.WhenAll(membersTask, usersTask, emailRequestsTask);
 
         var names = usersTask.Result.Models.ToDictionary(u => u.Id, u => u.Name);
         members = membersTask.Result.Models
@@ -178,6 +221,8 @@ else
             .OrderBy(m => m.Role == "admin" ? 0 : 1)
             .ThenBy(m => m.Name)
             .ToList();
+
+        finalStandingsRequest = emailRequestsTask.Result.Models.FirstOrDefault();
     }
 
     private void HandleStateChanged() => _ = OnStateChangedAsync();
@@ -274,6 +319,21 @@ else
             Snackbar.Add("Kunne ikke gemme teksterne.", Severity.Error);
         }
         isSavingTexts = false;
+    }
+
+    private async Task RequestFinalStandingsEmail()
+    {
+        if (CompetitionState.Current is not { } comp) return;
+        isRequestingEmail = true;
+        var error = await CompetitionState.RequestEmailAsync(comp.Id, "final_standings");
+        isRequestingEmail = false;
+        if (error is not null)
+        {
+            Snackbar.Add(error, Severity.Error);
+            return;
+        }
+        Snackbar.Add("Anmodet — mailen sendes til alle deltagere inden for ca. 15 minutter.", Severity.Success);
+        await LoadAsync();
     }
 
     private async Task FinishCompetition()

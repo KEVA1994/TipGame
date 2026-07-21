@@ -1,12 +1,12 @@
 name: Notify missing predictions
 
 on:
-  # DEACTIVATED after the 2026 World Cup ended. To reactivate for a new
-  # tournament, uncomment the schedule block below (see docs/REAKTIVERING.md).
-  # schedule:
-  #   # Every hour, on the hour (UTC). Each run reminds players about any match
-  #   # kicking off within the next 24h that they haven't predicted yet.
-  #   - cron: '0 * * * *'
+  schedule:
+    # Every hour, on the hour (UTC). Each run loops over every active
+    # competition with reminders enabled and reminds members about any match
+    # kicking off within the next 24h that they haven't predicted yet.
+    # No-ops cheaply when there are no active competitions with reminders on.
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       send_test:

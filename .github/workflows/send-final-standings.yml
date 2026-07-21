@@ -1,14 +1,20 @@
 name: Send final standings email
 
-# Manual only — no schedule. Run it once when the tournament is over.
-# Tip: run first with only_email set to your own address to preview the mail,
-# then run again without inputs to mail every player. NOTE: there is no dedup
-# guard — a second full run mails everyone again.
+# Drains the EmailRequests queue (kind=final_standings): admins queue a
+# request from the app's Admin page, this runs every 15 minutes and sends it.
+# The request's ProcessedAt column is the dedup guard — each competition's
+# final-standings mail goes out exactly once, ever.
+#
+# Tip: run manually with only_email set to your own address to preview
+# whatever's currently queued — that run does NOT mark requests as processed,
+# so the real scheduled run still sends to everyone afterwards.
 on:
+  schedule:
+    - cron: '*/15 * * * *'
   workflow_dispatch:
     inputs:
       only_email:
-        description: 'Only mail this address (preview against real data). Leave empty for the real run.'
+        description: 'Preview: only mail this address, and do not mark the request as sent. Leave empty for a normal (real) run.'
         type: string
         required: false
 

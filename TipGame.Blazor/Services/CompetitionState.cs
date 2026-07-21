@@ -228,6 +228,24 @@ public class CompetitionState
         }
     }
 
+    /// <summary>Queues a mail (currently only "final_standings") for a competition. Admin-only, one request per kind ever.</summary>
+    public async Task<string?> RequestEmailAsync(int competitionId, string kind)
+    {
+        try
+        {
+            await RpcAsync("request_email", new Dictionary<string, object?>
+            {
+                ["p_competition_id"] = competitionId,
+                ["p_kind"] = kind,
+            });
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return TranslateRpcError(ex.Message);
+        }
+    }
+
     private static string TranslateRpcError(string message) => message switch
     {
         _ when message.Contains("not open for joining") =>
@@ -238,6 +256,10 @@ public class CompetitionState
             "Du skal være logget ind.",
         _ when message.Contains("Invalid competition code") =>
             "Ugyldig turneringskode.",
+        _ when message.Contains("already been requested") =>
+            "Mailen er allerede anmodet om — den bliver kun sendt én gang.",
+        _ when message.Contains("Only the competition admin") =>
+            "Kun konkurrencens admin kan gøre dette.",
         _ => "Noget gik galt. Prøv igen.",
     };
 }

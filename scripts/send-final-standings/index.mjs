@@ -1,13 +1,16 @@
-// One-shot end-of-tournament email: congratulates the winners and shows the
-// final standings to every player. Triggered manually from GitHub Actions
-// (workflow_dispatch) — it has no schedule and no dedup table, so a re-run
-// mails everyone again.
+// Processes the EmailRequests queue (kind='final_standings'): for each
+// competition an admin has requested it for, computes the final standings and
+// mails every member exactly once, then stamps ProcessedAt as a dedup guard.
+// Triggered on a schedule from GitHub Actions (etape 6 of
+// docs/PLAN-multi-turnering.md) — admins queue the mail from the app's Admin
+// page (request_email RPC); this script is the worker that drains the queue.
 //
-// Standings are computed live from the database (sum of Predictions.Points per
-// user, ties share a rank), so the mail always matches the app's leaderboard.
+// Standings are computed live from the database (sum of Predictions.Points
+// per competition member, ties share a rank), so the mail always matches the
+// app's leaderboard for that competition.
 //
-// Email is sent over iCloud SMTP using an app-specific password, same setup as
-// scripts/notify-missing-predictions.
+// Email is sent over iCloud SMTP using an app-specific password, same setup
+// as scripts/notify-missing-predictions.
 import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
 
@@ -19,8 +22,9 @@ const smtpPassword = process.env.SMTP_PASSWORD;
 // Use || (not ??) so an empty secret from GitHub Actions falls back too.
 const fromAddress = process.env.REMINDER_FROM_ADDRESS || smtpUsername;
 const siteUrl = process.env.SITE_URL || "https://keva1994.github.io/TipGame/";
-// Preview guard: when set, the full real flow runs but only this address is
-// mailed. Use it to send yourself the final mail before the real run.
+// Preview guard: when set, every matching request is rendered and sent ONLY
+// to this address, and ProcessedAt is NOT stamped — the request stays queued
+// for the real run. Lets an admin preview the exact mail before it goes out.
 const onlyEmail = (process.env.ONLY_EMAIL || "").trim().toLowerCase() || null;
 
 for (const [name, value] of Object.entries({
@@ -45,69 +49,23 @@ const transporter = nodemailer.createTransport({
   auth: { user: smtpUsername, pass: smtpPassword },
 });
 
-// Refuse to declare winners while matches are still unplayed.
-const { data: unfinished, error: matchError } = await supabase
-  .from("Matches")
-  .select("Id")
-  .neq("Status", "FINISHED")
-  .limit(1);
-if (matchError) {
-  console.error("Failed to check matches:", matchError.message);
-  process.exit(1);
-}
-if (unfinished && unfinished.length > 0) {
-  console.error("There are unfinished matches — refusing to send final standings.");
-  process.exit(1);
-}
-
-const { data: users, error: userError } = await supabase
-  .from("Users")
-  .select("Id, Name, AuthId");
-if (userError) {
-  console.error("Failed to load users:", userError.message);
-  process.exit(1);
-}
-
-// PostgREST caps responses at 1000 rows — with ~28 players × ~104 matches the
-// table is ~3x that, so page through everything or the standings come out
-// wrong (computed from only the earliest matches).
-const preds = [];
-const pageSize = 1000;
-for (let from = 0; ; from += pageSize) {
-  const { data: page, error: predError } = await supabase
-    .from("Predictions")
-    .select("UserId, Points")
-    .order("Id", { ascending: true })
-    .range(from, from + pageSize - 1);
-  if (predError) {
-    console.error("Failed to load predictions:", predError.message);
-    process.exit(1);
+// PostgREST caps responses at 1000 rows — page through everything or large
+// competitions' standings come out wrong (computed from only some matches).
+async function fetchAll(table, select, filters) {
+  const rows = [];
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    let query = supabase.from(table).select(select).order("Id", { ascending: true });
+    for (const [col, val] of Object.entries(filters ?? {})) query = query.eq(col, val);
+    const { data: page, error } = await query.range(from, from + pageSize - 1);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    rows.push(...(page ?? []));
+    if (!page || page.length < pageSize) break;
   }
-  preds.push(...(page ?? []));
-  if (!page || page.length < pageSize) break;
-}
-console.log(`Loaded ${preds.length} predictions.`);
-
-const pointsByUser = new Map();
-for (const p of preds ?? []) {
-  pointsByUser.set(p.UserId, (pointsByUser.get(p.UserId) ?? 0) + (p.Points ?? 0));
+  return rows;
 }
 
-// Competition ranking: sorted by points, ties share a rank (1, 2, 2, 4, ...).
-const standings = (users ?? [])
-  .map((u) => ({ ...u, points: pointsByUser.get(u.Id) ?? 0 }))
-  .sort((a, b) => b.points - a.points || a.Name.localeCompare(b.Name, "da"));
-let lastPoints = null;
-let lastRank = 0;
-standings.forEach((row, i) => {
-  row.rank = row.points === lastPoints ? lastRank : i + 1;
-  lastPoints = row.points;
-  lastRank = row.rank;
-});
-
-const [gold, silver, bronze] = standings;
-
-function standingsRowsHtml(meId) {
+function standingsRowsHtml(standings, meId) {
   const medals = { 1: "🥇", 2: "🥈", 3: "🥉" };
   return standings
     .map((row) => {
@@ -123,19 +81,20 @@ function standingsRowsHtml(meId) {
     .join("\n");
 }
 
-function finalHtml({ userName, me }) {
+function finalHtml({ competitionName, matchCount, userName, me, standings }) {
+  const [gold, silver, bronze] = standings;
   const personal =
     me && me.rank <= 3
       ? `Og hold nu fast: <strong>du sluttede som nr. ${me.rank} med ${me.points} point!</strong> Kassen er din. 🎉`
       : me
-        ? `Du sluttede som <strong>nr. ${me.rank} med ${me.points} point</strong>. ${me.rank <= 10 ? "Solidt tippet! 💪" : "Der er et VM igen i 2030 — vi tror på comebacket. 💪"}`
+        ? `Du sluttede som <strong>nr. ${me.rank} med ${me.points} point</strong>. ${me.rank <= 10 ? "Solidt tippet! 💪" : "Der bliver nye chancer — vi tror på comebacket. 💪"}`
         : "";
   return `<!DOCTYPE html>
 <html lang="da">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>VM Tips Kuponen 2026 — vinderne er fundet!</title>
+	<title>${competitionName} — vinderne er fundet!</title>
 </head>
 <body style="margin:0;padding:0;background:#f3f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
 
@@ -150,10 +109,10 @@ function finalHtml({ userName, me }) {
 						<td style="background:linear-gradient(135deg,#1B5E20 0%,#388E3C 100%);padding:32px 32px 24px 32px;text-align:center;color:#ffffff;">
 							<div style="font-size:48px;line-height:1;margin-bottom:8px;">🏆⚽🎉</div>
 							<h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.01em;">
-								VM er slut — vinderne er fundet!
+								Slut — vinderne er fundet!
 							</h1>
 							<p style="margin:8px 0 0 0;font-size:14px;opacity:0.92;">
-								104 kampe. Tusindvis af tips. Én mester.
+								${matchCount} kampe. Mange tips. Én mester.
 							</p>
 						</td>
 					</tr>
@@ -166,7 +125,7 @@ function finalHtml({ userName, me }) {
 							</p>
 
 							<p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">
-								Så blev der fløjtet af for sidste gang, og <strong>VM Tips Kuponen 2026</strong>
+								Så blev der fløjtet af for sidste gang, og <strong>${competitionName}</strong>
 								er officielt slut. Tak fordi du tippede med!
 							</p>
 
@@ -176,14 +135,14 @@ function finalHtml({ userName, me }) {
 									<td style="padding:20px 16px;text-align:center;">
 										<div style="font-size:13px;font-weight:700;color:#5d4500;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">Sejrsskamlen</div>
 										<div style="font-size:18px;font-weight:700;color:#1B5E20;margin-bottom:6px;">🥇 ${gold.Name} — ${gold.points} point</div>
-										<div style="font-size:16px;font-weight:600;color:#455A64;margin-bottom:6px;">🥈 ${silver.Name} — ${silver.points} point</div>
-										<div style="font-size:16px;font-weight:600;color:#795548;">🥉 ${bronze.Name} — ${bronze.points} point</div>
+										${silver ? `<div style="font-size:16px;font-weight:600;color:#455A64;margin-bottom:6px;">🥈 ${silver.Name} — ${silver.points} point</div>` : ""}
+										${bronze ? `<div style="font-size:16px;font-weight:600;color:#795548;">🥉 ${bronze.Name} — ${bronze.points} point</div>` : ""}
 									</td>
 								</tr>
 							</table>
 
 							<p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;">
-								Kæmpe tillykke til de tre på podiet! 👏 ${personal}
+								Kæmpe tillykke til dem på podiet! 👏 ${personal}
 							</p>
 
 							<!-- Full standings -->
@@ -194,7 +153,7 @@ function finalHtml({ userName, me }) {
 									<th style="padding:8px 12px;font-size:12px;text-align:left;color:#6b7280;">Spiller</th>
 									<th style="padding:8px 12px;font-size:12px;text-align:right;color:#6b7280;">Point</th>
 								</tr>
-								__STANDINGS_ROWS__
+								${standingsRowsHtml(standings, me?.Id)}
 							</table>
 
 							<p style="margin:0 0 8px 0;font-size:13px;color:#6b7280;line-height:1.5;text-align:center;">
@@ -218,10 +177,10 @@ function finalHtml({ userName, me }) {
 					<tr>
 						<td style="background:#F5F5F5;padding:20px 32px;text-align:center;border-top:1px solid #E0E0E0;">
 							<p style="margin:0;font-size:13px;color:#1B5E20;font-weight:700;">
-								⚽ VM Tips Kuponen 2026 — slut og tak for denne gang!
+								⚽ ${competitionName} — slut og tak for denne gang!
 							</p>
 							<p style="margin:6px 0 0 0;font-size:11px;color:#9E9E9E;">
-								Denne e-mail er sendt automatisk af en bot uden følelser — men selv den synes, det var et godt VM.
+								Denne e-mail er sendt automatisk af en bot uden følelser — men selv den synes, det gik godt.
 								Den læser ikke svar, men svar gerne alligevel, så er du sgu sej. 💌
 							</p>
 						</td>
@@ -237,51 +196,159 @@ function finalHtml({ userName, me }) {
 </html>`;
 }
 
-let sent = 0;
-let skippedNoEmail = 0;
-const errors = [];
-
-for (const row of standings) {
-  if (!row.AuthId) {
-    skippedNoEmail++;
-    continue;
+async function processRequest(request) {
+  const { data: competition, error: compError } = await supabase
+    .from("Competitions")
+    .select("Id, Name")
+    .eq("Id", request.CompetitionId)
+    .single();
+  if (compError || !competition) {
+    console.error(`[request ${request.Id}] Competition not found: ${compError?.message}`);
+    return { sent: 0, skipped: true };
   }
 
-  const { data: authData, error: authErr } =
-    await supabase.auth.admin.getUserById(row.AuthId);
-  const email = authData?.user?.email;
-  if (authErr || !email) {
-    if (authErr) errors.push(`auth ${row.Id}: ${authErr.message}`);
-    else skippedNoEmail++;
-    continue;
+  // Refuse to declare winners while matches are still unplayed. Leaves the
+  // request pending — retried on the next scheduled run.
+  const { data: unfinished, error: matchCheckError } = await supabase
+    .from("Matches")
+    .select("Id")
+    .eq("CompetitionId", competition.Id)
+    .neq("Status", "FINISHED")
+    .limit(1);
+  if (matchCheckError) {
+    console.error(`[${competition.Name}] Failed to check matches:`, matchCheckError.message);
+    return { sent: 0, skipped: true };
+  }
+  if (unfinished && unfinished.length > 0) {
+    console.log(`[${competition.Name}] Matches still unfinished — will retry later.`);
+    return { sent: 0, skipped: true };
   }
 
-  if (onlyEmail && email.toLowerCase() !== onlyEmail) continue;
+  const members = await fetchAll("CompetitionMembers", "UserId", { CompetitionId: competition.Id });
+  const memberIds = [...new Set(members.map((m) => m.UserId))];
+  if (memberIds.length === 0) {
+    console.log(`[${competition.Name}] No members — nothing to send.`);
+    return { sent: 0, skipped: false };
+  }
 
-  const html = finalHtml({ userName: row.Name, me: row }).replace(
-    "__STANDINGS_ROWS__",
-    standingsRowsHtml(row.Id),
-  );
+  const { data: users, error: userError } = await supabase
+    .from("Users")
+    .select("Id, Name, AuthId")
+    .in("Id", memberIds);
+  if (userError) throw new Error(`users: ${userError.message}`);
 
-  try {
-    await transporter.sendMail({
-      from: fromAddress,
-      to: email,
-      subject: `🏆 VM Tips Kuponen 2026: Vinderne er fundet — tillykke ${gold.Name}!`,
-      html,
+  const matches = await fetchAll("Matches", "Id", { CompetitionId: competition.Id });
+  const matchIds = new Set(matches.map((m) => m.Id));
+
+  const allPreds = await fetchAll("Predictions", "UserId, MatchId, Points");
+  const preds = allPreds.filter((p) => matchIds.has(p.MatchId) && memberIds.includes(p.UserId));
+
+  const pointsByUser = new Map();
+  for (const p of preds) {
+    pointsByUser.set(p.UserId, (pointsByUser.get(p.UserId) ?? 0) + (p.Points ?? 0));
+  }
+
+  const standings = (users ?? [])
+    .map((u) => ({ ...u, points: pointsByUser.get(u.Id) ?? 0 }))
+    .sort((a, b) => b.points - a.points || a.Name.localeCompare(b.Name, "da"));
+  let lastPoints = null;
+  let lastRank = 0;
+  standings.forEach((row, i) => {
+    row.rank = row.points === lastPoints ? lastRank : i + 1;
+    lastPoints = row.points;
+    lastRank = row.rank;
+  });
+
+  let sent = 0;
+  let skippedNoEmail = 0;
+  const errors = [];
+
+  for (const row of standings) {
+    if (!row.AuthId) {
+      skippedNoEmail++;
+      continue;
+    }
+
+    const { data: authData, error: authErr } =
+      await supabase.auth.admin.getUserById(row.AuthId);
+    const email = authData?.user?.email;
+    if (authErr || !email) {
+      if (authErr) errors.push(`auth ${row.Id}: ${authErr.message}`);
+      else skippedNoEmail++;
+      continue;
+    }
+
+    if (onlyEmail && email.toLowerCase() !== onlyEmail) continue;
+
+    const html = finalHtml({
+      competitionName: competition.Name,
+      matchCount: matches.length,
+      userName: row.Name,
+      me: row,
+      standings,
     });
-    sent++;
-    console.log(`Sent to ${row.Name}`);
-  } catch (e) {
-    errors.push(`smtp ${row.Id}: ${e instanceof Error ? e.message : String(e)}`);
+
+    try {
+      await transporter.sendMail({
+        from: fromAddress,
+        to: email,
+        subject: `🏆 ${competition.Name}: Vinderne er fundet — tillykke ${standings[0].Name}!`,
+        html,
+      });
+      sent++;
+      console.log(`[${competition.Name}] Sent to ${row.Name}`);
+    } catch (e) {
+      errors.push(`smtp ${row.Id}: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }
+
+  console.log(
+    `[${competition.Name}] players=${standings.length} sent=${sent} noEmail=${skippedNoEmail} errors=${errors.length}` +
+      (onlyEmail ? ` (ONLY_EMAIL preview — not marking processed)` : ""),
+  );
+  if (errors.length > 0) console.error(`[${competition.Name}] Errors:`, errors);
+
+  if (!onlyEmail) {
+    const { error: markError } = await supabase
+      .from("EmailRequests")
+      .update({ ProcessedAt: new Date().toISOString() })
+      .eq("Id", request.Id);
+    if (markError) {
+      console.error(`[${competition.Name}] Failed to mark request processed:`, markError.message);
+    }
+  }
+
+  return { sent, skipped: false };
 }
 
-console.log(
-  `Done. players=${standings.length} sent=${sent} noEmail=${skippedNoEmail} errors=${errors.length}` +
-    (onlyEmail ? ` (ONLY_EMAIL=${onlyEmail})` : ""),
-);
-if (errors.length > 0) {
-  console.error("Errors:", errors);
+const { data: pending, error: queueError } = await supabase
+  .from("EmailRequests")
+  .select("Id, CompetitionId")
+  .eq("Kind", "final_standings")
+  .is("ProcessedAt", null);
+
+if (queueError) {
+  console.error("Failed to load email queue:", queueError.message);
   process.exit(1);
 }
+
+if (!pending || pending.length === 0) {
+  console.log("No pending final-standings requests. Nothing to do.");
+  process.exit(0);
+}
+
+let totalSent = 0;
+let hadError = false;
+
+for (const request of pending) {
+  try {
+    const { sent } = await processRequest(request);
+    totalSent += sent;
+  } catch (e) {
+    hadError = true;
+    console.error(`[request ${request.Id}] Failed:`, e instanceof Error ? e.message : String(e));
+  }
+}
+
+console.log(`Done. requests=${pending.length} sent=${totalSent}`);
+if (hadError) process.exit(1);
